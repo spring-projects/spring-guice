@@ -13,7 +13,12 @@
 
 package org.springframework.guice;
 
+import static org.junit.Assert.assertNotNull;
+
+import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
@@ -24,18 +29,37 @@ import com.google.inject.Injector;
  */
 public class ModuleBeanWiringTests extends AbstractCompleteWiringTests {
 
+	private AnnotationConfigApplicationContext context;
+
 	@Override
 	protected Injector createInjector() {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
-		context.register(TestConfig.class, ModuleRegistryConfiguration.class);
+		context = new AnnotationConfigApplicationContext();
+		context.register(TestConfig.class);
 		context.refresh();
 		return new SpringInjector(context);
 	}
 
+	@Test
+	public void bindToSpringBeanFromGuiceModule() throws Exception {
+		assertNotNull(context.getBean(Spam.class));
+	}
+
+	@EnableGuiceModules
+	@Configuration
 	public static class TestConfig extends AbstractModule {
 		@Override
 		protected void configure() {
 			bind(Service.class).to(MyService.class);
+		}
+
+		@Bean
+		public Spam spam(Service service) {
+			return new Spam(service);
+		}
+	}
+
+	protected static class Spam {
+		public Spam(Service service) {
 		}
 	}
 
