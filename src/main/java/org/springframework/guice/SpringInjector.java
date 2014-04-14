@@ -18,8 +18,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.RootBeanDefinition;
-import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.context.ApplicationContext;
 
 import com.google.inject.Binding;
 import com.google.inject.Injector;
@@ -33,19 +34,19 @@ import com.google.inject.spi.TypeConverterBinding;
 
 public class SpringInjector implements Injector {
 	
-	private GenericApplicationContext context;
 	private Injector injector;
+	private DefaultListableBeanFactory beanFactory;
 	
-	public SpringInjector(GenericApplicationContext context) {
-		this.context = context;
+	public SpringInjector(ApplicationContext context) {
+		this.beanFactory = (DefaultListableBeanFactory) context.getAutowireCapableBeanFactory();
 		if (context.getBeanNamesForType(Injector.class).length>0) {
-			injector = context.getBean(Injector.class);
+			this.injector = context.getBean(Injector.class);
 		}
 	}
 
 	@Override
 	public void injectMembers(Object instance) {
-		context.getAutowireCapableBeanFactory().autowireBean(instance);
+		beanFactory.autowireBean(instance);
 	}
 
 	@Override
@@ -53,7 +54,7 @@ public class SpringInjector implements Injector {
 		return new MembersInjector<T>() {
 			@Override
 			public void injectMembers(T instance) {
-				context.getAutowireCapableBeanFactory().autowireBean(instance);
+				beanFactory.autowireBean(instance);
 			}
 		};
 	}
@@ -103,18 +104,18 @@ public class SpringInjector implements Injector {
 
 	@Override
 	public <T> Provider<T> getProvider(Class<T> type) {
-		if (context.getBeanNamesForType(type).length==0) {
+		if (beanFactory.getBeanNamesForType(type).length==0) {
 			if (injector!=null && injector.getExistingBinding(Key.get(type))!=null) {
 				return injector.getProvider(type);
 			}
 			// TODO: use prototype scope?
-			context.getDefaultListableBeanFactory().registerBeanDefinition(type.getSimpleName(), new RootBeanDefinition(type));
+			beanFactory.registerBeanDefinition(type.getSimpleName(), new RootBeanDefinition(type));
 		}
 		final Class<T> cls = type;
 		return new Provider<T>() {
 			@Override
 			public T get() {
-				return context.getBean(cls);
+				return beanFactory.getBean(cls);
 			}
 		};
 	}
@@ -129,14 +130,14 @@ public class SpringInjector implements Injector {
 
 	@Override
 	public <T> T getInstance(Class<T> type) {
-		if (context.getBeanNamesForType(type).length==0) {
+		if (beanFactory.getBeanNamesForType(type).length==0) {
 			if (injector!=null && injector.getExistingBinding(Key.get(type))!=null) {
 				return injector.getInstance(type);
 			}
 			// TODO: use prototype scope?
-			context.getDefaultListableBeanFactory().registerBeanDefinition(type.getSimpleName(), new RootBeanDefinition(type));
+			beanFactory.registerBeanDefinition(type.getSimpleName(), new RootBeanDefinition(type));
 		}
-		return context.getBean(type);
+		return beanFactory.getBean(type);
 	}
 
 	@Override

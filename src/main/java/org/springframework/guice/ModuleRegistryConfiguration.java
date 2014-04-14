@@ -22,9 +22,12 @@ import javax.annotation.PostConstruct;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 
 import com.google.inject.Binding;
 import com.google.inject.Guice;
@@ -34,7 +37,8 @@ import com.google.inject.Module;
 import com.google.inject.Provider;
 
 @Configuration
-public class ModuleRegistryConfiguration {
+@Order(Ordered.HIGHEST_PRECEDENCE + 10)
+public class ModuleRegistryConfiguration implements BeanPostProcessor {
 
 	@Autowired
 	private ConfigurableListableBeanFactory beanFactory;
@@ -64,6 +68,16 @@ public class ModuleRegistryConfiguration {
 				}
 			});
 		}
+	}
+
+	@Override
+	public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+		return bean;
+	}
+
+	@Override
+	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+		return bean;
 	}
 
 }

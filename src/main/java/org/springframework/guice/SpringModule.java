@@ -15,6 +15,7 @@ package org.springframework.guice;
 
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.util.ClassUtils;
 
@@ -28,24 +29,24 @@ import com.google.inject.Provider;
  */
 public class SpringModule implements Module {
 
-	private GenericApplicationContext context;
+	private DefaultListableBeanFactory beanFactory;
 
 	public SpringModule(GenericApplicationContext context) {
-		this.context = context;
+		this.beanFactory = (DefaultListableBeanFactory) context.getAutowireCapableBeanFactory();
 	}
 
 	@Override
 	public void configure(Binder binder) {
-		for (String name : context.getBeanDefinitionNames()) {
-			BeanDefinition definition = context.getBeanDefinition(name);
+		for (String name : beanFactory.getBeanDefinitionNames()) {
+			BeanDefinition definition = beanFactory.getBeanDefinition(name);
 			if (definition.isAutowireCandidate() && definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
-				Class<?> type = context.getType(name);
+				Class<?> type = beanFactory.getType(name);
 				@SuppressWarnings("unchecked")
 				final Class<Object> cls = (Class<Object>) type;
 				Provider<Object> provider = new Provider<Object>() {
 					@Override
 					public Object get() {
-						return context.getBean(cls);
+						return beanFactory.getBean(cls);
 					}
 				};
 				for (Class<?> iface : ClassUtils.getAllInterfacesForClass(cls)) {
