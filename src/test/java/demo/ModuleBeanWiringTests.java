@@ -22,7 +22,7 @@ import com.google.inject.Injector;
  * @author Dave Syer
  *
  */
-public class HybridWiringTests extends AbstractCompleteWiringTests {
+public class ModuleBeanWiringTests extends AbstractCompleteWiringTests {
 
 	@Override
 	protected Injector createInjector() {

@@ -45,17 +45,22 @@ public class SpringInjector implements Injector {
 
 	@Override
 	public void injectMembers(Object instance) {
-	
+		context.getAutowireCapableBeanFactory().autowireBean(instance);
 	}
 
 	@Override
 	public <T> MembersInjector<T> getMembersInjector(TypeLiteral<T> typeLiteral) {
-		return null;
+		return new MembersInjector<T>() {
+			@Override
+			public void injectMembers(T instance) {
+				context.getAutowireCapableBeanFactory().autowireBean(instance);
+			}
+		};
 	}
 
 	@Override
 	public <T> MembersInjector<T> getMembersInjector(Class<T> type) {
-		return null;
+		return getMembersInjector(TypeLiteral.get(type));
 	}
 
 	@Override
@@ -90,17 +95,36 @@ public class SpringInjector implements Injector {
 
 	@Override
 	public <T> Provider<T> getProvider(Key<T> key) {
-		return null;
+		// TODO: support for other metadata in the key
+		@SuppressWarnings("unchecked")
+		Provider<T> provider = (Provider<T>) getProvider(key.getTypeLiteral().getRawType());
+		return provider;
 	}
 
 	@Override
 	public <T> Provider<T> getProvider(Class<T> type) {
-		return null;
+		if (context.getBeanNamesForType(type).length==0) {
+			if (injector!=null && injector.getExistingBinding(Key.get(type))!=null) {
+				return injector.getProvider(type);
+			}
+			// TODO: use prototype scope?
+			context.getDefaultListableBeanFactory().registerBeanDefinition(type.getSimpleName(), new RootBeanDefinition(type));
+		}
+		final Class<T> cls = type;
+		return new Provider<T>() {
+			@Override
+			public T get() {
+				return context.getBean(cls);
+			}
+		};
 	}
 
 	@Override
 	public <T> T getInstance(Key<T> key) {
-		return null;
+		// TODO: support for other metadata in the key
+		@SuppressWarnings("unchecked")
+		T provider = (T) getInstance(key.getTypeLiteral().getRawType());
+		return provider;
 	}
 
 	@Override

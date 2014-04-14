@@ -21,6 +21,20 @@ public abstract class AbstractCompleteWiringTests {
 	protected abstract Injector createInjector();
 
 	@Test
+	public void injectInstance() {
+		Bar bar = new Bar();
+		injector.injectMembers(bar);
+		assertNotNull(bar.service);
+	}
+
+	@Test
+	public void memberInjector() {
+		Bar bar = new Bar();
+		injector.getMembersInjector(Bar.class).injectMembers(bar);
+		assertNotNull(bar.service);
+	}
+
+	@Test
 	public void getInstanceUnbound() {
 		assertNotNull(injector.getInstance(Foo.class));
 	}
@@ -28,6 +42,16 @@ public abstract class AbstractCompleteWiringTests {
 	@Test
 	public void getInstanceBound() {
 		assertNotNull(injector.getInstance(Service.class));
+	}
+
+	@Test
+	public void getProviderUnbound() {
+		assertNotNull(injector.getProvider(Foo.class).get());
+	}
+
+	@Test
+	public void getProviderBound() {
+		assertNotNull(injector.getProvider(Service.class).get());
 	}
 
 	interface Service {
@@ -40,6 +64,17 @@ public abstract class AbstractCompleteWiringTests {
 
 		@Inject
 		public Foo(Service service) {
+		}
+
+	}
+
+	public static class Bar {
+
+		private Service service;
+
+		@Inject
+		public void setService(Service service) {
+			this.service = service;
 		}
 
 	}
