@@ -11,9 +11,12 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package demo;
+package org.springframework.guice;
 
-import com.google.inject.AbstractModule;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -21,19 +24,22 @@ import com.google.inject.Injector;
  * @author Dave Syer
  *
  */
-public class GuiceWiringTests extends AbstractCompleteWiringTests {
+public class SpringModuleWiringTests extends AbstractCompleteWiringTests {
 
 	@Override
 	protected Injector createInjector() {
-		Injector app = Guice.createInjector(new TestConfig());
-		return app;
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+		context.register(TestConfig.class);
+		context.refresh();
+		return Guice.createInjector(new SpringModule(context));
 	}
 
-	public static class TestConfig extends AbstractModule {
-		@Override
-		protected void configure() {
-			bind(Service.class).to(MyService.class);
+	@Configuration
+	public static class TestConfig {
+		@Bean
+		public Service service() {
+			return new MyService();
 		}
 	}
-	
+
 }

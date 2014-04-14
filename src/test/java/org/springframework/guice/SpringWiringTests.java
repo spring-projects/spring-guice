@@ -11,7 +11,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package demo;
+package org.springframework.guice;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;

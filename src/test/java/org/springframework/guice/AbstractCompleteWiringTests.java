@@ -1,4 +1,4 @@
-package demo;
+package org.springframework.guice;
 
 import static org.junit.Assert.assertNotNull;
 
