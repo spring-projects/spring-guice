@@ -26,22 +26,11 @@
 			<artifactId>guice</artifactId>
 			<version>3.0</version>
 			<scope>compile</scope>
-			<exclusions>
-				<exclusion>
-					<artifactId>cglib</artifactId>
-					<groupId>org.sonatype.sisu.inject</groupId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.eclipse.jetty.orbit</groupId>
-			<artifactId>javax.mail.glassfish</artifactId>
-			<version>1.4.1.v201005082020</version>
 		</dependency>
 	</dependencies>
 
