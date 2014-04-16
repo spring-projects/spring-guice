@@ -10,10 +10,8 @@ target/
 .project
 .DS_Store
 .settings/
+.springBeans
 *.iml
 *.iws
 *.ipr
 .idea/
-code/
-cargo-installs/
-atlassian-ide-plugin.xml
