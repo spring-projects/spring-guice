@@ -32,14 +32,16 @@ public class SpringModule implements Module {
 	private DefaultListableBeanFactory beanFactory;
 
 	public SpringModule(GenericApplicationContext context) {
-		this.beanFactory = (DefaultListableBeanFactory) context.getAutowireCapableBeanFactory();
+		this.beanFactory = (DefaultListableBeanFactory) context
+				.getAutowireCapableBeanFactory();
 	}
 
 	@Override
 	public void configure(Binder binder) {
 		for (String name : beanFactory.getBeanDefinitionNames()) {
 			BeanDefinition definition = beanFactory.getBeanDefinition(name);
-			if (definition.isAutowireCandidate() && definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
+			if (definition.isAutowireCandidate()
+					&& definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
 				Class<?> type = beanFactory.getType(name);
 				@SuppressWarnings("unchecked")
 				final Class<Object> cls = (Class<Object>) type;
@@ -49,6 +51,9 @@ public class SpringModule implements Module {
 						return beanFactory.getBean(cls);
 					}
 				};
+				if (!cls.isInterface()) {
+					binder.bind(cls).toProvider(provider);
+				}
 				for (Class<?> iface : ClassUtils.getAllInterfacesForClass(cls)) {
 					@SuppressWarnings("unchecked")
 					Class<Object> unchecked = (Class<Object>) iface;

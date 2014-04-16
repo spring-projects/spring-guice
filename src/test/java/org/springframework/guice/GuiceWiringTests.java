@@ -13,6 +13,8 @@
 
 package org.springframework.guice;
 
+import javax.inject.Singleton;
+
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -33,6 +35,7 @@ public class GuiceWiringTests extends AbstractCompleteWiringTests {
 		@Override
 		protected void configure() {
 			bind(Service.class).to(MyService.class);
+			bind(Baz.class).in(Singleton.class);
 		}
 	}
 	

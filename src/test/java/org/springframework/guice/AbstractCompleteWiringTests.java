@@ -1,5 +1,6 @@
 package org.springframework.guice;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import javax.inject.Inject;
@@ -45,6 +46,13 @@ public abstract class AbstractCompleteWiringTests {
 	}
 
 	@Test
+	public void getInstanceBoundWithNoInterface() {
+		Baz instance = injector.getInstance(Baz.class);
+		assertNotNull(instance);
+		assertEquals(instance, injector.getInstance(Baz.class));
+	}
+
+	@Test
 	public void getProviderUnbound() {
 		assertNotNull(injector.getProvider(Foo.class).get());
 	}
@@ -75,6 +83,14 @@ public abstract class AbstractCompleteWiringTests {
 		@Inject
 		public void setService(Service service) {
 			this.service = service;
+		}
+
+	}
+
+	public static class Baz {
+
+		@Inject
+		public Baz(Service service) {
 		}
 
 	}

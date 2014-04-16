@@ -40,6 +40,10 @@ public class SpringModuleWiringTests extends AbstractCompleteWiringTests {
 		public Service service() {
 			return new MyService();
 		}
+		@Bean
+		public Baz baz() {
+			return new Baz(service());
+		}
 	}
 
 }
