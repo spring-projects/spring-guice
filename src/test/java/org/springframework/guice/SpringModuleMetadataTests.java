@@ -25,13 +25,14 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 
 import com.google.inject.ConfigurationException;
-import com.google.inject.CreationException;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.ProvisionException;
 
 /**
  * @author Dave Syer
@@ -45,15 +46,20 @@ public class SpringModuleMetadataTests {
 	@Test
 	public void twoConfigClasses() throws Exception {
 		Injector injector = createInjector(TestConfig.class, OtherConfig.class);
-		assertNotNull(injector.getBinding(Service.class));
+		assertNotNull(injector.getInstance(Service.class));
 	}
 
 	@Test
 	public void twoServices() throws Exception {
-		// Two beans with the same interface cause problems at startup
-		expected.expect(CreationException.class);
 		Injector injector = createInjector(TestConfig.class, MoreConfig.class);
-		assertNotNull(injector.getBinding(Service.class));
+		expected.expect(ProvisionException.class);
+		assertNotNull(injector.getInstance(Service.class));
+	}
+
+	@Test
+	public void twoServicesOnePrimary() throws Exception {
+		Injector injector = createInjector(TestConfig.class, PrimaryConfig.class);
+		assertNotNull(injector.getInstance(Service.class));
 	}
 
 	@Test
@@ -67,7 +73,7 @@ public class SpringModuleMetadataTests {
 	public void excludes() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MetadataExcludesConfig.class);
 		expected.expect(ConfigurationException.class);
-		assertNull(injector.getBinding(Service.class));
+		assertNull(injector.getInstance(Service.class));
 	}
 
 	private Injector createInjector(Class<?>... config) {
@@ -116,6 +122,15 @@ public class SpringModuleMetadataTests {
 	public static class TestConfig {
 		@Bean
 		public Service service() {
+			return new MyService();
+		}
+	}
+
+	@Configuration
+	public static class PrimaryConfig {
+		@Bean
+		@Primary
+		public Service primary() {
 			return new MyService();
 		}
 	}

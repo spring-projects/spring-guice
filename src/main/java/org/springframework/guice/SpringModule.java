@@ -13,6 +13,9 @@
 
 package org.springframework.guice;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
@@ -23,6 +26,7 @@ import org.springframework.util.ClassUtils;
 import com.google.inject.Binder;
 import com.google.inject.Module;
 import com.google.inject.Provider;
+import com.google.inject.ProvisionException;
 
 /**
  * @author Dave Syer
@@ -31,16 +35,19 @@ import com.google.inject.Provider;
 public class SpringModule implements Module {
 
 	private DefaultListableBeanFactory beanFactory;
-	
+
 	private GuiceModuleMetadata metadata = new GuiceModuleMetadata();
+
+	private Map<Class<?>, Provider<?>> bound = new HashMap<Class<?>, Provider<?>>();
 
 	public SpringModule(GenericApplicationContext context) {
 		this.beanFactory = (DefaultListableBeanFactory) context
 				.getAutowireCapableBeanFactory();
-		if (beanFactory.getBeanNamesForType(GuiceModuleMetadata.class).length>0) {
+		if (beanFactory.getBeanNamesForType(GuiceModuleMetadata.class).length > 0) {
 			this.metadata = beanFactory.getBean(GuiceModuleMetadata.class);
-		} else if (BeanFactoryUtils.beanNamesForTypeIncludingAncestors(beanFactory, GuiceModuleMetadata.class).length>0) {
-			this.metadata = beanFactory.getBean(GuiceModuleMetadata.class);			
+		} else if (BeanFactoryUtils.beanNamesForTypeIncludingAncestors(beanFactory,
+				GuiceModuleMetadata.class).length > 0) {
+			this.metadata = beanFactory.getBean(GuiceModuleMetadata.class);
 		}
 	}
 
@@ -54,12 +61,11 @@ public class SpringModule implements Module {
 				@SuppressWarnings("unchecked")
 				final Class<Object> cls = (Class<Object>) type;
 				final String beanName = name;
-				Provider<Object> provider = new Provider<Object>() {
-					@Override
-					public Object get() {
-						return beanFactory.getBean(beanName, cls);
-					}
-				};
+				Provider<Object> provider = new BeanFactoryProvider(beanFactory,
+						beanName, type);
+				if (bound.get(type) != null) {
+					continue; // TODO: named beans
+				}
 				if (!cls.isInterface() && !ClassUtils.isCglibProxyClass(cls)) {
 					bindConditionally(binder, cls, provider);
 				}
@@ -78,6 +84,45 @@ public class SpringModule implements Module {
 			return;
 		}
 		binder.bind(cls).toProvider(provider);
+		bound.put(cls, provider);
+	}
+
+	private static class BeanFactoryProvider implements Provider<Object> {
+
+		private DefaultListableBeanFactory beanFactory;
+		private String name;
+		private Class<?> type;
+		private Object result;
+
+		public BeanFactoryProvider(DefaultListableBeanFactory beanFactory, String name,
+				Class<?> type) {
+			this.beanFactory = beanFactory;
+			this.name = name;
+			this.type = type;
+		}
+
+		@Override
+		public Object get() {
+			if (result == null) {
+				String[] names = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
+						beanFactory, type);
+				if (names.length == 1) {
+					result = beanFactory.getBean(name, type);
+				} else {
+					for (String name : names) {
+						if (beanFactory.getBeanDefinition(name).isPrimary()) {
+							result = beanFactory.getBean(name, type);
+							break;
+						}
+					}
+					if (result == null) {
+						throw new ProvisionException(
+								"No primary bean definition for type: " + type);
+					}
+				}
+			}
+			return result;
+		}
 	}
 
 }
