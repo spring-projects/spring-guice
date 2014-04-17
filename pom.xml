@@ -53,13 +53,6 @@
 	</properties>
 
 	<build>
-		<extensions>
-			<extension>
-				<groupId>org.springframework.build</groupId>
-				<artifactId>aws-maven</artifactId>
-				<version>5.0.0.RELEASE</version>
-			</extension>
-		</extensions>
 		<pluginManagement>
 			<plugins>
 				<plugin>
@@ -143,14 +136,14 @@
 			</url>
 		</site>
 		<repository>
-			<id>springframework-release</id>
-			<name>Spring Release Repository</name>
-			<url>s3://maven.springframework.org/release</url>
+			<id>repo.spring.io</id>
+			<name>repo.spring.io-milestones</name>
+			<url>http://repo.spring.io/libs-milestone-local</url>
 		</repository>
 		<snapshotRepository>
-			<id>springframework-snapshot</id>
-			<name>Spring Snapshot Repository</name>
-			<url>s3://maven.springframework.org/snapshot</url>
+			<id>repo.spring.io</id>
+			<name>repo.spring.io-snapshots</name>
+			<url>http://repo.spring.io/libs-snapshot-local</url>
 		</snapshotRepository>
 	</distributionManagement>
 
