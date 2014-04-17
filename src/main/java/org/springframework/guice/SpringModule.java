@@ -21,7 +21,7 @@ import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.context.support.GenericApplicationContext;
+import org.springframework.context.ApplicationContext;
 import org.springframework.util.ClassUtils;
 
 import com.google.inject.Binder;
@@ -41,12 +41,14 @@ public class SpringModule implements Module {
 
 	private Map<Class<?>, Provider<?>> bound = new HashMap<Class<?>, Provider<?>>();
 
-	public SpringModule(GenericApplicationContext context) {
-		this.beanFactory = (DefaultListableBeanFactory) context
-				.getAutowireCapableBeanFactory();
+	public SpringModule(ApplicationContext context) {
+		this((DefaultListableBeanFactory) context.getAutowireCapableBeanFactory());
+	}
+
+	public SpringModule(DefaultListableBeanFactory beanFactory) {
+		this.beanFactory = beanFactory;
 		if (beanFactory.getBeanNamesForType(GuiceModuleMetadata.class).length > 0) {
-			this.matcher = new CompositeTypeMatcher(beanFactory.getBeansOfType(
-					GuiceModuleMetadata.class).values());
+			this.matcher = new CompositeTypeMatcher(beanFactory.getBeansOfType(GuiceModuleMetadata.class).values());
 		}
 	}
 
@@ -54,14 +56,12 @@ public class SpringModule implements Module {
 	public void configure(Binder binder) {
 		for (String name : beanFactory.getBeanDefinitionNames()) {
 			BeanDefinition definition = beanFactory.getBeanDefinition(name);
-			if (definition.isAutowireCandidate()
-					&& definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
+			if (definition.isAutowireCandidate() && definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
 				Class<?> type = beanFactory.getType(name);
 				@SuppressWarnings("unchecked")
 				final Class<Object> cls = (Class<Object>) type;
 				final String beanName = name;
-				Provider<Object> provider = new BeanFactoryProvider(beanFactory,
-						beanName, type);
+				Provider<Object> provider = new BeanFactoryProvider(beanFactory, beanName, type);
 				if (!cls.isInterface() && !ClassUtils.isCglibProxyClass(cls)) {
 					bindConditionally(binder, cls, provider);
 				}
@@ -74,13 +74,15 @@ public class SpringModule implements Module {
 		}
 	}
 
-	private void bindConditionally(Binder binder, Class<Object> type,
-			Provider<Object> provider) {
+	private void bindConditionally(Binder binder, Class<Object> type, Provider<Object> provider) {
 		if (bound.get(type) != null) {
 			// Only bind one provider for each type
 			return; // TODO: named beans
 		}
 		if (!matcher.matches(type)) {
+			return;
+		}
+		if (type.getName().startsWith("com.google.inject")) {
 			return;
 		}
 		binder.bind(type).toProvider(provider);
@@ -90,12 +92,14 @@ public class SpringModule implements Module {
 	private static class BeanFactoryProvider implements Provider<Object> {
 
 		private DefaultListableBeanFactory beanFactory;
+
 		private String name;
+
 		private Class<?> type;
+
 		private Object result;
 
-		public BeanFactoryProvider(DefaultListableBeanFactory beanFactory, String name,
-				Class<?> type) {
+		public BeanFactoryProvider(DefaultListableBeanFactory beanFactory, String name, Class<?> type) {
 			this.beanFactory = beanFactory;
 			this.name = name;
 			this.type = type;
@@ -104,11 +108,11 @@ public class SpringModule implements Module {
 		@Override
 		public Object get() {
 			if (result == null) {
-				String[] names = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
-						beanFactory, type);
+				String[] names = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(beanFactory, type);
 				if (names.length == 1) {
 					result = beanFactory.getBean(name, type);
-				} else {
+				}
+				else {
 					for (String name : names) {
 						if (beanFactory.getBeanDefinition(name).isPrimary()) {
 							result = beanFactory.getBean(name, type);
@@ -116,8 +120,7 @@ public class SpringModule implements Module {
 						}
 					}
 					if (result == null) {
-						throw new ProvisionException(
-								"No primary bean definition for type: " + type);
+						throw new ProvisionException("No primary bean definition for type: " + type);
 					}
 				}
 			}

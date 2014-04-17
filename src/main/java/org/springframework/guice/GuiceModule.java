@@ -39,7 +39,7 @@ import org.springframework.context.annotation.Import;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-@Import(GuiceModuleMetadataRegistrar.class)
+@Import(GuiceModuleRegistrar.class)
 public @interface GuiceModule {
 
 	/**

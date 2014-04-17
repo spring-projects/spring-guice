@@ -48,7 +48,7 @@ import org.springframework.util.Assert;
  * @author Dave Syer
  *
  */
-public class GuiceModuleMetadataRegistrar implements ImportBeanDefinitionRegistrar,
+public class GuiceModuleRegistrar implements ImportBeanDefinitionRegistrar,
 		ResourceLoaderAware {
 
 	private ResourceLoader resourceLoader = new DefaultResourceLoader();

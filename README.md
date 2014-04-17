@@ -18,6 +18,31 @@ Note that the `ApplicationContext` in this example might contain the
 (`MyModule`), or if `Service` is a concrete class it could be neither,
 but Guice creates an instance and wires it for us.
 
+If the `ApplicationConfiguration` is annotated `@GuiceModule` then it
+can filter the types of bean that are registered with the Guice
+binder. Example:
+
+```java
+@Configuration
+@GuiceModule(includeFilters=@Filter(pattern=.*\\.Service))
+public class ApplicationConfiguration {
+    @Bean
+    public MyService service() {
+        ...
+    }
+}
+```
+
+In this case, only bean types (or interfaces) called "Service" will
+match the include filter, and only those beans will be bound.
+
+If there are multiple `@Beans` of the same type in the
+`ApplicationContext` then the `SpringModule` will register them all,
+and there will be a runtime exception if an `Injector` needs one. As
+with normal Spring dependency resolution, you can add the `@Primary`
+marker to a single bean to differentiate and hint to the `Injector`
+which instance to use.
+
 ## Using existing Guice Modules in a Spring ApplicationContext
 
 The main feature here is a Spring `@Configuration` annotation:
@@ -65,6 +90,39 @@ If there is a `@Bean` of type `Service` it will be returned from the
 create it and autowire its dependencies for you. A side effect of this
 is that a `BeanDefinition` *will* be created.
 
+In the example above, if `ApplicationConfiguration` was annotated
+`@EnableGuiceModules` then there is an `Injector` bean already waiting
+to be used, including wiring it into the application itself if you
+need it. So this works as well:
+
+```java
+@Configuration
+@EnableGuiceModules
+public class ApplicationConfiguration {
+
+    @Autowired
+    private Injector injector;
+    
+    @Bean
+    public Foo foo() {
+        // Guice creates and does the wiring of Foo instead of Spring
+        return injector.getInstance(Foo.class);
+    }
+}
+```
+
+In this example if the `Injector` has a binding for a `Provider` of
+`Foo.class` then the `foo()` method is redundant - it is already
+resolvable as a Spring dependency. But if Guice is being used as a
+factory for new objects that it doesn't have bindings for, then it
+makes sense.
+
+**Note:** if you also have `@GuiceModule` in your context, then using
+the injector to create a `@Bean` directly is a bad idea (there's a
+dependency cycle). You *can* do it, and break the cycle, if you
+exclude the `@Bean` type from the `Injector` bindings using the
+`@GuiceModule` exclude filters.
+
 ## Limitations
 
 * So far there is no support for the Guice SPI methods in
@@ -80,6 +138,6 @@ is that a `BeanDefinition` *will* be created.
 
 * `SpringModule` treats all beans as singletons.
 
-* `SpringModule` binds all interfaces of a bean it can find. This will
-  cause issues sooner rather than later (e.g. when 2 beans implement
-  the same interface).
+* `SpringModule` binds all interfaces of a bean it can find. This
+  should work out OK, as long as those interfaces are not needed for
+  injection (and if there is no `@Primary` bean).

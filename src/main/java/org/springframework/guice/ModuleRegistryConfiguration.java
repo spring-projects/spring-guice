@@ -13,6 +13,7 @@
 
 package org.springframework.guice;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
@@ -23,7 +24,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
@@ -41,7 +42,7 @@ import com.google.inject.Provider;
 public class ModuleRegistryConfiguration implements BeanPostProcessor {
 
 	@Autowired
-	private ConfigurableListableBeanFactory beanFactory;
+	private DefaultListableBeanFactory beanFactory;
 	
 	@Autowired(required=false)
 	private List<Module> modules = Collections.emptyList();
@@ -55,6 +56,8 @@ public class ModuleRegistryConfiguration implements BeanPostProcessor {
 
 	@PostConstruct
 	public void init() {
+		List<Module> modules = new ArrayList<Module>(this.modules);
+		modules.add(new SpringModule(beanFactory));
 		injector = Guice.createInjector(modules);
 		for (Entry<Key<?>, Binding<?>> entry : injector.getBindings().entrySet()) {
 			if (entry.getKey().getTypeLiteral().getRawType().equals(Injector.class)) {
