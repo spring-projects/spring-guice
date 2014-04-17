@@ -104,7 +104,7 @@ public class GuiceModuleMetadata {
 	private boolean visible(Class<?> type) {
 		Class<?> cls = type;
 		while (cls != null && cls != Object.class) {
-			if (!Modifier.isPublic(cls.getModifiers())) {
+			if (!Modifier.isInterface(cls.getModifiers()) && !Modifier.isPublic(cls.getModifiers()) && !Modifier.isProtected(cls.getModifiers())) {
 				return false;
 			}
 			cls = cls.getDeclaringClass();

@@ -13,6 +13,7 @@
 
 package org.springframework.guice;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 import javax.inject.Inject;
@@ -28,6 +29,7 @@ import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 
 import com.google.inject.ConfigurationException;
+import com.google.inject.CreationException;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 
@@ -43,8 +45,15 @@ public class SpringModuleMetadataTests {
 	@Test
 	public void twoConfigClasses() throws Exception {
 		Injector injector = createInjector(TestConfig.class, OtherConfig.class);
-		expected.expect(ConfigurationException.class);
-		assertNull(injector.getBinding(Service.class));
+		assertNotNull(injector.getBinding(Service.class));
+	}
+
+	@Test
+	public void twoServices() throws Exception {
+		// Two beans with the same interface cause problems at startup
+		expected.expect(CreationException.class);
+		Injector injector = createInjector(TestConfig.class, MoreConfig.class);
+		assertNotNull(injector.getBinding(Service.class));
 	}
 
 	@Test
@@ -107,6 +116,14 @@ public class SpringModuleMetadataTests {
 	public static class TestConfig {
 		@Bean
 		public Service service() {
+			return new MyService();
+		}
+	}
+
+	@Configuration
+	public static class MoreConfig {
+		@Bean
+		public Service more() {
 			return new MyService();
 		}
 	}
