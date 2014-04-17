@@ -13,13 +13,13 @@
 
 package org.springframework.guice;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-
-import javax.inject.Inject;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan.Filter;
@@ -34,7 +34,7 @@ import com.google.inject.Injector;
  * @author Dave Syer
  *
  */
-public class GuiceModulesTests {
+public class GuiceModuleAnnotationTests {
 
 	@Rule
 	public ExpectedException expected = ExpectedException.none();
@@ -42,8 +42,7 @@ public class GuiceModulesTests {
 	@Test
 	public void includes() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MetadataIncludesConfig.class);
-		expected.expect(ConfigurationException.class);
-		assertNull(injector.getBinding(Service.class));
+		assertNotNull(injector.getBinding(Service.class));
 	}
 
 	@Test
@@ -51,6 +50,12 @@ public class GuiceModulesTests {
 		Injector injector = createInjector(TestConfig.class, MetadataExcludesConfig.class);
 		expected.expect(ConfigurationException.class);
 		assertNull(injector.getInstance(Service.class));
+	}
+
+	@Test
+	public void twoIncludes() throws Exception {
+		Injector injector = createInjector(TestConfig.class, MetadataIncludesConfig.class, MetadataMoreIncludesConfig.class);
+		assertNotNull(injector.getBinding(Service.class));
 	}
 
 	private Injector createInjector(Class<?>... config) {
@@ -69,21 +74,25 @@ public class GuiceModulesTests {
 
 	public static class Foo {
 
-		@Inject
+		@Autowired
 		public Foo(Service service) {
 		}
 
 	}
 
 	@Configuration
-	@GuiceModules(excludeFilters=@Filter(type=FilterType.REGEX, pattern=".*"))
+	@GuiceModule(excludeFilters=@Filter(type=FilterType.REGEX, pattern=".*"))
 	protected static class MetadataExcludesConfig {
 	}
 
-	// TODO: allow include Service.class as well
 	@Configuration
-	@GuiceModules(includeFilters=@Filter(type=FilterType.ASSIGNABLE_TYPE, value=MyService.class))
+	@GuiceModule(includeFilters=@Filter(type=FilterType.ASSIGNABLE_TYPE, value=Service.class))
 	protected static class MetadataIncludesConfig {
+	}
+	
+	@Configuration
+	@GuiceModule(includeFilters=@Filter(type=FilterType.ASSIGNABLE_TYPE, value=Foo.class))
+	protected static class MetadataMoreIncludesConfig {
 	}
 	
 	@Configuration

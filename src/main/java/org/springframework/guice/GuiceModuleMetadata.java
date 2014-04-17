@@ -30,12 +30,14 @@ import org.springframework.core.type.filter.TypeFilter;
 
 /**
  * Encapsulates some metadata about a Guice module that is to be created from the parent
- * context of a <code>@Bean</code> of this type.
+ * context of a <code>@Bean</code> of this type. Can be used directly as a
+ * <code>@Bean</code>, but it is easier to just add <code>@</code>{@link GuiceModule} to
+ * your <code>@Configuration</code>.
  * 
  * @author Dave Syer
  *
  */
-public class GuiceModuleMetadata {
+public class GuiceModuleMetadata implements BindingTypeMatcher {
 
 	private TypeFilter[] includeFilters;
 
@@ -60,6 +62,7 @@ public class GuiceModuleMetadata {
 		return this;
 	}
 
+	@Override
 	public boolean matches(Class<?> type) {
 
 		if (infrastructureTypes.contains(type)) {
@@ -104,7 +107,9 @@ public class GuiceModuleMetadata {
 	private boolean visible(Class<?> type) {
 		Class<?> cls = type;
 		while (cls != null && cls != Object.class) {
-			if (!Modifier.isInterface(cls.getModifiers()) && !Modifier.isPublic(cls.getModifiers()) && !Modifier.isProtected(cls.getModifiers())) {
+			if (!Modifier.isInterface(cls.getModifiers())
+					&& !Modifier.isPublic(cls.getModifiers())
+					&& !Modifier.isProtected(cls.getModifiers())) {
 				return false;
 			}
 			cls = cls.getDeclaringClass();

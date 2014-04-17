@@ -13,6 +13,7 @@
 
 package org.springframework.guice;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,7 +37,7 @@ public class SpringModule implements Module {
 
 	private DefaultListableBeanFactory beanFactory;
 
-	private GuiceModuleMetadata metadata = new GuiceModuleMetadata();
+	private BindingTypeMatcher matcher = new GuiceModuleMetadata();
 
 	private Map<Class<?>, Provider<?>> bound = new HashMap<Class<?>, Provider<?>>();
 
@@ -44,10 +45,8 @@ public class SpringModule implements Module {
 		this.beanFactory = (DefaultListableBeanFactory) context
 				.getAutowireCapableBeanFactory();
 		if (beanFactory.getBeanNamesForType(GuiceModuleMetadata.class).length > 0) {
-			this.metadata = beanFactory.getBean(GuiceModuleMetadata.class);
-		} else if (BeanFactoryUtils.beanNamesForTypeIncludingAncestors(beanFactory,
-				GuiceModuleMetadata.class).length > 0) {
-			this.metadata = beanFactory.getBean(GuiceModuleMetadata.class);
+			this.matcher = new CompositeTypeMatcher(beanFactory.getBeansOfType(
+					GuiceModuleMetadata.class).values());
 		}
 	}
 
@@ -63,9 +62,6 @@ public class SpringModule implements Module {
 				final String beanName = name;
 				Provider<Object> provider = new BeanFactoryProvider(beanFactory,
 						beanName, type);
-				if (bound.get(type) != null) {
-					continue; // TODO: named beans
-				}
 				if (!cls.isInterface() && !ClassUtils.isCglibProxyClass(cls)) {
 					bindConditionally(binder, cls, provider);
 				}
@@ -78,13 +74,17 @@ public class SpringModule implements Module {
 		}
 	}
 
-	private void bindConditionally(Binder binder, Class<Object> cls,
+	private void bindConditionally(Binder binder, Class<Object> type,
 			Provider<Object> provider) {
-		if (!metadata.matches(cls)) {
+		if (bound.get(type) != null) {
+			// Only bind one provider for each type
+			return; // TODO: named beans
+		}
+		if (!matcher.matches(type)) {
 			return;
 		}
-		binder.bind(cls).toProvider(provider);
-		bound.put(cls, provider);
+		binder.bind(type).toProvider(provider);
+		bound.put(type, provider);
 	}
 
 	private static class BeanFactoryProvider implements Provider<Object> {
@@ -122,6 +122,24 @@ public class SpringModule implements Module {
 				}
 			}
 			return result;
+		}
+	}
+
+	private static class CompositeTypeMatcher implements BindingTypeMatcher {
+		private Collection<? extends BindingTypeMatcher> matchers;
+
+		public CompositeTypeMatcher(Collection<? extends BindingTypeMatcher> matchers) {
+			this.matchers = matchers;
+		}
+
+		@Override
+		public boolean matches(Class<?> type) {
+			for (BindingTypeMatcher matcher : matchers) {
+				if (matcher.matches(type)) {
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 

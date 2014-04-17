@@ -26,8 +26,10 @@ import java.util.regex.Pattern;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.DefaultBeanNameGenerator;
 import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
@@ -65,8 +67,10 @@ public class GuiceModuleMetadataRegistrar implements ImportBeanDefinitionRegistr
 				parseFilters(annotation, "includeFilters"));
 		builder.addPropertyValue("excludeFilters",
 				parseFilters(annotation, "excludeFilters"));
-		registry.registerBeanDefinition(GuiceModules.class.getName(),
-				builder.getBeanDefinition());
+		AbstractBeanDefinition definition = builder.getBeanDefinition();
+		String name = new DefaultBeanNameGenerator().generateBeanName(definition,
+				registry);
+		registry.registerBeanDefinition(name, definition);
 	}
 
 	public static class GuiceModuleMetadataFactory implements
@@ -110,7 +114,7 @@ public class GuiceModuleMetadataRegistrar implements ImportBeanDefinitionRegistr
 
 		Set<TypeFilter> result = new HashSet<TypeFilter>();
 		AnnotationAttributes attributes = new AnnotationAttributes(
-				annotation.getAnnotationAttributes(GuiceModules.class.getName()));
+				annotation.getAnnotationAttributes(GuiceModule.class.getName()));
 		AnnotationAttributes[] filters = attributes.getAnnotationArray(attributeName);
 
 		for (AnnotationAttributes filter : filters) {

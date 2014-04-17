@@ -23,14 +23,24 @@ import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Import;
 
 /**
+ * Annotation that decorates the whole application context and provides metadata to Guice
+ * if the context is used as a Module. Can be added to any <code>@Configuration</code>
+ * class (and if added to many then the filters are combined with logical OR). By default
+ * all beans in the context will be bound to Guice with all of their implemented
+ * interfaces. If you need to filter out which beans are added you can filter by class.
+ * TODO: filter by name.
+ * 
  * @author Dave Syer
+ * 
+ * @see SpringModule
+ * @see GuiceModuleMetadata
  *
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Import(GuiceModuleMetadataRegistrar.class)
-public @interface GuiceModules {
+public @interface GuiceModule {
 
 	/**
 	 * Specifies which types are eligible for inclusion in Guice module
