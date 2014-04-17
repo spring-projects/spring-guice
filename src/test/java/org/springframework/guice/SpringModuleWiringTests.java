@@ -13,6 +13,8 @@
 
 package org.springframework.guice;
 
+import org.junit.Rule;
+import org.junit.rules.ExpectedException;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,6 +27,9 @@ import com.google.inject.Injector;
  *
  */
 public class SpringModuleWiringTests extends AbstractCompleteWiringTests {
+
+	@Rule
+	public ExpectedException expected = ExpectedException.none();
 
 	@Override
 	protected Injector createInjector() {
@@ -40,6 +45,7 @@ public class SpringModuleWiringTests extends AbstractCompleteWiringTests {
 		public Service service() {
 			return new MyService();
 		}
+
 		@Bean
 		public Baz baz() {
 			return new Baz(service());

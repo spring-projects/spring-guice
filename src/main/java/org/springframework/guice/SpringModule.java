@@ -13,6 +13,7 @@
 
 package org.springframework.guice;
 
+import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
@@ -30,10 +31,17 @@ import com.google.inject.Provider;
 public class SpringModule implements Module {
 
 	private DefaultListableBeanFactory beanFactory;
+	
+	private GuiceModuleMetadata metadata = new GuiceModuleMetadata();
 
 	public SpringModule(GenericApplicationContext context) {
 		this.beanFactory = (DefaultListableBeanFactory) context
 				.getAutowireCapableBeanFactory();
+		if (beanFactory.getBeanNamesForType(GuiceModuleMetadata.class).length>0) {
+			this.metadata = beanFactory.getBean(GuiceModuleMetadata.class);
+		} else if (BeanFactoryUtils.beanNamesForTypeIncludingAncestors(beanFactory, GuiceModuleMetadata.class).length>0) {
+			this.metadata = beanFactory.getBean(GuiceModuleMetadata.class);			
+		}
 	}
 
 	@Override
@@ -45,22 +53,31 @@ public class SpringModule implements Module {
 				Class<?> type = beanFactory.getType(name);
 				@SuppressWarnings("unchecked")
 				final Class<Object> cls = (Class<Object>) type;
+				final String beanName = name;
 				Provider<Object> provider = new Provider<Object>() {
 					@Override
 					public Object get() {
-						return beanFactory.getBean(cls);
+						return beanFactory.getBean(beanName, cls);
 					}
 				};
-				if (!cls.isInterface()) {
-					binder.bind(cls).toProvider(provider);
+				if (!cls.isInterface() && !ClassUtils.isCglibProxyClass(cls)) {
+					bindConditionally(binder, cls, provider);
 				}
 				for (Class<?> iface : ClassUtils.getAllInterfacesForClass(cls)) {
 					@SuppressWarnings("unchecked")
 					Class<Object> unchecked = (Class<Object>) iface;
-					binder.bind(unchecked).toProvider(provider);
+					bindConditionally(binder, unchecked, provider);
 				}
 			}
 		}
+	}
+
+	private void bindConditionally(Binder binder, Class<Object> cls,
+			Provider<Object> provider) {
+		if (!metadata.matches(cls)) {
+			return;
+		}
+		binder.bind(cls).toProvider(provider);
 	}
 
 }
