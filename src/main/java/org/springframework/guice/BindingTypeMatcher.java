@@ -22,6 +22,6 @@ package org.springframework.guice;
  */
 public interface BindingTypeMatcher {
 
-	boolean matches(Class<?> type);
+	boolean matches(String name, Class<?> type);
 
 }

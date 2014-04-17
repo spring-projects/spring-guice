@@ -63,23 +63,23 @@ public class SpringModule implements Module {
 				final String beanName = name;
 				Provider<Object> provider = new BeanFactoryProvider(beanFactory, beanName, type);
 				if (!cls.isInterface() && !ClassUtils.isCglibProxyClass(cls)) {
-					bindConditionally(binder, cls, provider);
+					bindConditionally(binder, name, cls, provider);
 				}
 				for (Class<?> iface : ClassUtils.getAllInterfacesForClass(cls)) {
 					@SuppressWarnings("unchecked")
 					Class<Object> unchecked = (Class<Object>) iface;
-					bindConditionally(binder, unchecked, provider);
+					bindConditionally(binder, name, unchecked, provider);
 				}
 			}
 		}
 	}
 
-	private void bindConditionally(Binder binder, Class<Object> type, Provider<Object> provider) {
+	private void bindConditionally(Binder binder, String name, Class<Object> type, Provider<Object> provider) {
 		if (bound.get(type) != null) {
 			// Only bind one provider for each type
 			return; // TODO: named beans
 		}
-		if (!matcher.matches(type)) {
+		if (!matcher.matches(name, type)) {
 			return;
 		}
 		if (type.getName().startsWith("com.google.inject")) {
@@ -136,9 +136,9 @@ public class SpringModule implements Module {
 		}
 
 		@Override
-		public boolean matches(Class<?> type) {
+		public boolean matches(String name, Class<?> type) {
 			for (BindingTypeMatcher matcher : matchers) {
-				if (matcher.matches(type)) {
+				if (matcher.matches(name, type)) {
 					return true;
 				}
 			}

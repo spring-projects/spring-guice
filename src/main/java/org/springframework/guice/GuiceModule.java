@@ -52,4 +52,24 @@ public @interface GuiceModule {
 	 */
 	Filter[] excludeFilters() default {};
 
+	/**
+	 * Specifies which names (by regex) are eligible for inclusion in Guice module
+	 */
+	String[] includePatterns() default {};
+
+	/**
+	 * Specifies which bean names (by regex) are not eligible for inclusion in Guice module.
+	 */
+	String[] excludePatterns() default {};
+
+	/**
+	 * Specifies which names (by simple wildcard match) are eligible for inclusion in Guice module
+	 */
+	String[] includeNames() default {};
+
+	/**
+	 * Specifies which bean names (by simple wildcard match) are not eligible for inclusion in Guice module.
+	 */
+	String[] excludeNames() default {};
+
 }

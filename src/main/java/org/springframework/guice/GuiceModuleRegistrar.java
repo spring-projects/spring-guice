@@ -67,6 +67,14 @@ public class GuiceModuleRegistrar implements ImportBeanDefinitionRegistrar,
 				parseFilters(annotation, "includeFilters"));
 		builder.addPropertyValue("excludeFilters",
 				parseFilters(annotation, "excludeFilters"));
+		builder.addPropertyValue("includePatterns",
+				parsePatterns(annotation, "includePatterns"));
+		builder.addPropertyValue("excludePatterns",
+				parsePatterns(annotation, "excludePatterns"));
+		builder.addPropertyValue("includeNames",
+				parseNames(annotation, "includeNames"));
+		builder.addPropertyValue("excludeNames",
+				parseNames(annotation, "excludeNames"));
 		AbstractBeanDefinition definition = builder.getBeanDefinition();
 		String name = new DefaultBeanNameGenerator().generateBeanName(definition,
 				registry);
@@ -80,6 +88,14 @@ public class GuiceModuleRegistrar implements ImportBeanDefinitionRegistrar,
 
 		private Collection<? extends TypeFilter> excludeFilters;
 
+		private Collection<Pattern> includePatterns;
+
+		private Collection<Pattern> excludePatterns;
+
+		private Collection<String> includeNames;
+
+		private Collection<String> excludeNames;
+
 		public void setIncludeFilters(Collection<? extends TypeFilter> includeFilters) {
 			this.includeFilters = includeFilters;
 		}
@@ -88,13 +104,37 @@ public class GuiceModuleRegistrar implements ImportBeanDefinitionRegistrar,
 			this.excludeFilters = excludeFilters;
 		}
 
+		public void setIncludePatterns(Collection<Pattern> includePatterns) {
+			this.includePatterns = includePatterns;
+		}
+
+		public void setExcludePatterns(Collection<Pattern> excludePatterns) {
+			this.excludePatterns = excludePatterns;
+		}
+
+		public void setIncludeNames(Collection<String> includeNames) {
+			this.includeNames = includeNames;
+		}
+
+		public void setExcludeNames(Collection<String> excludeNames) {
+			this.excludeNames = excludeNames;
+		}
+
 		@Override
 		public GuiceModuleMetadata getObject() throws Exception {
 			return new GuiceModuleMetadata()
 					.include(
 							includeFilters.toArray(new TypeFilter[includeFilters.size()]))
 					.exclude(
-							excludeFilters.toArray(new TypeFilter[excludeFilters.size()]));
+							excludeFilters.toArray(new TypeFilter[excludeFilters.size()]))
+					.include(
+							includePatterns.toArray(new Pattern[includePatterns.size()]))
+					.exclude(
+							excludePatterns.toArray(new Pattern[excludePatterns.size()]))
+					.include(
+							includeNames.toArray(new String[includeNames.size()]))
+					.exclude(
+							excludeNames.toArray(new Pattern[excludeNames.size()]));
 		}
 
 		@Override
@@ -107,6 +147,32 @@ public class GuiceModuleRegistrar implements ImportBeanDefinitionRegistrar,
 			return false;
 		}
 
+	}
+
+	private Set<Pattern> parsePatterns(AnnotationMetadata annotation, String attributeName) {
+		Set<Pattern> result = new HashSet<Pattern>();
+		AnnotationAttributes attributes = new AnnotationAttributes(
+				annotation.getAnnotationAttributes(GuiceModule.class.getName()));
+		String[] filters = attributes.getStringArray(attributeName);
+
+		for (String filter : filters) {
+			result.add(Pattern.compile(filter));
+		}
+
+		return result;
+	}
+
+	private Set<String> parseNames(AnnotationMetadata annotation, String attributeName) {
+		Set<String> result = new HashSet<String>();
+		AnnotationAttributes attributes = new AnnotationAttributes(
+				annotation.getAnnotationAttributes(GuiceModule.class.getName()));
+		String[] filters = attributes.getStringArray(attributeName);
+
+		for (String filter : filters) {
+			result.add(filter);
+		}
+
+		return result;
 	}
 
 	private Set<TypeFilter> parseFilters(AnnotationMetadata annotation,
