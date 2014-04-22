@@ -11,7 +11,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package org.springframework.guice;
+package org.springframework.guice.annotation;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -21,6 +21,8 @@ import java.lang.annotation.Target;
 
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Import;
+import org.springframework.guice.module.GuiceModuleMetadata;
+import org.springframework.guice.module.SpringModule;
 
 /**
  * Annotation that decorates the whole application context and provides metadata to Guice
@@ -28,7 +30,6 @@ import org.springframework.context.annotation.Import;
  * class (and if added to many then the filters are combined with logical OR). By default
  * all beans in the context will be bound to Guice with all of their implemented
  * interfaces. If you need to filter out which beans are added you can filter by class.
- * TODO: filter by name.
  * 
  * @author Dave Syer
  * 

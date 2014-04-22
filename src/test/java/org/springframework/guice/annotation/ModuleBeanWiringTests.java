@@ -11,67 +11,58 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package org.springframework.guice;
+package org.springframework.guice.annotation;
 
 import static org.junit.Assert.assertNotNull;
 
-import javax.inject.Inject;
-
 import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.FilterType;
-import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.guice.AbstractCompleteWiringTests;
+import org.springframework.guice.injector.SpringInjector;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 
 /**
  * @author Dave Syer
  *
  */
-public class EnableGuiceModulesTests {
+public class ModuleBeanWiringTests extends AbstractCompleteWiringTests {
+
+	private AnnotationConfigApplicationContext context;
+
+	@Override
+	protected Injector createInjector() {
+		context = new AnnotationConfigApplicationContext();
+		context.register(TestConfig.class);
+		context.refresh();
+		return new SpringInjector(context);
+	}
 
 	@Test
-	public void test() {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(TestConfig.class);
-		assertNotNull(context.getBean(Foo.class));
-		context.close();
+	public void bindToSpringBeanFromGuiceModule() throws Exception {
+		assertNotNull(context.getBean(Spam.class));
 	}
 
-	interface Service {
-	}
-
-	protected static class MyService implements Service {
-	}
-
-	public static class Foo {
-
-		@Inject
-		public Foo(Service service) {
-		}
-
-	}
-
-	@Configuration
 	@EnableGuiceModules
-	@GuiceModule(excludeFilters = @Filter(type = FilterType.ASSIGNABLE_TYPE, value = Foo.class))
-	protected static class TestConfig {
-
-		@Autowired
-		private Injector injector;
-
-		@Bean
-		public Foo foo() {
-			return injector.getInstance(Foo.class);
+	@Configuration
+	public static class TestConfig extends AbstractModule {
+		@Override
+		protected void configure() {
+			bind(Service.class).to(MyService.class);
 		}
 
 		@Bean
-		public Service service() {
-			return new MyService();
+		public Spam spam(Service service) {
+			return new Spam(service);
 		}
+	}
 
+	protected static class Spam {
+		public Spam(Service service) {
+		}
 	}
 
 }

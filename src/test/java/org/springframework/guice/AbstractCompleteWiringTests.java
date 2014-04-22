@@ -62,10 +62,10 @@ public abstract class AbstractCompleteWiringTests {
 		assertNotNull(injector.getProvider(Service.class).get());
 	}
 
-	interface Service {
+	public interface Service {
 	}
 
-	protected static class MyService implements Service {
+	public static class MyService implements Service {
 	}
 
 	public static class Foo {

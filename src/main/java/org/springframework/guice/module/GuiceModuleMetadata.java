@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.guice;
+package org.springframework.guice.module;
 
 import java.io.IOException;
 import java.lang.reflect.Modifier;
@@ -28,12 +28,13 @@ import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
 import org.springframework.core.type.filter.TypeFilter;
+import org.springframework.guice.annotation.GuiceModule;
 import org.springframework.util.PatternMatchUtils;
 
 /**
- * Encapsulates some metadata about a Guice module that is to be created from the parent context of a <code>@Bean</code>
- * of this type. Can be used directly as a <code>@Bean</code>, but it is easier to just add <code>@</code>
- * {@link GuiceModule} to your <code>@Configuration</code>.
+ * Encapsulates some metadata about a Guice module that is to be created from a Spring
+ * application context. Can be used directly as a <code>@Bean</code>, but it is easier to
+ * just add <code>@</code> {@link GuiceModule} to your <code>@Configuration</code>.
  * 
  * @author Dave Syer
  *
@@ -114,12 +115,12 @@ public class GuiceModuleMetadata implements BindingTypeMatcher {
 				}
 			}
 		}
-		if (includeNames != null && includeNames.length>0) {
+		if (includeNames != null && includeNames.length > 0) {
 			if (!PatternMatchUtils.simpleMatch(includeNames, name)) {
 				return false;
 			}
 		}
-		if (excludeNames != null && excludeNames.length>0) {
+		if (excludeNames != null && excludeNames.length > 0) {
 			if (PatternMatchUtils.simpleMatch(excludeNames, name)) {
 				return false;
 			}
@@ -138,28 +139,30 @@ public class GuiceModuleMetadata implements BindingTypeMatcher {
 
 		if (includeFilters != null) {
 			try {
-				MetadataReader reader = metadataReaderFactory.getMetadataReader(type.getName());
+				MetadataReader reader = metadataReaderFactory.getMetadataReader(type
+						.getName());
 				for (TypeFilter filter : includeFilters) {
 					if (!filter.match(reader, metadataReaderFactory)) {
 						return false;
 					}
 				}
-			}
-			catch (IOException e) {
-				throw new IllegalStateException("Cannot read metadata for class " + type, e);
+			} catch (IOException e) {
+				throw new IllegalStateException("Cannot read metadata for class " + type,
+						e);
 			}
 		}
 		if (excludeFilters != null) {
 			try {
-				MetadataReader reader = metadataReaderFactory.getMetadataReader(type.getName());
+				MetadataReader reader = metadataReaderFactory.getMetadataReader(type
+						.getName());
 				for (TypeFilter filter : excludeFilters) {
 					if (filter.match(reader, metadataReaderFactory)) {
 						return false;
 					}
 				}
-			}
-			catch (IOException e) {
-				throw new IllegalStateException("Cannot read metadata for class " + type, e);
+			} catch (IOException e) {
+				throw new IllegalStateException("Cannot read metadata for class " + type,
+						e);
 			}
 		}
 		return true;
@@ -168,7 +171,8 @@ public class GuiceModuleMetadata implements BindingTypeMatcher {
 	private boolean visible(Class<?> type) {
 		Class<?> cls = type;
 		while (cls != null && cls != Object.class) {
-			if (!Modifier.isInterface(cls.getModifiers()) && !Modifier.isPublic(cls.getModifiers())
+			if (!Modifier.isInterface(cls.getModifiers())
+					&& !Modifier.isPublic(cls.getModifiers())
 					&& !Modifier.isProtected(cls.getModifiers())) {
 				return false;
 			}

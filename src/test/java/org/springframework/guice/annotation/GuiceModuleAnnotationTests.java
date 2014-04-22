@@ -11,7 +11,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package org.springframework.guice;
+package org.springframework.guice.annotation;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -25,6 +25,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.guice.annotation.GuiceModule;
+import org.springframework.guice.module.SpringModule;
 
 import com.google.inject.ConfigurationException;
 import com.google.inject.Guice;

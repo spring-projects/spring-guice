@@ -7,6 +7,8 @@ import javax.inject.Inject;
 import org.junit.Test;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.guice.annotation.ModuleRegistryConfiguration;
+import org.springframework.guice.injector.SpringInjector;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;

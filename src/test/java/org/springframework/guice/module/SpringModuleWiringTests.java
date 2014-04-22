@@ -11,26 +11,33 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package org.springframework.guice;
+package org.springframework.guice.module;
 
+import org.junit.Rule;
+import org.junit.rules.ExpectedException;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.guice.AbstractCompleteWiringTests;
 
+import com.google.inject.Guice;
 import com.google.inject.Injector;
 
 /**
  * @author Dave Syer
  *
  */
-public class SpringWiringTests extends AbstractCompleteWiringTests {
+public class SpringModuleWiringTests extends AbstractCompleteWiringTests {
+
+	@Rule
+	public ExpectedException expected = ExpectedException.none();
 
 	@Override
 	protected Injector createInjector() {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
 		context.register(TestConfig.class);
 		context.refresh();
-		return new SpringInjector(context);
+		return Guice.createInjector(new SpringModule(context));
 	}
 
 	@Configuration
@@ -38,6 +45,11 @@ public class SpringWiringTests extends AbstractCompleteWiringTests {
 		@Bean
 		public Service service() {
 			return new MyService();
+		}
+
+		@Bean
+		public Baz baz() {
+			return new Baz(service());
 		}
 	}
 

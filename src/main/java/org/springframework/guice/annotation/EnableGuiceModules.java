@@ -11,7 +11,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package org.springframework.guice;
+package org.springframework.guice.annotation;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

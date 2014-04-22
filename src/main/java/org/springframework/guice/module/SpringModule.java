@@ -11,7 +11,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package org.springframework.guice;
+package org.springframework.guice.module;
 
 import java.util.Collection;
 import java.util.HashMap;

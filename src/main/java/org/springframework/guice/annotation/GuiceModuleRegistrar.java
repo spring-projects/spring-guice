@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.springframework.guice;
+package org.springframework.guice.annotation;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -42,6 +42,7 @@ import org.springframework.core.type.filter.AspectJTypeFilter;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.core.type.filter.RegexPatternTypeFilter;
 import org.springframework.core.type.filter.TypeFilter;
+import org.springframework.guice.module.GuiceModuleMetadata;
 import org.springframework.util.Assert;
 
 /**

@@ -11,7 +11,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package org.springframework.guice;
+package org.springframework.guice.annotation;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.guice.module.SpringModule;
 
 import com.google.inject.Binding;
 import com.google.inject.Guice;
