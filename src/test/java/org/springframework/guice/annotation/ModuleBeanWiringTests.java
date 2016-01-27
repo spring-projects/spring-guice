@@ -16,6 +16,7 @@ package org.springframework.guice.annotation;
 import static org.junit.Assert.assertNotNull;
 
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -49,6 +50,9 @@ public class ModuleBeanWiringTests extends AbstractCompleteWiringTests {
 	@EnableGuiceModules
 	@Configuration
 	public static class TestConfig extends AbstractModule {
+		
+		@Autowired Service service;
+		
 		@Override
 		protected void configure() {
 			bind(Service.class).to(MyService.class);

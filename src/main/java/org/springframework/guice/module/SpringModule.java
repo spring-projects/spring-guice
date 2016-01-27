@@ -85,7 +85,7 @@ public class SpringModule implements Module {
 		if (type.getName().startsWith("com.google.inject")) {
 			return;
 		}
-		binder.bind(type).toProvider(provider);
+		binder.withSource("spring-guice").bind(type).toProvider(provider);
 		bound.put(type, provider);
 	}
 

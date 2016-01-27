@@ -37,7 +37,7 @@ public class SimpleWiringTests {
 		assertNotNull(app.getInstance(Foo.class));
 	}
 
-	protected static class TestConfig extends AbstractModule {
+	public static class TestConfig extends AbstractModule {
 		@Override
 		protected void configure() {
 			bind(Service.class).to(MyService.class);
@@ -47,10 +47,10 @@ public class SimpleWiringTests {
 	interface Service {	
 	}
 	
-	protected static class MyService implements Service {
+	public static class MyService implements Service {
 	}
 
-	protected static class Foo {
+	public static class Foo {
 		
 		@Inject
 		public Foo(Service service) {
