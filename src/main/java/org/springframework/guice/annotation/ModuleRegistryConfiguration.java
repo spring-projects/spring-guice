@@ -52,7 +52,7 @@ public class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostPr
 	{
 		for (Entry<Key<?>, Binding<?>> entry : injector.getBindings().entrySet()) {
 			if (entry.getKey().getTypeLiteral().getRawType().equals(Injector.class) || 
-					"spring-guice".equals(entry.getValue().getSource())) {
+					"spring-guice".equals(entry.getValue().getSource().toString())) {
 				continue;
 			}
 		
@@ -82,16 +82,7 @@ public class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostPr
 
 	@Override
 	public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
-		String[] moduleNames = ((DefaultListableBeanFactory)registry).getBeanNamesForType(Module.class);
-		List<Module> modules = new ArrayList<>();
-		for(String module : moduleNames)
-		{
-			try {
-				modules.add((Module) Class.forName(registry.getBeanDefinition(module).getBeanClassName()).newInstance());
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
+		List<Module> modules = new ArrayList<>(((DefaultListableBeanFactory)registry).getBeansOfType(Module.class).values());
 		modules.add(new SpringModule(this.applicationContext));
 		Injector injector = createInjector(modules);
 		mapBindings(injector, registry);
