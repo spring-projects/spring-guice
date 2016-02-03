@@ -82,7 +82,7 @@ public class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostPr
 
 	@Override
 	public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
-		List<Module> modules = new ArrayList<>(((DefaultListableBeanFactory)registry).getBeansOfType(Module.class).values());
+		List<Module> modules = new ArrayList<Module>(((DefaultListableBeanFactory)registry).getBeansOfType(Module.class).values());
 		modules.add(new SpringModule(this.applicationContext));
 		Injector injector = createInjector(modules);
 		mapBindings(injector, registry);
