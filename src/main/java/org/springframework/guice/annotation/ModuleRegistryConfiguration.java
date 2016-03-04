@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -30,6 +31,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.guice.injector.InjectorFactory;
 import org.springframework.guice.module.SpringModule;
 
 import com.google.inject.Binding;
@@ -87,14 +89,22 @@ public class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostPr
 
 	}
 
-	@Override
-	public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
-		List<Module> modules = new ArrayList<Module>(((DefaultListableBeanFactory)registry).getBeansOfType(Module.class).values());
-		modules.add(new SpringModule(this.applicationContext));
-		Injector injector = createInjector(modules);
-		mapBindings(injector, registry);
-		((ConfigurableListableBeanFactory) registry).registerSingleton(Injector.class.getName(), injector);
-	}
+    @Override
+    public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
+        List<Module> modules = new ArrayList<Module>(
+                ((DefaultListableBeanFactory) registry).getBeansOfType(Module.class).values());
+        modules.add(new SpringModule(this.applicationContext));
+        Injector injector = null;
+        try {
+            injector = ((DefaultListableBeanFactory) registry).getBean(InjectorFactory.class).createInjector(modules);
+        } catch (NoSuchBeanDefinitionException e) {
+            
+        }
+        if (injector == null) {
+            injector = createInjector(modules);
+        }
+        mapBindings(injector, registry);
+    }
 
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
