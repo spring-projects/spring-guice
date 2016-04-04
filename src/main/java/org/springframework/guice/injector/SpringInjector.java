@@ -39,7 +39,7 @@ public class SpringInjector implements Injector {
 	
 	public SpringInjector(ApplicationContext context) {
 		this.beanFactory = (DefaultListableBeanFactory) context.getAutowireCapableBeanFactory();
-		if (context.getBeanNamesForType(Injector.class).length>0) {
+		if (context.getBeanNamesForType(Injector.class, true, false).length>0) {
 			this.injector = context.getBean(Injector.class);
 		}
 	}
@@ -104,7 +104,7 @@ public class SpringInjector implements Injector {
 
 	@Override
 	public <T> Provider<T> getProvider(Class<T> type) {
-		if (beanFactory.getBeanNamesForType(type).length==0) {
+		if (beanFactory.getBeanNamesForType(type, true, false).length==0) {
 			if (injector!=null && injector.getExistingBinding(Key.get(type))!=null) {
 				return injector.getProvider(type);
 			}
@@ -130,7 +130,7 @@ public class SpringInjector implements Injector {
 
 	@Override
 	public <T> T getInstance(Class<T> type) {
-		if (beanFactory.getBeanNamesForType(type).length==0) {
+		if (beanFactory.getBeanNamesForType(type, true, false).length==0) {
 			if (injector!=null && injector.getExistingBinding(Key.get(type))!=null) {
 				return injector.getInstance(type);
 			}
