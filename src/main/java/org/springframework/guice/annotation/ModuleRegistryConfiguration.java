@@ -16,6 +16,7 @@ package org.springframework.guice.annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.springframework.beans.BeansException;
@@ -28,6 +29,7 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ApplicationContextException;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -96,7 +98,16 @@ public class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostPr
         modules.add(new SpringModule(this.applicationContext));
         Injector injector = null;
         try {
-            injector = ((DefaultListableBeanFactory) registry).getBean(InjectorFactory.class).createInjector(modules);
+            Map<String, InjectorFactory> beansOfType = ((DefaultListableBeanFactory) registry).getBeansOfType(InjectorFactory.class);
+            if (beansOfType.size() > 1) {
+                throw new ApplicationContextException("Found multiple beans of type " + InjectorFactory.class.getName()
+                        + "  Please ensure that only one InjectorFactory bean is defined. InjectorFactory beans found: "
+                        + beansOfType.keySet());
+            }
+            else if(beansOfType.size() == 1) {
+                 InjectorFactory injectorFactory = beansOfType.values().iterator().next();
+                 injector = injectorFactory.createInjector(modules);
+            }
         } catch (NoSuchBeanDefinitionException e) {
             
         }
