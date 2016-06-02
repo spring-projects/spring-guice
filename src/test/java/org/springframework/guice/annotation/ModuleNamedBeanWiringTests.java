@@ -35,7 +35,7 @@ import com.google.inject.Provides;
  * @author Dave Syer
  *
  */
-public class ModuleBeanWiringTests extends AbstractCompleteWiringTests {
+public class ModuleNamedBeanWiringTests extends AbstractCompleteWiringTests {
 
 	private AnnotationConfigApplicationContext context;
 
@@ -71,6 +71,12 @@ public class ModuleBeanWiringTests extends AbstractCompleteWiringTests {
 		@Provides
 		@Named("thing")
 		public Thang thing() {
+			return new Thang();
+		}
+
+		@Provides
+		@Named("other")
+		public Thang other() {
 			return new Thang();
 		}
 

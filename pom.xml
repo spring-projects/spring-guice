@@ -15,7 +15,7 @@
 			<dependency>
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-framework-bom</artifactId>
-				<version>4.2.5.RELEASE</version>
+				<version>${spring.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -50,6 +50,7 @@
 		<java.version>1.6</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<spring.version>4.2.6.RELEASE</spring.version>
 	</properties>
 
 	<build>
