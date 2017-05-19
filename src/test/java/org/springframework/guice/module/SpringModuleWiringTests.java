@@ -51,6 +51,17 @@ public class SpringModuleWiringTests extends AbstractCompleteWiringTests {
 		public Baz baz() {
 			return new Baz(service());
 		}
+
+		@Bean
+		public Thang thing() {
+			return new Thang();
+		}
+
+		@Bean
+		public Thing that() {
+			return new Thing();
+		}
+
 	}
 
 }

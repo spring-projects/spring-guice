@@ -4,11 +4,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 
 public abstract class AbstractCompleteWiringTests {
 
@@ -16,7 +19,7 @@ public abstract class AbstractCompleteWiringTests {
 
 	@Before
 	public void init() {
-		injector = createInjector();
+		this.injector = createInjector();
 	}
 
 	protected abstract Injector createInjector();
@@ -24,42 +27,52 @@ public abstract class AbstractCompleteWiringTests {
 	@Test
 	public void injectInstance() {
 		Bar bar = new Bar();
-		injector.injectMembers(bar);
+		this.injector.injectMembers(bar);
 		assertNotNull(bar.service);
 	}
 
 	@Test
 	public void memberInjector() {
 		Bar bar = new Bar();
-		injector.getMembersInjector(Bar.class).injectMembers(bar);
+		this.injector.getMembersInjector(Bar.class).injectMembers(bar);
 		assertNotNull(bar.service);
 	}
 
 	@Test
 	public void getInstanceUnbound() {
-		assertNotNull(injector.getInstance(Foo.class));
+		assertNotNull(this.injector.getInstance(Foo.class));
 	}
 
 	@Test
 	public void getInstanceBound() {
-		assertNotNull(injector.getInstance(Service.class));
+		assertNotNull(this.injector.getInstance(Service.class));
 	}
 
 	@Test
 	public void getInstanceBoundWithNoInterface() {
-		Baz instance = injector.getInstance(Baz.class);
+		Baz instance = this.injector.getInstance(Baz.class);
 		assertNotNull(instance);
-		assertEquals(instance, injector.getInstance(Baz.class));
+		assertEquals(instance, this.injector.getInstance(Baz.class));
 	}
 
 	@Test
 	public void getProviderUnbound() {
-		assertNotNull(injector.getProvider(Foo.class).get());
+		assertNotNull(this.injector.getProvider(Foo.class).get());
 	}
 
 	@Test
 	public void getProviderBound() {
-		assertNotNull(injector.getProvider(Service.class).get());
+		assertNotNull(this.injector.getProvider(Service.class).get());
+	}
+
+	@Test
+	public void getNamedInstance() {
+		assertNotNull(this.injector.getInstance(Key.get(Thang.class, Names.named("thing"))));
+	}
+
+	@Test
+	public void getNamedInjectedInstance() {
+		assertNotNull(this.injector.getInstance(Thing.class).thang);
 	}
 
 	public interface Service {
@@ -95,4 +108,17 @@ public abstract class AbstractCompleteWiringTests {
 
 	}
 
+	public static class Thing {
+
+		private Thang thang;
+
+		@Inject
+		public void setThang(@Named("thing") Thang thang) {
+			this.thang = thang;
+		}
+
+	}
+
+	public static class Thang {
+	}
 }

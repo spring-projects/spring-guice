@@ -30,23 +30,24 @@ import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Scope;
 import com.google.inject.TypeLiteral;
+import com.google.inject.name.Named;
 import com.google.inject.spi.TypeConverterBinding;
 
 public class SpringInjector implements Injector {
-	
+
 	private Injector injector;
 	private DefaultListableBeanFactory beanFactory;
-	
+
 	public SpringInjector(ApplicationContext context) {
 		this.beanFactory = (DefaultListableBeanFactory) context.getAutowireCapableBeanFactory();
-		if (context.getBeanNamesForType(Injector.class).length>0) {
+		if (context.getBeanNamesForType(Injector.class, true, false).length>0) {
 			this.injector = context.getBean(Injector.class);
 		}
 	}
 
 	@Override
 	public void injectMembers(Object instance) {
-		beanFactory.autowireBean(instance);
+		this.beanFactory.autowireBean(instance);
 	}
 
 	@Override
@@ -54,7 +55,7 @@ public class SpringInjector implements Injector {
 		return new MembersInjector<T>() {
 			@Override
 			public void injectMembers(T instance) {
-				beanFactory.autowireBean(instance);
+				SpringInjector.this.beanFactory.autowireBean(instance);
 			}
 		};
 	}
@@ -97,47 +98,54 @@ public class SpringInjector implements Injector {
 	@Override
 	public <T> Provider<T> getProvider(Key<T> key) {
 		// TODO: support for other metadata in the key
-		@SuppressWarnings("unchecked")
-		Provider<T> provider = (Provider<T>) getProvider(key.getTypeLiteral().getRawType());
-		return provider;
-	}
-
-	@Override
-	public <T> Provider<T> getProvider(Class<T> type) {
-		if (beanFactory.getBeanNamesForType(type).length==0) {
-			if (injector!=null && injector.getExistingBinding(Key.get(type))!=null) {
-				return injector.getProvider(type);
+		Class<? super T> type = key.getTypeLiteral().getRawType();
+		final String name = extractName(key);
+		if (this.beanFactory.getBeanNamesForType(type, true, false).length==0) {
+			if (this.injector!=null) {
+				return this.injector.getProvider(key);
 			}
 			// TODO: use prototype scope?
-			beanFactory.registerBeanDefinition(type.getSimpleName(), new RootBeanDefinition(type));
+			this.beanFactory.registerBeanDefinition(name, new RootBeanDefinition(type));
 		}
-		final Class<T> cls = type;
+		if (this.beanFactory.containsBean(name) && this.beanFactory.isTypeMatch(name, type)) {
+			return new Provider<T>() {
+				@SuppressWarnings("unchecked")
+				@Override
+				public T get() {
+					return (T) SpringInjector.this.beanFactory.getBean(name);
+				}
+			};
+		}
+		@SuppressWarnings("unchecked")
+		final Class<T> cls = (Class<T>) type;
 		return new Provider<T>() {
 			@Override
 			public T get() {
-				return beanFactory.getBean(cls);
+				return SpringInjector.this.beanFactory.getBean(cls);
 			}
 		};
 	}
 
+	private String extractName(Key<?> key) {
+		if (key.getAnnotation() instanceof Named) {
+			return ((Named) key.getAnnotation()).value();
+		}
+		return key.getTypeLiteral().getRawType().getSimpleName();
+	}
+
+	@Override
+	public <T> Provider<T> getProvider(Class<T> type) {
+		return getProvider(Key.get(type));
+	}
+
 	@Override
 	public <T> T getInstance(Key<T> key) {
-		// TODO: support for other metadata in the key
-		@SuppressWarnings("unchecked")
-		T provider = (T) getInstance(key.getTypeLiteral().getRawType());
-		return provider;
+		return getProvider(key).get();
 	}
 
 	@Override
 	public <T> T getInstance(Class<T> type) {
-		if (beanFactory.getBeanNamesForType(type).length==0) {
-			if (injector!=null && injector.getExistingBinding(Key.get(type))!=null) {
-				return injector.getInstance(type);
-			}
-			// TODO: use prototype scope?
-			beanFactory.registerBeanDefinition(type.getSimpleName(), new RootBeanDefinition(type));
-		}
-		return beanFactory.getBean(type);
+		return getInstance(Key.get(type));
 	}
 
 	@Override
@@ -164,5 +172,5 @@ public class SpringInjector implements Injector {
 	public Set<TypeConverterBinding> getTypeConverterBindings() {
 		return null;
 	}
-	
+
 }

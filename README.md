@@ -128,16 +128,16 @@ exclude the `@Bean` type from the `Injector` bindings using the
 * So far there is no support for the Guice SPI methods in
   `SpringInjector` so tooling may not work. It wouldn't be hard to do.
 
-* `SpringInjector` only knows about raw types, so it ignores
-  additional meta-information in factory requests (like
-  annotations). Should be easy enough to fix, but some compromises
-  might hav eto be made.
+* `SpringInjector` only knows about raw types and bean names, so it
+  ignores additional meta-information in factory requests (like
+  annotations other than `@Named`). Should be easy enough to fix, but
+  some compromises might have to be made.
   
 * `SpringInjector` has no support for creating child or parent
   `Injectors`. Probably not difficult.
 
 * `SpringModule` treats all beans as singletons.
 
-* `SpringModule` binds all interfaces of a bean it can find. This
-  should work out OK, as long as those interfaces are not needed for
-  injection (and if there is no `@Primary` bean).
+* `SpringModule` binds all interfaces and all names of a bean it can
+  find. This should work out OK, as long as those interfaces are not
+  needed for injection (and if there is no `@Primary` bean).

@@ -28,6 +28,7 @@ import com.google.inject.Binder;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
+import com.google.inject.name.Names;
 
 /**
  * @author Dave Syer
@@ -54,14 +55,14 @@ public class SpringModule implements Module {
 
 	@Override
 	public void configure(Binder binder) {
-		for (String name : beanFactory.getBeanDefinitionNames()) {
-			BeanDefinition definition = beanFactory.getBeanDefinition(name);
+		for (String name : this.beanFactory.getBeanDefinitionNames()) {
+			BeanDefinition definition = this.beanFactory.getBeanDefinition(name);
 			if (definition.isAutowireCandidate() && definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
-				Class<?> type = beanFactory.getType(name);
+				Class<?> type = this.beanFactory.getType(name);
 				@SuppressWarnings("unchecked")
 				final Class<Object> cls = (Class<Object>) type;
 				final String beanName = name;
-				Provider<Object> provider = new BeanFactoryProvider(beanFactory, beanName, type);
+				Provider<Object> provider = new BeanFactoryProvider(this.beanFactory, beanName, type);
 				if (!cls.isInterface() && !ClassUtils.isCglibProxyClass(cls)) {
 					bindConditionally(binder, name, cls, provider);
 				}
@@ -75,18 +76,19 @@ public class SpringModule implements Module {
 	}
 
 	private void bindConditionally(Binder binder, String name, Class<Object> type, Provider<Object> provider) {
-		if (bound.get(type) != null) {
+		if (this.bound.get(type) != null) {
 			// Only bind one provider for each type
 			return; // TODO: named beans
 		}
-		if (!matcher.matches(name, type)) {
+		if (!this.matcher.matches(name, type)) {
 			return;
 		}
 		if (type.getName().startsWith("com.google.inject")) {
 			return;
 		}
 		binder.withSource("spring-guice").bind(type).toProvider(provider);
-		bound.put(type, provider);
+		binder.withSource("spring-guice").bind(type).annotatedWith(Names.named(name)).toProvider(provider);
+		this.bound.put(type, provider);
 	}
 
 	private static class BeanFactoryProvider implements Provider<Object> {
@@ -107,24 +109,24 @@ public class SpringModule implements Module {
 
 		@Override
 		public Object get() {
-			if (result == null) {
-				String[] names = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(beanFactory, type);
+			if (this.result == null) {
+				String[] names = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(this.beanFactory, this.type);
 				if (names.length == 1) {
-					result = beanFactory.getBean(name, type);
+					this.result = this.beanFactory.getBean(this.name, this.type);
 				}
 				else {
 					for (String name : names) {
-						if (beanFactory.getBeanDefinition(name).isPrimary()) {
-							result = beanFactory.getBean(name, type);
+						if (this.beanFactory.getBeanDefinition(name).isPrimary()) {
+							this.result = this.beanFactory.getBean(name, this.type);
 							break;
 						}
 					}
-					if (result == null) {
-						throw new ProvisionException("No primary bean definition for type: " + type);
+					if (this.result == null) {
+						throw new ProvisionException("No primary bean definition for type: " + this.type);
 					}
 				}
 			}
-			return result;
+			return this.result;
 		}
 	}
 
@@ -137,7 +139,7 @@ public class SpringModule implements Module {
 
 		@Override
 		public boolean matches(String name, Class<?> type) {
-			for (BindingTypeMatcher matcher : matchers) {
+			for (BindingTypeMatcher matcher : this.matchers) {
 				if (matcher.matches(name, type)) {
 					return true;
 				}

@@ -40,6 +40,14 @@ public class SpringWiringTests extends AbstractCompleteWiringTests {
 		public Service service() {
 			return new MyService();
 		}
+		@Bean
+		public Thang thing() {
+			return new Thang();
+		}
+		@Bean
+		public Thang other() {
+			return new Thang();
+		}
 	}
 
 }

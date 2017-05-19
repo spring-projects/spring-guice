@@ -41,6 +41,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
+import com.google.inject.name.Named;
 
 @Configuration
 @Order(Ordered.HIGHEST_PRECEDENCE + 10)
@@ -55,33 +56,39 @@ public class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostPr
 	private void mapBindings(Injector injector, BeanDefinitionRegistry registry)
 	{
 		for (Entry<Key<?>, Binding<?>> entry : injector.getBindings().entrySet()) {
-			if (entry.getKey().getTypeLiteral().getRawType().equals(Injector.class) || 
+			if (entry.getKey().getTypeLiteral().getRawType().equals(Injector.class) ||
 					"spring-guice".equals(entry.getValue().getSource().toString())) {
 				continue;
 			}
-		
+
 			entry.getValue().getKey().toString();
 			RootBeanDefinition bean = new RootBeanDefinition(GuiceFactoryBean.class);
 			ConstructorArgumentValues args = new ConstructorArgumentValues();
 			args.addIndexedArgumentValue(0, entry.getKey().getTypeLiteral().getRawType());
 			args.addIndexedArgumentValue(1, entry.getValue().getProvider());
 			bean.setConstructorArgumentValues(args);
-			registry.registerBeanDefinition(entry.getValue().getKey().toString(), bean);
+			registry.registerBeanDefinition(extractName(entry.getValue().getKey()), bean);
 		}
-		
+
 		if(injector.getParent() != null)
 		{
 			mapBindings(injector.getParent(), registry);
 		}
-		
+
 		((ConfigurableListableBeanFactory) registry).registerResolvableDependency(Injector.class, injector);
 	}
 
+	private String extractName(Key<?> key) {
+		if (key.getAnnotation() instanceof Named) {
+			return ((Named) key.getAnnotation()).value();
+		}
+		return key.getTypeLiteral().getRawType().getSimpleName();
+	}
 
 	@Override
 	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
-		
-		
+
+
 	}
 
     @Override
@@ -100,6 +107,7 @@ public class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostPr
             else if(beansOfType.size() == 1) {
                  InjectorFactory injectorFactory = beansOfType.values().iterator().next();
                  injector = injectorFactory.createInjector(modules);
+                 ((ConfigurableListableBeanFactory) registry).registerSingleton(Injector.class.getName(), injector);
             }
         } catch (NoSuchBeanDefinitionException e) {
             
