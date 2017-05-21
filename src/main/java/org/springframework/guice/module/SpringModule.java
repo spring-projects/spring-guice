@@ -110,14 +110,8 @@ public class SpringModule implements Module {
 		@Override
 		public Object get() {
 			if (this.result == null) {
-
-				String[] named = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(this.beanFactory, this.type);
-				List<String> names = new ArrayList<>(named.length);
-				for (String name : named) {
-					if (name.equals(this.name)) names.add(name);
-				}
-
-				if (names.size() == 1) {
+				String[] names = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(this.beanFactory, this.type);
+				if (names.length == 1) {
 					this.result = this.beanFactory.getBean(this.name, this.type);
 				}
 				else {
