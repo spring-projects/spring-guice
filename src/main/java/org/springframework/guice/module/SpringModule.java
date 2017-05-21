@@ -13,8 +13,10 @@
 
 package org.springframework.guice.module;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.BeanFactoryUtils;
@@ -62,33 +64,35 @@ public class SpringModule implements Module {
 				@SuppressWarnings("unchecked")
 				final Class<Object> cls = (Class<Object>) type;
 				final String beanName = name;
-				Provider<Object> provider = new BeanFactoryProvider(this.beanFactory, beanName, type);
+				Provider<Object> typeProvider = new BeanFactoryProvider(this.beanFactory, null, type);
+				Provider<Object> namedProvider = new BeanFactoryProvider(this.beanFactory, beanName, type);
 				if (!cls.isInterface() && !ClassUtils.isCglibProxyClass(cls)) {
-					bindConditionally(binder, name, cls, provider);
+					bindConditionally(binder, name, cls, typeProvider, namedProvider);
 				}
 				for (Class<?> iface : ClassUtils.getAllInterfacesForClass(cls)) {
 					@SuppressWarnings("unchecked")
 					Class<Object> unchecked = (Class<Object>) iface;
-					bindConditionally(binder, name, unchecked, provider);
+					bindConditionally(binder, name, unchecked, typeProvider, namedProvider);
 				}
 			}
 		}
 	}
 
-	private void bindConditionally(Binder binder, String name, Class<Object> type, Provider<Object> provider) {
-		if (this.bound.get(type) != null) {
-			// Only bind one provider for each type
-			return; // TODO: named beans
-		}
+	private void bindConditionally(Binder binder, String name, Class<Object> type, Provider<Object> typeProvider,
+			Provider<Object> namedProvider) {
 		if (!this.matcher.matches(name, type)) {
 			return;
 		}
 		if (type.getName().startsWith("com.google.inject")) {
 			return;
 		}
-		binder.withSource("spring-guice").bind(type).toProvider(provider);
-		binder.withSource("spring-guice").bind(type).annotatedWith(Names.named(name)).toProvider(provider);
-		this.bound.put(type, provider);
+		if (this.bound.get(type) == null) {
+			// Only bind one provider for each type
+			binder.withSource("spring-guice").bind(type).toProvider(typeProvider);
+			this.bound.put(type, typeProvider);
+		}
+		// But allow binding to named beans
+		binder.withSource("spring-guice").bind(type).annotatedWith(Names.named(name)).toProvider(namedProvider);
 	}
 
 	private static class BeanFactoryProvider implements Provider<Object> {
@@ -112,16 +116,19 @@ public class SpringModule implements Module {
 			if (this.result == null) {
 
 				String[] named = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(this.beanFactory, this.type);
-				List<String> names = new ArrayList<>(named.length);
-				for (String name : named) {
-					if (name.equals(this.name)) names.add(name);
+				List<String> names = new ArrayList<String>(named.length);
+				if (named.length == 1) {
+					names.add(named[0]);
+				} else {
+					for (String name : named) {
+						if (name.equals(this.name))
+							names.add(name);
+					}
 				}
-
 				if (names.size() == 1) {
-					this.result = this.beanFactory.getBean(this.name, this.type);
-				}
-				else {
-					for (String name : names) {
+					this.result = this.beanFactory.getBean(names.get(0), this.type);
+				} else {
+					for (String name : named) {
 						if (this.beanFactory.getBeanDefinition(name).isPrimary()) {
 							this.result = this.beanFactory.getBean(name, this.type);
 							break;

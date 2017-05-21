@@ -34,7 +34,9 @@ import org.springframework.guice.module.SpringModule;
 import com.google.inject.ConfigurationException;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.ProvisionException;
+import com.google.inject.name.Names;
 
 /**
  * @author Dave Syer
@@ -62,6 +64,12 @@ public class SpringModuleMetadataTests {
 	public void twoServicesOnePrimary() throws Exception {
 		Injector injector = createInjector(TestConfig.class, PrimaryConfig.class);
 		assertNotNull(injector.getInstance(Service.class));
+	}
+
+	@Test
+	public void twoServicesByName() throws Exception {
+		Injector injector = createInjector(TestConfig.class, MoreConfig.class);
+		assertNotNull(injector.getInstance(Key.get(Service.class, Names.named("service"))));
 	}
 
 	@Test
