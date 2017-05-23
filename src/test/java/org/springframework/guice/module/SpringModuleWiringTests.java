@@ -15,6 +15,7 @@ package org.springframework.guice.module;
 
 import org.junit.Rule;
 import org.junit.rules.ExpectedException;
+
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,10 +35,8 @@ public class SpringModuleWiringTests extends AbstractCompleteWiringTests {
 
 	@Override
 	protected Injector createInjector() {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
-		context.register(TestConfig.class);
-		context.refresh();
-		return Guice.createInjector(new SpringModule(context));
+		return Guice.createInjector(new SpringModule(
+				new AnnotationConfigApplicationContext(TestConfig.class)));
 	}
 
 	@Configuration
@@ -61,10 +60,11 @@ public class SpringModuleWiringTests extends AbstractCompleteWiringTests {
 		public Thing that() {
 			return new Thing();
 		}
-		
+
 		@Bean
 		public Parameterized<String> parameterizedBean() {
-		    return new Parameterized<String>(){};
+			return new Parameterized<String>() {
+			};
 		}
 	}
 }

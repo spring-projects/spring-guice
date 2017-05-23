@@ -25,7 +25,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
-import org.springframework.guice.annotation.GuiceModule;
 import org.springframework.guice.module.SpringModule;
 
 import com.google.inject.ConfigurationException;
@@ -73,10 +72,7 @@ public class GuiceModuleAnnotationTests {
 	}
 
 	private Injector createInjector(Class<?>... config) {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
-		context.register(config);
-		context.refresh();
-		Injector injector = Guice.createInjector(new SpringModule(context));
+		Injector injector = Guice.createInjector(new SpringModule(new AnnotationConfigApplicationContext(config)));
 		return injector;
 	}
 

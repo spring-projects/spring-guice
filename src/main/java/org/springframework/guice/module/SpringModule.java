@@ -20,64 +20,96 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Provider;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.ProvisionException;
+import com.google.inject.Stage;
+import com.google.inject.TypeLiteral;
+import com.google.inject.matcher.Matchers;
+import com.google.inject.name.Names;
+import com.google.inject.spi.ProvisionListener;
+
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
+import org.springframework.guice.injector.GuiceAutowireCandidateResolver;
 import org.springframework.util.ClassUtils;
-
-import com.google.inject.Binder;
-import com.google.inject.Module;
-import com.google.inject.Key;
-import com.google.inject.Provider;
-import com.google.inject.ProvisionException;
-import com.google.inject.TypeLiteral;
-import com.google.inject.name.Names;
 
 /**
  * @author Dave Syer
  *
  */
-public class SpringModule implements Module {
-
-	private DefaultListableBeanFactory beanFactory;
+public class SpringModule extends AbstractModule {
 
 	private BindingTypeMatcher matcher = new GuiceModuleMetadata();
 
 	private Map<Type, Provider<?>> bound = new HashMap<Type, Provider<?>>();
 
+	private ConfigurableListableBeanFactory beanFactory;
+
+	private Provider<ConfigurableListableBeanFactory> beanFactoryProvider;
+
 	public SpringModule(ApplicationContext context) {
-		this((DefaultListableBeanFactory) context.getAutowireCapableBeanFactory());
+		this((ConfigurableListableBeanFactory) context.getAutowireCapableBeanFactory());
 	}
 
-	public SpringModule(DefaultListableBeanFactory beanFactory) {
+	public SpringModule(ConfigurableListableBeanFactory beanFactory) {
 		this.beanFactory = beanFactory;
-		if (beanFactory.getBeanNamesForType(GuiceModuleMetadata.class).length > 0) {
-			this.matcher = new CompositeTypeMatcher(
-					beanFactory.getBeansOfType(GuiceModuleMetadata.class).values());
-		}
 	}
 
-	public void configure(Binder binder) {
-		for (String name : this.beanFactory.getBeanDefinitionNames()) {
-			BeanDefinition definition = this.beanFactory.getBeanDefinition(name);
+	public SpringModule(Provider<ConfigurableListableBeanFactory> beanFactoryProvider) {
+		this.beanFactoryProvider = beanFactoryProvider;
+	}
+
+	@Override
+	public void configure() {
+		if (binder().currentStage() != Stage.TOOL) {
+			if (beanFactory == null) {
+				beanFactory = beanFactoryProvider.get();
+			}
+			if (beanFactory.getBeanNamesForType(ProvisionListener.class).length > 0) {
+				binder().bindListener(Matchers.any(),
+						beanFactory.getBeansOfType(ProvisionListener.class).values()
+								.toArray(new ProvisionListener[0]));
+			}
+			if (beanFactory instanceof DefaultListableBeanFactory) {
+				((DefaultListableBeanFactory) beanFactory)
+						.setAutowireCandidateResolver(new GuiceAutowireCandidateResolver(
+								binder().getProvider(Injector.class)));
+			}
+			if (beanFactory.getBeanNamesForType(GuiceModuleMetadata.class).length > 0) {
+				this.matcher = new CompositeTypeMatcher(
+						beanFactory.getBeansOfType(GuiceModuleMetadata.class).values());
+			}
+		}
+		bind(beanFactory);
+	}
+
+	private void bind(ConfigurableListableBeanFactory beanFactory) {
+		for (String name : beanFactory.getBeanDefinitionNames()) {
+			BeanDefinition definition = beanFactory.getBeanDefinition(name);
 			if (definition.isAutowireCandidate()
 					&& definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
-				Class<?> type = this.beanFactory.getType(name);
+				Class<?> type = beanFactory.getType(name);
 				final String beanName = name;
-				Provider<?> typeProvider = BeanFactoryProvider.typed(this.beanFactory,
-						type);
-				Provider<?> namedProvider = BeanFactoryProvider.named(this.beanFactory,
+				Provider<?> typeProvider = BeanFactoryProvider.typed(beanFactory, type);
+				Provider<?> namedProvider = BeanFactoryProvider.named(beanFactory,
 						beanName, type);
 				if (!type.isInterface() && !ClassUtils.isCglibProxyClass(type)) {
-					bindConditionally(binder, name, type, typeProvider, namedProvider);
+					bindConditionally(binder(), name, type, typeProvider, namedProvider);
 				}
 				for (Class<?> iface : ClassUtils.getAllInterfacesForClass(type)) {
-					bindConditionally(binder, name, iface, typeProvider, namedProvider);
+					bindConditionally(binder(), name, iface, typeProvider, namedProvider);
 				}
 				for (Type iface : type.getGenericInterfaces()) {
-					bindConditionally(binder, name, iface, typeProvider, namedProvider);
+					bindConditionally(binder(), name, iface, typeProvider, namedProvider);
 				}
 			}
 		}
@@ -106,7 +138,7 @@ public class SpringModule implements Module {
 
 	private static class BeanFactoryProvider<T> implements Provider<T> {
 
-		private DefaultListableBeanFactory beanFactory;
+		private ConfigurableListableBeanFactory beanFactory;
 
 		private String name;
 
@@ -114,19 +146,19 @@ public class SpringModule implements Module {
 
 		private T result;
 
-		private BeanFactoryProvider(DefaultListableBeanFactory beanFactory, String name,
-				Class<T> type) {
+		private BeanFactoryProvider(ConfigurableListableBeanFactory beanFactory,
+				String name, Class<T> type) {
 			this.beanFactory = beanFactory;
 			this.name = name;
 			this.type = type;
 		}
 
-		public static <S> Provider<S> named(DefaultListableBeanFactory beanFactory,
+		public static <S> Provider<S> named(ConfigurableListableBeanFactory beanFactory,
 				String name, Class<S> type) {
 			return new BeanFactoryProvider<S>(beanFactory, name, type);
 		}
 
-		public static <S> Provider<S> typed(DefaultListableBeanFactory beanFactory,
+		public static <S> Provider<S> typed(ConfigurableListableBeanFactory beanFactory,
 				Class<S> type) {
 			return new BeanFactoryProvider<S>(beanFactory, null, type);
 		}
@@ -184,5 +216,4 @@ public class SpringModule implements Module {
 			return false;
 		}
 	}
-
 }
