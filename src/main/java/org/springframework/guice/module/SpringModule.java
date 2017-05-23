@@ -24,58 +24,95 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.guice.injector.GuiceAutowireCandidateResolver;
 import org.springframework.util.ClassUtils;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
-import com.google.inject.Module;
+import com.google.inject.Injector;
 import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
+import com.google.inject.Stage;
 import com.google.inject.name.Names;
 
 /**
  * @author Dave Syer
  *
  */
-public class SpringModule implements Module {
-
-	private DefaultListableBeanFactory beanFactory;
+public class SpringModule extends AbstractModule {
 
 	private BindingTypeMatcher matcher = new GuiceModuleMetadata();
 
 	private Map<Class<?>, Provider<?>> bound = new HashMap<Class<?>, Provider<?>>();
-
-	public SpringModule(ApplicationContext context) {
-		this((DefaultListableBeanFactory) context.getAutowireCapableBeanFactory());
-	}
-
-	public SpringModule(DefaultListableBeanFactory beanFactory) {
-		this.beanFactory = beanFactory;
-		if (beanFactory.getBeanNamesForType(GuiceModuleMetadata.class).length > 0) {
-			this.matcher = new CompositeTypeMatcher(beanFactory.getBeansOfType(GuiceModuleMetadata.class).values());
-		}
-	}
+	
+    private final Class<?>[] configClasses;
+    private final String[] basePackages;
+    private ApplicationContext context;
+    
+    public SpringModule(Class<?>... configClasses) {
+        this.configClasses = configClasses; 
+        this.basePackages = null;
+    }
+    
+    public SpringModule(String... basePackages) {
+        this.basePackages = basePackages;
+        this.configClasses = null;
+    }
+    
+    public SpringModule(ApplicationContext context) {
+        this.context = context;   
+        this.configClasses = null;
+        this.basePackages = null;
+    }
 
 	@Override
-	public void configure(Binder binder) {
-		for (String name : this.beanFactory.getBeanDefinitionNames()) {
-			BeanDefinition definition = this.beanFactory.getBeanDefinition(name);
-			if (definition.isAutowireCandidate() && definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
-				Class<?> type = this.beanFactory.getType(name);
-				@SuppressWarnings("unchecked")
-				final Class<Object> cls = (Class<Object>) type;
-				final String beanName = name;
-				Provider<Object> typeProvider = new BeanFactoryProvider(this.beanFactory, null, type);
-				Provider<Object> namedProvider = new BeanFactoryProvider(this.beanFactory, beanName, type);
-				if (!cls.isInterface() && !ClassUtils.isCglibProxyClass(cls)) {
-					bindConditionally(binder, name, cls, typeProvider, namedProvider);
-				}
-				for (Class<?> iface : ClassUtils.getAllInterfacesForClass(cls)) {
-					@SuppressWarnings("unchecked")
-					Class<Object> unchecked = (Class<Object>) iface;
-					bindConditionally(binder, name, unchecked, typeProvider, namedProvider);
-				}
-			}
-		}
+	public void configure() {
+        if(binder().currentStage() != Stage.TOOL) {
+            if(context == null) {
+                AnnotationConfigApplicationContext guiceAwareContext = new AnnotationConfigApplicationContext();
+                
+                if(basePackages != null) {
+                    guiceAwareContext.scan(basePackages);
+                }
+                if(configClasses != null) {
+                    guiceAwareContext.register(configClasses);
+                }
+                
+                guiceAwareContext.getDefaultListableBeanFactory().setAutowireCandidateResolver(new GuiceAutowireCandidateResolver(binder().getProvider(Injector.class)));            
+                guiceAwareContext.refresh();
+                context = guiceAwareContext;
+            } 
+            DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) context.getAutowireCapableBeanFactory();
+            
+            if (beanFactory.getBeanNamesForType(GuiceModuleMetadata.class).length > 0) {
+                this.matcher = new CompositeTypeMatcher(beanFactory.getBeansOfType(GuiceModuleMetadata.class).values());
+            }
+
+            bindDefinitionsForBeanFactory(beanFactory);
+        }
+	}
+	
+	protected void bindDefinitionsForBeanFactory(DefaultListableBeanFactory beanFactory) {
+       for (String name : beanFactory.getBeanDefinitionNames()) {
+            BeanDefinition definition = beanFactory.getBeanDefinition(name);
+            if (definition.isAutowireCandidate() && definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
+                Class<?> type = beanFactory.getType(name);
+                @SuppressWarnings("unchecked")
+                final Class<Object> cls = (Class<Object>) type;
+                final String beanName = name;
+                Provider<Object> typeProvider = new BeanFactoryProvider(beanFactory, null, type);
+                Provider<Object> namedProvider = new BeanFactoryProvider(beanFactory, beanName, type);
+                if (!cls.isInterface() && !ClassUtils.isCglibProxyClass(cls)) {
+                    bindConditionally(binder(), name, cls, typeProvider, namedProvider);
+                }
+                for (Class<?> iface : ClassUtils.getAllInterfacesForClass(cls)) {
+                    @SuppressWarnings("unchecked")
+                    Class<Object> unchecked = (Class<Object>) iface;
+                    bindConditionally(binder(), name, unchecked, typeProvider, namedProvider);
+                }
+            }
+        }
 	}
 
 	private void bindConditionally(Binder binder, String name, Class<Object> type, Provider<Object> typeProvider,
