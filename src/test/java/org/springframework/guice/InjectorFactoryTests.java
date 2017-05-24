@@ -11,6 +11,7 @@ import org.springframework.guice.annotation.ModuleRegistryConfiguration;
 import org.springframework.guice.injector.InjectorFactory;
 
 import com.google.inject.Guice;
+import com.google.inject.Module;
 
 public class InjectorFactoryTests  {
     
