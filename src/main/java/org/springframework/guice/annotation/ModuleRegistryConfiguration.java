@@ -41,6 +41,7 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.name.Named;
+import com.google.inject.spi.ElementSource;
 
 @Configuration
 @Order(Ordered.HIGHEST_PRECEDENCE + 10)
@@ -60,13 +61,21 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 				continue;
 			}
 
-			entry.getValue().getKey().toString();
+			Binding<?> binding = entry.getValue();
+			Key<?> key = entry.getKey();
+			Object source = binding.getSource();
+
 			RootBeanDefinition bean = new RootBeanDefinition(GuiceFactoryBean.class);
 			ConstructorArgumentValues args = new ConstructorArgumentValues();
-			args.addIndexedArgumentValue(0, entry.getKey().getTypeLiteral().getRawType());
-			args.addIndexedArgumentValue(1, entry.getValue().getProvider());
+			args.addIndexedArgumentValue(0, key.getTypeLiteral().getRawType());
+			args.addIndexedArgumentValue(1, binding.getProvider());
 			bean.setConstructorArgumentValues(args);
-			registry.registerBeanDefinition(extractName(entry.getValue().getKey()), bean);
+			if (source != null && source instanceof ElementSource) {
+				bean.setResourceDescription(((ElementSource) source).getDeclaringSource().toString());
+			} else {
+				bean.setResourceDescription("spring-guice");
+			}
+			registry.registerBeanDefinition(extractName(key), bean);
 		}
 
 		if(injector.getParent() != null)
