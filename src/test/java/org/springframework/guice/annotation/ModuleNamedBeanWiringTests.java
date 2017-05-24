@@ -86,6 +86,11 @@ public class ModuleNamedBeanWiringTests extends AbstractCompleteWiringTests {
 		public Baz baz(Service service) {
 			return new Baz(service);
 		}
+		
+        @Bean
+        public Parameterized<String> parameterizedBean() {
+            return new Parameterized<String>() {};
+        }
 }
 
 	protected static class Spam {

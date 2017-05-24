@@ -61,7 +61,10 @@ public class SpringModuleWiringTests extends AbstractCompleteWiringTests {
 		public Thing that() {
 			return new Thing();
 		}
-
+		
+		@Bean
+		public Parameterized<String> parameterizedBean() {
+		    return new Parameterized<String>(){};
+		}
 	}
-
 }

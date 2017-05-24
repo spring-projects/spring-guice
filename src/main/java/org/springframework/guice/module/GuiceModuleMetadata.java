@@ -18,12 +18,14 @@ package org.springframework.guice.module;
 
 import java.io.IOException;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.core.ResolvableType;
 import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
@@ -93,7 +95,7 @@ public class GuiceModuleMetadata implements BindingTypeMatcher {
 	}
 
 	@Override
-	public boolean matches(String name, Class<?> type) {
+	public boolean matches(String name, Type type) {
 		if (!matches(name) || !matches(type)) {
 			return false;
 		}
@@ -128,7 +130,7 @@ public class GuiceModuleMetadata implements BindingTypeMatcher {
 		return true;
 	}
 
-	private boolean matches(Class<?> type) {
+	private boolean matches(Type type) {
 		if (infrastructureTypes.contains(type)) {
 			return false;
 		}
@@ -140,7 +142,7 @@ public class GuiceModuleMetadata implements BindingTypeMatcher {
 		if (includeFilters != null) {
 			try {
 				MetadataReader reader = metadataReaderFactory.getMetadataReader(type
-						.getName());
+						.getTypeName());
 				for (TypeFilter filter : includeFilters) {
 					if (!filter.match(reader, metadataReaderFactory)) {
 						return false;
@@ -154,7 +156,7 @@ public class GuiceModuleMetadata implements BindingTypeMatcher {
 		if (excludeFilters != null) {
 			try {
 				MetadataReader reader = metadataReaderFactory.getMetadataReader(type
-						.getName());
+						.getTypeName());
 				for (TypeFilter filter : excludeFilters) {
 					if (filter.match(reader, metadataReaderFactory)) {
 						return false;
@@ -168,8 +170,8 @@ public class GuiceModuleMetadata implements BindingTypeMatcher {
 		return true;
 	}
 
-	private boolean visible(Class<?> type) {
-		Class<?> cls = type;
+	private boolean visible(Type type) {
+		Class<?> cls = ResolvableType.forType(type).resolve();
 		while (cls != null && cls != Object.class) {
 			if (!Modifier.isInterface(cls.getModifiers())
 					&& !Modifier.isPublic(cls.getModifiers())

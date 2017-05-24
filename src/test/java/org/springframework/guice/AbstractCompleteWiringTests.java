@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 
 public abstract class AbstractCompleteWiringTests {
@@ -74,6 +75,12 @@ public abstract class AbstractCompleteWiringTests {
 	public void getNamedInjectedInstance() {
 		assertNotNull(this.injector.getInstance(Thing.class).thang);
 	}
+	
+	@Test
+	public void getParameterizedType() {
+	    Parameterized<String> instance = this.injector.getInstance(Key.get(new TypeLiteral<Parameterized<String>>() {}));
+	    assertNotNull(instance);
+	}
 
 	public interface Service {
 	}
@@ -120,5 +127,8 @@ public abstract class AbstractCompleteWiringTests {
 	}
 
 	public static class Thang {
+	}
+	
+	public static interface Parameterized<T> {
 	}
 }
