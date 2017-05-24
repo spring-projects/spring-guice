@@ -16,12 +16,14 @@
 
 package org.springframework.guice.module;
 
+import java.lang.reflect.Type;
+
 /**
  * @author Dave Syer
  *
  */
 public interface BindingTypeMatcher {
 
-	boolean matches(String name, Class<?> type);
+	boolean matches(String name, Type type);
 
 }

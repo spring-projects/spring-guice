@@ -13,6 +13,7 @@
 
 package org.springframework.guice.module;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -28,8 +29,10 @@ import org.springframework.util.ClassUtils;
 
 import com.google.inject.Binder;
 import com.google.inject.Module;
+import com.google.inject.Key;
 import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
+import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 
 /**
@@ -42,7 +45,7 @@ public class SpringModule implements Module {
 
 	private BindingTypeMatcher matcher = new GuiceModuleMetadata();
 
-	private Map<Class<?>, Provider<?>> bound = new HashMap<Class<?>, Provider<?>>();
+	private Map<Type, Provider<?>> bound = new HashMap<Type, Provider<?>>();
 
 	public SpringModule(ApplicationContext context) {
 		this((DefaultListableBeanFactory) context.getAutowireCapableBeanFactory());
@@ -55,64 +58,65 @@ public class SpringModule implements Module {
 		}
 	}
 
-	@Override
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void configure(Binder binder) {
 		for (String name : this.beanFactory.getBeanDefinitionNames()) {
 			BeanDefinition definition = this.beanFactory.getBeanDefinition(name);
 			if (definition.isAutowireCandidate() && definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
 				Class<?> type = this.beanFactory.getType(name);
-				@SuppressWarnings("unchecked")
-				final Class<Object> cls = (Class<Object>) type;
 				final String beanName = name;
 				Provider<Object> typeProvider = new BeanFactoryProvider(this.beanFactory, null, type);
 				Provider<Object> namedProvider = new BeanFactoryProvider(this.beanFactory, beanName, type);
-				if (!cls.isInterface() && !ClassUtils.isCglibProxyClass(cls)) {
-					bindConditionally(binder, name, cls, typeProvider, namedProvider);
+				if (!type.isInterface() && !ClassUtils.isCglibProxyClass(type)) {
+					bindConditionally(binder, name, type, typeProvider, namedProvider);
 				}
-				for (Class<?> iface : ClassUtils.getAllInterfacesForClass(cls)) {
-					@SuppressWarnings("unchecked")
-					Class<Object> unchecked = (Class<Object>) iface;
-					bindConditionally(binder, name, unchecked, typeProvider, namedProvider);
+				for (Class<?> iface : ClassUtils.getAllInterfacesForClass(type)) {
+					bindConditionally(binder, name, iface, typeProvider, namedProvider);
+				}
+				for (Type iface : type.getGenericInterfaces()) {
+					bindConditionally(binder, name, iface, typeProvider, namedProvider);
 				}
 			}
 		}
 	}
 
-	private void bindConditionally(Binder binder, String name, Class<Object> type, Provider<Object> typeProvider,
-			Provider<Object> namedProvider) {
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private <T> void bindConditionally(Binder binder, String name, Type type, Provider typeProvider,
+			Provider namedProvider) {
 		if (!this.matcher.matches(name, type)) {
 			return;
 		}
-		if (type.getName().startsWith("com.google.inject")) {
+		if (type.getTypeName().startsWith("com.google.inject")) {
 			return;
 		}
+
 		if (this.bound.get(type) == null) {
 			// Only bind one provider for each type
-			binder.withSource("spring-guice").bind(type).toProvider(typeProvider);
-			this.bound.put(type, typeProvider);
+	        binder.withSource("spring-guice").bind(Key.get(type)).toProvider(typeProvider);
+	        this.bound.put(type, typeProvider);
 		}
 		// But allow binding to named beans
-		binder.withSource("spring-guice").bind(type).annotatedWith(Names.named(name)).toProvider(namedProvider);
+		binder.withSource("spring-guice").bind(TypeLiteral.get(type)).annotatedWith(Names.named(name)).toProvider(namedProvider);
 	}
 
-	private static class BeanFactoryProvider implements Provider<Object> {
+	private static class BeanFactoryProvider<T> implements Provider<T> {
 
 		private DefaultListableBeanFactory beanFactory;
 
 		private String name;
 
-		private Class<?> type;
+		private Class<T> type;
 
-		private Object result;
+		private T result;
 
-		public BeanFactoryProvider(DefaultListableBeanFactory beanFactory, String name, Class<?> type) {
+		public BeanFactoryProvider(DefaultListableBeanFactory beanFactory, String name, Class<T> type) {
 			this.beanFactory = beanFactory;
 			this.name = name;
 			this.type = type;
 		}
 
 		@Override
-		public Object get() {
+		public T get() {
 			if (this.result == null) {
 
 				String[] named = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(this.beanFactory, this.type);
@@ -151,7 +155,7 @@ public class SpringModule implements Module {
 		}
 
 		@Override
-		public boolean matches(String name, Class<?> type) {
+		public boolean matches(String name, Type type) {
 			for (BindingTypeMatcher matcher : this.matchers) {
 				if (matcher.matches(name, type)) {
 					return true;

@@ -48,6 +48,10 @@ public class SpringWiringTests extends AbstractCompleteWiringTests {
 		public Thang other() {
 			return new Thang();
 		}
+        @Bean
+        public Parameterized<String> parameterizedBean() {
+            return new Parameterized<String>() {};
+        }
 	}
 
 }
