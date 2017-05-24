@@ -19,18 +19,20 @@ public class InjectorFactoryTests  {
     
     @Before
     public void init() {
-        Mockito.when(injectorFactory.createInjector(Mockito.anyList())).thenReturn(Guice.createInjector());
+        Mockito.when(injectorFactory.createInjector(Mockito.anyListOf(Module.class))).thenReturn(Guice.createInjector());
     }
     
     @Test
     public void testCustomInjectorIsCreated() {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(InjectorFactoryConfig.class, ModuleRegistryConfiguration.class);
-        Mockito.verify(injectorFactory, Mockito.times(1)).createInjector(Mockito.anyList());
+        Mockito.verify(injectorFactory, Mockito.times(1)).createInjector(Mockito.anyListOf(Module.class));
+        context.close();
     }
     
     @Test(expected=ApplicationContextException.class)
     public void testMultipleInjectorFactoriesThrowsApplicationContextException() {
-        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(InjectorFactoryConfig.class, SecondInjectorFactoryConfig.class, ModuleRegistryConfiguration.class); 
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(InjectorFactoryConfig.class, SecondInjectorFactoryConfig.class, ModuleRegistryConfiguration.class);
+        context.close();
     }
     
     @Configuration
