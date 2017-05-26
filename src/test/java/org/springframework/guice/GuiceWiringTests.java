@@ -18,6 +18,7 @@ import javax.inject.Singleton;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
 
 /**
@@ -38,6 +39,7 @@ public class GuiceWiringTests extends AbstractCompleteWiringTests {
 			bind(Service.class).to(MyService.class);
 			bind(Baz.class).in(Singleton.class);
 			bind(Thang.class).annotatedWith(Names.named("thing")).to(Thang.class);
+			bind(new TypeLiteral<Parameterized<String>>(){}).toInstance(new Parameterized<String>(){});
 		}
 	}
 
