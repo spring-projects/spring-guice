@@ -97,7 +97,7 @@ public class SpringInjector implements Injector {
 
 	@Override
 	public <T> Provider<T> getProvider(Key<T> key) {
-		// TODO: support for other metadata in the key
+		// TODO: support for other metadata in the key (apart from name and type)
 		Class<? super T> type = key.getTypeLiteral().getRawType();
 		final String name = extractName(key);
 		if (this.beanFactory.getBeanNamesForType(type, true, false).length==0) {

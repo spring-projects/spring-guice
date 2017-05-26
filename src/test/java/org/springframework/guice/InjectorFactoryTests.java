@@ -13,39 +13,44 @@ import org.springframework.guice.injector.InjectorFactory;
 import com.google.inject.Guice;
 import com.google.inject.Module;
 
-public class InjectorFactoryTests  {
-    
-    static final private InjectorFactory injectorFactory = Mockito.mock(InjectorFactory.class);
-    
-    @Before
-    public void init() {
-        Mockito.when(injectorFactory.createInjector(Mockito.anyList())).thenReturn(Guice.createInjector());
-    }
-    
-    @Test
-    public void testCustomInjectorIsCreated() {
-        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(InjectorFactoryConfig.class, ModuleRegistryConfiguration.class);
-        Mockito.verify(injectorFactory, Mockito.times(1)).createInjector(Mockito.anyList());
-    }
-    
-    @Test(expected=ApplicationContextException.class)
-    public void testMultipleInjectorFactoriesThrowsApplicationContextException() {
-        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(InjectorFactoryConfig.class, SecondInjectorFactoryConfig.class, ModuleRegistryConfiguration.class); 
-    }
-    
-    @Configuration
-    static class InjectorFactoryConfig {
-        @Bean
-        public InjectorFactory injectorFactory() { 
-           return injectorFactory;
-        }
-    }
-    
-    @Configuration
-    static class SecondInjectorFactoryConfig {
-        @Bean
-        public InjectorFactory injectorFactory2() { 
-            return injectorFactory;
-        }
-    }
+public class InjectorFactoryTests {
+
+	static final private InjectorFactory injectorFactory = Mockito.mock(InjectorFactory.class);
+
+	@Before
+	public void init() {
+		Mockito.when(injectorFactory.createInjector(Mockito.anyListOf(Module.class)))
+				.thenReturn(Guice.createInjector());
+	}
+
+	@Test
+	public void testCustomInjectorIsCreated() {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(InjectorFactoryConfig.class,
+				ModuleRegistryConfiguration.class);
+		Mockito.verify(injectorFactory, Mockito.times(1)).createInjector(Mockito.anyListOf(Module.class));
+		context.close();
+	}
+
+	@Test(expected = ApplicationContextException.class)
+	public void testMultipleInjectorFactoriesThrowsApplicationContextException() {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(InjectorFactoryConfig.class,
+				SecondInjectorFactoryConfig.class, ModuleRegistryConfiguration.class);
+		context.close();
+	}
+
+	@Configuration
+	static class InjectorFactoryConfig {
+		@Bean
+		public InjectorFactory injectorFactory() {
+			return injectorFactory;
+		}
+	}
+
+	@Configuration
+	static class SecondInjectorFactoryConfig {
+		@Bean
+		public InjectorFactory injectorFactory2() {
+			return injectorFactory;
+		}
+	}
 }
