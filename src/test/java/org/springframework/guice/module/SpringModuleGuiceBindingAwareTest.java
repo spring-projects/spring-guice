@@ -1,11 +1,14 @@
 package org.springframework.guice.module;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 
 import javax.inject.Inject;
 
 import org.junit.Test;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.util.AopTestUtils;
@@ -35,6 +38,9 @@ public class SpringModuleGuiceBindingAwareTest {
         assertNotNull(springBean.getDep2());
         assertNotNull(springBean.getDep3());
         
+        //invoke a method to make sure we aren't dealing with a lazy proxy
+        assertEquals("done", springBean.getDep1().doWork());
+        
         //check binding equality
         assertSame(injector.getInstance(IGuiceDependency1.class),  AopTestUtils.getTargetObject(springBean.getDep1()));
         assertSame(injector.getInstance(IGuiceDependency2.class),  AopTestUtils.getTargetObject(springBean.getDep2()));
@@ -60,12 +66,25 @@ public class SpringModuleGuiceBindingAwareTest {
             return new SpringBean(dependency);
         }
         
+        @Bean
+        public ApplicationListener<ApplicationEvent> eventListener(final IGuiceDependency1 dependency) {
+        	return new ApplicationListener<ApplicationEvent>() {
+				@Override
+				public void onApplicationEvent(ApplicationEvent event) {
+					dependency.doWork();
+				}
+			};
+        }
     }
 
-    static interface IGuiceDependency1 {}
+    static interface IGuiceDependency1 {
+    	String doWork();
+    }
     static interface IGuiceDependency2 {}
     static interface IGuiceDependency3 {}
-    static class GuiceDependency1 implements IGuiceDependency1 {}
+    static class GuiceDependency1 implements IGuiceDependency1 {
+    	public String doWork() { return "done"; }
+    }
     
     static interface ISpringBean {
         IGuiceDependency1 getDep1();
