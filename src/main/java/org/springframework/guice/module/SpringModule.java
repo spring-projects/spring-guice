@@ -18,61 +18,106 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.guice.injector.GuiceAutowireCandidateResolver;
 import org.springframework.util.ClassUtils;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
-import com.google.inject.Module;
+import com.google.inject.Injector;
 import com.google.inject.Provider;
 import com.google.inject.ProvisionException;
+import com.google.inject.Stage;
+import com.google.inject.matcher.Matchers;
 import com.google.inject.name.Names;
+import com.google.inject.spi.ProvisionListener;
 
 /**
  * @author Dave Syer
  *
  */
-public class SpringModule implements Module {
-
-	private DefaultListableBeanFactory beanFactory;
+public class SpringModule extends AbstractModule {
 
 	private BindingTypeMatcher matcher = new GuiceModuleMetadata();
 
 	private Map<Class<?>, Provider<?>> bound = new HashMap<Class<?>, Provider<?>>();
+	
+    private final Class<?>[] configClasses;
+    private final String[] basePackages;
+    private ApplicationContext context;
+    
+    public SpringModule(Class<?>... configClasses) {
+        this.configClasses = configClasses; 
+        this.basePackages = null;
+    }
+    
+    public SpringModule(String... basePackages) {
+        this.basePackages = basePackages;
+        this.configClasses = null;
+    }
+    
+    public SpringModule(ApplicationContext context) {
+        this.context = context;   
+        this.configClasses = null;
+        this.basePackages = null;
+    }
 
-	public SpringModule(ApplicationContext context) {
-		this((DefaultListableBeanFactory) context.getAutowireCapableBeanFactory());
-	}
+	@Override
+	public void configure() {
+		if (binder().currentStage() != Stage.TOOL) {
+			ConfigurableListableBeanFactory beanFactory = null;
+			if (context == null) {
+				final PartiallyRefreshableApplicationContext guiceAwareContext = new PartiallyRefreshableApplicationContext();
+				if (basePackages != null) {
+					guiceAwareContext.scan(basePackages);
+				}
+				if (configClasses != null) {
+					guiceAwareContext.register(configClasses);
+				}
 
-	public SpringModule(DefaultListableBeanFactory beanFactory) {
-		this.beanFactory = beanFactory;
-		if (beanFactory.getBeanNamesForType(GuiceModuleMetadata.class).length > 0) {
-			this.matcher = new CompositeTypeMatcher(beanFactory.getBeansOfType(GuiceModuleMetadata.class).values());
+				guiceAwareContext.getDefaultListableBeanFactory().setAutowireCandidateResolver(
+						new GuiceAutowireCandidateResolver(binder().getProvider(Injector.class)));
+				guiceAwareContext.partialRefresh();	//make sure all definitions are readable
+				beanFactory = guiceAwareContext.getBeanFactory();
+
+				binder().bindListener(Matchers.any(), new ContextRefreshingProvisionListener(guiceAwareContext));
+			} else {
+				beanFactory = (ConfigurableListableBeanFactory) context.getAutowireCapableBeanFactory();
+			}
+
+			if (beanFactory.getBeanNamesForType(GuiceModuleMetadata.class).length > 0) {
+				this.matcher = new CompositeTypeMatcher(beanFactory.getBeansOfType(GuiceModuleMetadata.class).values());
+			}
+
+			bindDefinitionsForBeanFactory(beanFactory);
 		}
 	}
 
-	@Override
-	public void configure(Binder binder) {
-		for (String name : this.beanFactory.getBeanDefinitionNames()) {
-			BeanDefinition definition = this.beanFactory.getBeanDefinition(name);
+	protected void bindDefinitionsForBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+		for (String name : beanFactory.getBeanDefinitionNames()) {
+			BeanDefinition definition = beanFactory.getBeanDefinition(name);
 			if (definition.isAutowireCandidate() && definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
-				Class<?> type = this.beanFactory.getType(name);
+				Class<?> type = beanFactory.getType(name);
 				@SuppressWarnings("unchecked")
 				final Class<Object> cls = (Class<Object>) type;
 				final String beanName = name;
-				Provider<Object> typeProvider = new BeanFactoryProvider(this.beanFactory, null, type);
-				Provider<Object> namedProvider = new BeanFactoryProvider(this.beanFactory, beanName, type);
+				Provider<Object> typeProvider = new BeanFactoryProvider(beanFactory, null, type);
+				Provider<Object> namedProvider = new BeanFactoryProvider(beanFactory, beanName, type);
 				if (!cls.isInterface() && !ClassUtils.isCglibProxyClass(cls)) {
-					bindConditionally(binder, name, cls, typeProvider, namedProvider);
+					bindConditionally(binder(), name, cls, typeProvider, namedProvider);
 				}
 				for (Class<?> iface : ClassUtils.getAllInterfacesForClass(cls)) {
 					@SuppressWarnings("unchecked")
 					Class<Object> unchecked = (Class<Object>) iface;
-					bindConditionally(binder, name, unchecked, typeProvider, namedProvider);
+					bindConditionally(binder(), name, unchecked, typeProvider, namedProvider);
 				}
 			}
 		}
@@ -94,10 +139,47 @@ public class SpringModule implements Module {
 		// But allow binding to named beans
 		binder.withSource("spring-guice").bind(type).annotatedWith(Names.named(name)).toProvider(namedProvider);
 	}
+	
+	private final class PartiallyRefreshableApplicationContext extends AnnotationConfigApplicationContext {
+
+		private final AtomicBoolean partiallyRefreshed = new AtomicBoolean(false);
+
+		/*
+		 * Initializes beanFactoryPostProcessors only to ensure that all
+		 * BeanDefinition's are available
+		 */
+		void partialRefresh() {
+			invokeBeanFactoryPostProcessors(getBeanFactory());
+		}
+
+		@Override
+		protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory) {
+			if (partiallyRefreshed.compareAndSet(false, true)) {
+				super.invokeBeanFactoryPostProcessors(beanFactory);
+			}
+		}
+	}
+
+	private final class ContextRefreshingProvisionListener implements ProvisionListener {
+		private final ConfigurableApplicationContext context;
+		private final AtomicBoolean initialized = new AtomicBoolean(false);
+
+		private ContextRefreshingProvisionListener(ConfigurableApplicationContext context) {
+			this.context = context;
+		}
+
+		@Override
+		public <T> void onProvision(ProvisionInvocation<T> provision) {
+			if (!initialized.getAndSet(true)) {
+				context.refresh();
+			}
+			provision.provision();
+		}
+	}
 
 	private static class BeanFactoryProvider implements Provider<Object> {
 
-		private DefaultListableBeanFactory beanFactory;
+		private ConfigurableListableBeanFactory beanFactory;
 
 		private String name;
 
@@ -105,7 +187,7 @@ public class SpringModule implements Module {
 
 		private Object result;
 
-		public BeanFactoryProvider(DefaultListableBeanFactory beanFactory, String name, Class<?> type) {
+		public BeanFactoryProvider(ConfigurableListableBeanFactory beanFactory, String name, Class<?> type) {
 			this.beanFactory = beanFactory;
 			this.name = name;
 			this.type = type;
@@ -160,5 +242,4 @@ public class SpringModule implements Module {
 			return false;
 		}
 	}
-
 }

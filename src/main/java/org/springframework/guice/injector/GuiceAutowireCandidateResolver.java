@@ -13,36 +13,91 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.springframework.guice.injector;
 
-import org.springframework.beans.factory.config.BeanDefinitionHolder;
+import javax.inject.Provider;
+
+import org.springframework.aop.TargetSource;
+import org.springframework.aop.framework.ProxyFactory;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.DependencyDescriptor;
-import org.springframework.beans.factory.support.AutowireCandidateResolver;
-import org.springframework.core.ResolvableType;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.context.annotation.ContextAnnotationAutowireCandidateResolver;
+import org.springframework.util.Assert;
+
+import com.google.inject.Injector;
 
 /**
  * @author Dave Syer
+ * @author Taylor Wicksell
  *
  */
-public class GuiceAutowireCandidateResolver implements AutowireCandidateResolver {
+public class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateResolver {
+    
+    private Provider<Injector> injectorProvider;
 
-	@Override
-	public boolean isAutowireCandidate(BeanDefinitionHolder bdHolder,
-			DependencyDescriptor descriptor) {
-		return false;
-	}
+    public GuiceAutowireCandidateResolver(Provider<Injector> injectorProvider) {
+        this.injectorProvider = injectorProvider;
+    }
 
-	@Override
-	public Object getSuggestedValue(DependencyDescriptor descriptor) {
-		ResolvableType resolvable = descriptor.getResolvableType();
-		return null;
-	}
+    @Override
+    public Object getLazyResolutionProxyIfNecessary(DependencyDescriptor descriptor, String beanName) {
+        return (isLazy(descriptor, beanName) ? buildLazyResolutionProxy(descriptor, beanName) : null);
+    }
 
-	@Override
-	public Object getLazyResolutionProxyIfNecessary(DependencyDescriptor descriptor,
-			String beanName) {
-		return null;
-	}
+    protected boolean isLazy(DependencyDescriptor descriptor, String beanName) {
+        Assert.state(getBeanFactory() instanceof DefaultListableBeanFactory,
+                "BeanFactory needs to be a DefaultListableBeanFactory");
+        final DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) getBeanFactory();
+        try {
+            beanFactory.doResolveDependency(descriptor, beanName, null, null);
+        } catch (NoSuchBeanDefinitionException e) {
+            return true;
+        }
+        return super.isLazy(descriptor);
+    }
+
+    protected Object buildLazyResolutionProxy(final DependencyDescriptor descriptor, final String beanName) {
+        Assert.state(getBeanFactory() instanceof DefaultListableBeanFactory,
+                "BeanFactory needs to be a DefaultListableBeanFactory");
+        final DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) getBeanFactory();
+        TargetSource ts = new TargetSource() {
+            @Override
+            public Class<?> getTargetClass() {
+                return descriptor.getDependencyType();
+            }
+
+            @Override
+            public boolean isStatic() {
+                return false;
+            }
+
+            @Override
+            public Object getTarget() {
+                Object target = null;
+                try {
+                    target = beanFactory.doResolveDependency(descriptor, beanName, null, null);
+                } catch (NoSuchBeanDefinitionException e) {
+                    target = injectorProvider.get().getInstance(descriptor.getDependencyType());
+                }
+                if (target == null) {
+                    throw new NoSuchBeanDefinitionException(descriptor.getDependencyType(),
+                            "Optional dependency not present for lazy injection point");
+                }
+                return target;
+            }
+
+            @Override
+            public void releaseTarget(Object target) {
+            }
+        };
+        ProxyFactory pf = new ProxyFactory();
+        pf.setTargetSource(ts);
+        Class<?> dependencyType = descriptor.getDependencyType();
+        if (dependencyType.isInterface()) {
+            pf.addInterface(dependencyType);
+        }
+        return pf.getProxy(beanFactory.getBeanClassLoader());
+    }
 
 }
