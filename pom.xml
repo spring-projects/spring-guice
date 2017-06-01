@@ -9,6 +9,7 @@
 
 	<name>spring-guice</name>
 	<description>Utilities for using Spring with Guice and vice versa</description>
+	<url>https://github.com/spring-projects/spring-guice</url>
 
 	<dependencyManagement>
 		<dependencies>
@@ -118,6 +119,11 @@
 		</plugins>
 	</build>
 
+	<organization>
+		<name>Pivotal Software, Inc.</name>
+		<url>https://www.spring.io</url>
+	</organization>
+
 	<scm>
 		<url>http://github.com/spring-projects/spring-guice</url>
 		<connection>scm:git:git://github.com/spring-projects/spring-guice.git</connection>
@@ -133,25 +139,78 @@
 		</developer>
 	</developers>
 
+	<licenses>
+		<license>
+			<name>Apache License, Version 2.0</name>
+			<url>https://www.apache.org/licenses/LICENSE-2.0</url>
+			<comments>
+Copyright 2014-2015 the original author or authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+	http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+implied.
+
+See the License for the specific language governing permissions and
+limitations under the License.
+			</comments>
+		</license>
+	</licenses>
+
 	<distributionManagement>
-		<!-- see 'staging' profile for dry-run deployment settings -->
-		<downloadUrl>http://www.springsource.com/download/community
-		</downloadUrl>
+		<downloadUrl>https://github.com/spring-projects/spring-guice</downloadUrl>
 		<site>
 			<id>spring-docs</id>
-			<url>scp://static.springframework.org/var/www/domains/springframework.org/static/htdocs/spring-guice/docs/${project.version}
-			</url>
+			<url>scp://static.springframework.org/var/www/domains/springframework.org/static/htdocs/spring-guice/docs/${project.artifactId}/${project.version}</url>
 		</site>
 		<repository>
-			<id>repo.spring.io</id>
-			<name>repo.spring.io-milestones</name>
-			<url>http://repo.spring.io/libs-milestone-local</url>
+			<id>sonatype-nexus-staging</id>
+			<name>Nexus Release Repository</name>
+			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
 		</repository>
 		<snapshotRepository>
 			<id>repo.spring.io</id>
-			<name>repo.spring.io-snapshots</name>
-			<url>http://repo.spring.io/libs-snapshot-local</url>
+			<name>Spring Snapshot Repository</name>
+			<url>https://repo.spring.io/libs-snapshot-local</url>
 		</snapshotRepository>
 	</distributionManagement>
 
+	<profiles>
+		<profile>
+			<id>milestone</id>
+			<distributionManagement>
+				<repository>
+					<id>repo.spring.io</id>
+					<name>Spring Milestone Repository</name>
+					<url>https://repo.spring.io/libs-milestone-local</url>
+				</repository>
+			</distributionManagement>
+		</profile>
+		<profile>
+			<id>central</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>

@@ -1,0 +1,30 @@
+# fly --target spring login --concourse-url https://ci.spring.io
+# fly --target spring set-pipeline --config pipeline.yml --pipeline spring-guice
+---
+resources:
+- name: source
+  type: git
+  source:
+    uri: https://github.com/spring-projects/spring-guice.git
+  
+jobs:
+- name: build
+  plan:
+  - get: source
+    trigger: true
+  - aggregate:
+    - task: maven
+      config:
+        platform: linux
+        image_resource:
+          type: docker-image
+          source: 
+            repository: springio/maven-base
+        inputs:
+          - name: source
+        run:
+          path: ./mvnw
+          args: [install]
+      params:
+        TERM: -dumb
+    
