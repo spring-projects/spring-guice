@@ -54,19 +54,22 @@ public class SpringModule implements Module {
 	public SpringModule(DefaultListableBeanFactory beanFactory) {
 		this.beanFactory = beanFactory;
 		if (beanFactory.getBeanNamesForType(GuiceModuleMetadata.class).length > 0) {
-			this.matcher = new CompositeTypeMatcher(beanFactory.getBeansOfType(GuiceModuleMetadata.class).values());
+			this.matcher = new CompositeTypeMatcher(
+					beanFactory.getBeansOfType(GuiceModuleMetadata.class).values());
 		}
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void configure(Binder binder) {
 		for (String name : this.beanFactory.getBeanDefinitionNames()) {
 			BeanDefinition definition = this.beanFactory.getBeanDefinition(name);
-			if (definition.isAutowireCandidate() && definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
+			if (definition.isAutowireCandidate()
+					&& definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
 				Class<?> type = this.beanFactory.getType(name);
 				final String beanName = name;
-				Provider<Object> typeProvider = new BeanFactoryProvider(this.beanFactory, null, type);
-				Provider<Object> namedProvider = new BeanFactoryProvider(this.beanFactory, beanName, type);
+				Provider<?> typeProvider = BeanFactoryProvider.typed(this.beanFactory,
+						type);
+				Provider<?> namedProvider = BeanFactoryProvider.named(this.beanFactory,
+						beanName, type);
 				if (!type.isInterface() && !ClassUtils.isCglibProxyClass(type)) {
 					bindConditionally(binder, name, type, typeProvider, namedProvider);
 				}
@@ -80,9 +83,9 @@ public class SpringModule implements Module {
 		}
 	}
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    private <T> void bindConditionally(Binder binder, String name, Type type, Provider typeProvider,
-			Provider namedProvider) {
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private void bindConditionally(Binder binder, String name, Type type,
+			Provider typeProvider, Provider namedProvider) {
 		if (!this.matcher.matches(name, type)) {
 			return;
 		}
@@ -92,11 +95,13 @@ public class SpringModule implements Module {
 
 		if (this.bound.get(type) == null) {
 			// Only bind one provider for each type
-	        binder.withSource("spring-guice").bind(Key.get(type)).toProvider(typeProvider);
-	        this.bound.put(type, typeProvider);
+			binder.withSource("spring-guice").bind(Key.get(type))
+					.toProvider(typeProvider);
+			this.bound.put(type, typeProvider);
 		}
 		// But allow binding to named beans
-		binder.withSource("spring-guice").bind(TypeLiteral.get(type)).annotatedWith(Names.named(name)).toProvider(namedProvider);
+		binder.withSource("spring-guice").bind(TypeLiteral.get(type))
+				.annotatedWith(Names.named(name)).toProvider(namedProvider);
 	}
 
 	private static class BeanFactoryProvider<T> implements Provider<T> {
@@ -109,21 +114,34 @@ public class SpringModule implements Module {
 
 		private T result;
 
-		public BeanFactoryProvider(DefaultListableBeanFactory beanFactory, String name, Class<T> type) {
+		private BeanFactoryProvider(DefaultListableBeanFactory beanFactory, String name,
+				Class<T> type) {
 			this.beanFactory = beanFactory;
 			this.name = name;
 			this.type = type;
+		}
+
+		public static <S> Provider<S> named(DefaultListableBeanFactory beanFactory,
+				String name, Class<S> type) {
+			return new BeanFactoryProvider<S>(beanFactory, name, type);
+		}
+
+		public static <S> Provider<S> typed(DefaultListableBeanFactory beanFactory,
+				Class<S> type) {
+			return new BeanFactoryProvider<S>(beanFactory, null, type);
 		}
 
 		@Override
 		public T get() {
 			if (this.result == null) {
 
-				String[] named = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(this.beanFactory, this.type);
+				String[] named = BeanFactoryUtils
+						.beanNamesForTypeIncludingAncestors(this.beanFactory, this.type);
 				List<String> names = new ArrayList<String>(named.length);
 				if (named.length == 1) {
 					names.add(named[0]);
-				} else {
+				}
+				else {
 					for (String name : named) {
 						if (name.equals(this.name))
 							names.add(name);
@@ -131,7 +149,8 @@ public class SpringModule implements Module {
 				}
 				if (names.size() == 1) {
 					this.result = this.beanFactory.getBean(names.get(0), this.type);
-				} else {
+				}
+				else {
 					for (String name : named) {
 						if (this.beanFactory.getBeanDefinition(name).isPrimary()) {
 							this.result = this.beanFactory.getBean(name, this.type);
@@ -139,7 +158,8 @@ public class SpringModule implements Module {
 						}
 					}
 					if (this.result == null) {
-						throw new ProvisionException("No primary bean definition for type: " + this.type);
+						throw new ProvisionException(
+								"No primary bean definition for type: " + this.type);
 					}
 				}
 			}
