@@ -21,7 +21,6 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.guice.injector.GuiceAutowireCandidateResolver;
 import org.springframework.test.util.AopTestUtils;
 
 import static org.junit.Assert.assertEquals;
