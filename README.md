@@ -1,6 +1,8 @@
 This project provides bridges between Spring and Guice so that you can
 use one from the other (and vice versa)
 
+![Build Status](https://travis-ci.org/spring-projects/spring-guice.svg?branch=master)
+
 ## Using a Spring ApplicationContext as a Module in Guice
 
 The main bridge in this case is a Guice `Module` that wraps an
