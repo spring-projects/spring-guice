@@ -16,14 +16,14 @@
 
 package org.springframework.guice.module;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.inject.Provider;
-
-import com.google.inject.spi.ProvisionListener;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -34,20 +34,31 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.OrderComparator;
 
+import com.google.inject.spi.ProvisionListener;
+
 /**
- * A {@link Provider} for a {@link BeanFactory} from an {@link ApplicationContext} that
- * will not be refreshed until the Guice injector wants to resolve dependencies. Delaying
- * the refresh means that the bean factory can resolve dependencies from Guice modules
- * (and vice versa).
+ * A {@link Provider} for a {@link BeanFactory} from an
+ * {@link ApplicationContext} that will not be refreshed until the Guice
+ * injector wants to resolve dependencies. Delaying the refresh means that the
+ * bean factory can resolve dependencies from Guice modules (and vice versa).
+ * 
+ * <br/>
+ * 
+ * Also implements {@link Closeable} so if you want to clean up resources used
+ * in the application context then you can keep a reference to the provider and
+ * call {@link #close()} on it when the application is shut down. Alternatively,
+ * you could register an {@link ApplicationContextInitializer} that sets a
+ * shutdown hook, so that the context is closed automatically when the JVM ends.
  * 
  * @author Dave Syer
  *
  */
-public class BeanFactoryProvider implements Provider<ConfigurableListableBeanFactory> {
+public class BeanFactoryProvider implements Provider<ConfigurableListableBeanFactory>, Closeable {
 
 	private Class<?>[] config;
 	private String[] basePackages;
 	private List<ApplicationContextInitializer<ConfigurableApplicationContext>> initializers = new ArrayList<ApplicationContextInitializer<ConfigurableApplicationContext>>();
+	private PartiallyRefreshableApplicationContext context;
 
 	/**
 	 * Create an application context by scanning these base packages.
@@ -81,37 +92,53 @@ public class BeanFactoryProvider implements Provider<ConfigurableListableBeanFac
 	}
 
 	@Override
+	public void close() throws IOException {
+		if (this.context != null) {
+			synchronized (this) {
+				if (this.context != null) {
+					this.context.close();
+					this.context = null;
+				}
+			}
+		}
+	}
+
+	@Override
 	public ConfigurableListableBeanFactory get() {
-		// TODO: how to close the context?
-		PartiallyRefreshableApplicationContext context = new PartiallyRefreshableApplicationContext();
-		if (config != null && config.length > 0) {
-			context.register(config);
-		}
-		if (basePackages != null && basePackages.length > 0) {
-			context.scan(basePackages);
-		}
-		context.partialRefresh();
-		if (initializers != null && !initializers.isEmpty()) {
-			OrderComparator.sort(initializers);
-			for (ApplicationContextInitializer<ConfigurableApplicationContext> initializer : initializers) {
-				initializer.initialize(context);
+		if (this.context == null) {
+			synchronized (this) {
+				if (this.context == null) {
+					PartiallyRefreshableApplicationContext context = new PartiallyRefreshableApplicationContext();
+					if (config != null && config.length > 0) {
+						context.register(config);
+					}
+					if (basePackages != null && basePackages.length > 0) {
+						context.scan(basePackages);
+					}
+					context.partialRefresh();
+					if (initializers != null && !initializers.isEmpty()) {
+						OrderComparator.sort(initializers);
+						for (ApplicationContextInitializer<ConfigurableApplicationContext> initializer : initializers) {
+							initializer.initialize(context);
+						}
+					}
+					this.context = context;
+				}
 			}
 		}
 		return context.getBeanFactory();
 	}
 
-	private static final class PartiallyRefreshableApplicationContext
-			extends AnnotationConfigApplicationContext {
+	private static final class PartiallyRefreshableApplicationContext extends AnnotationConfigApplicationContext {
 
 		private final AtomicBoolean partiallyRefreshed = new AtomicBoolean(false);
 
 		/*
-		 * Initializes beanFactoryPostProcessors only to ensure that all BeanDefinition's
-		 * are available
+		 * Initializes beanFactoryPostProcessors only to ensure that all
+		 * BeanDefinition's are available
 		 */
 		private void partialRefresh() {
-			getBeanFactory().registerSingleton("refreshListener",
-					new ContextRefreshingProvisionListener(this));
+			getBeanFactory().registerSingleton("refreshListener", new ContextRefreshingProvisionListener(this));
 			invokeBeanFactoryPostProcessors(getBeanFactory());
 		}
 
@@ -124,21 +151,18 @@ public class BeanFactoryProvider implements Provider<ConfigurableListableBeanFac
 		}
 
 		@Override
-		protected void invokeBeanFactoryPostProcessors(
-				ConfigurableListableBeanFactory beanFactory) {
+		protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory) {
 			if (partiallyRefreshed.compareAndSet(false, true)) {
 				super.invokeBeanFactoryPostProcessors(beanFactory);
 			}
 		}
 	}
 
-	private static final class ContextRefreshingProvisionListener
-			implements ProvisionListener {
+	private static final class ContextRefreshingProvisionListener implements ProvisionListener {
 		private final PartiallyRefreshableApplicationContext context;
 		private final AtomicBoolean initialized = new AtomicBoolean(false);
 
-		private ContextRefreshingProvisionListener(
-				PartiallyRefreshableApplicationContext context) {
+		private ContextRefreshingProvisionListener(PartiallyRefreshableApplicationContext context) {
 			this.context = context;
 		}
 

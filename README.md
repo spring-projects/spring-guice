@@ -45,6 +45,42 @@ with normal Spring dependency resolution, you can add the `@Primary`
 marker to a single bean to differentiate and hint to the `Injector`
 which instance to use.
 
+## Registering Spring Configuration Classes as a Guice Module
+
+If your Spring `@Configuration` has dependencies that can only come
+from a Guice `Module` and you prefer to use the Guice APIs to build up
+the configuration (so you can't use `@EnableGuiceModules` below), then
+you can create a `SpringModule` from a
+`Provider<ConfigurableListableBeanFactory>` instead of from an
+existing `ApplicationContext`. There are some additional features that
+may also apply:
+
+* If the bean factory created by the provider is a
+`DefaultListableBeanFactory` (mostly it would be if it came from an
+`ApplicationContext`), then it will pick up a special Guice-aware
+`AutowireCandidateResolver`, meaning that it will be able to inject
+dependencies from Guice modules that are not registered as beans.
+
+* If the bean factory contains any beans of type `ProvisionListener`
+(a Guice lifecysle listener), then those will be instantiated and
+registered with Guice.
+
+To take advantage of the autowiring the bean factory must come from an
+`ApplicationContext` that is not fully refreshed (refreshing would
+resolve all the dependencies and fail because the Guice resolver is
+not yet registered). To help you build bean factories that have this
+quality there is a convenience class called `BeanFactoryProvider` with
+static methods which you can use to create a provider to inject into a
+`SpringModule`.  Example:
+
+```java
+Injector injector = Guice.createInjector(new SimpleGuiceModule(), 
+    new SpringModule(BeanFactoryProvider.from(SpringConfiguration.class)));
+```
+
+The `SimpleGuiceModule` contains a component that the
+`SpringConfiguration` depends on.
+
 ## Using existing Guice Modules in a Spring ApplicationContext
 
 The main feature here is a Spring `@Configuration` annotation:
