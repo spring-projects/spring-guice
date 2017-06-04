@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.guice.injector;
+package org.springframework.guice.module;
 
 import javax.inject.Provider;
 
@@ -32,7 +32,7 @@ import com.google.inject.Injector;
  * @author Taylor Wicksell
  *
  */
-public class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateResolver {
+class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateResolver {
     
     private Provider<Injector> injectorProvider;
 

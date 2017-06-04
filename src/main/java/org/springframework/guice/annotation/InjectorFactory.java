@@ -1,8 +1,6 @@
-package org.springframework.guice.injector;
+package org.springframework.guice.annotation;
 
 import java.util.List;
-
-import org.springframework.guice.annotation.EnableGuiceModules;
 
 import com.google.inject.Injector;
 import com.google.inject.Module;

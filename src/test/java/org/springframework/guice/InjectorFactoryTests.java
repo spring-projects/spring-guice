@@ -7,8 +7,8 @@ import org.springframework.context.ApplicationContextException;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.guice.annotation.ModuleRegistryConfiguration;
-import org.springframework.guice.injector.InjectorFactory;
+import org.springframework.guice.annotation.EnableGuiceModules;
+import org.springframework.guice.annotation.InjectorFactory;
 
 import com.google.inject.Guice;
 import com.google.inject.Module;
@@ -26,7 +26,7 @@ public class InjectorFactoryTests {
 	@Test
 	public void testCustomInjectorIsCreated() {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(InjectorFactoryConfig.class,
-				ModuleRegistryConfiguration.class);
+				ModulesConfig.class);
 		Mockito.verify(injectorFactory, Mockito.times(1)).createInjector(Mockito.anyListOf(Module.class));
 		context.close();
 	}
@@ -34,8 +34,13 @@ public class InjectorFactoryTests {
 	@Test(expected = ApplicationContextException.class)
 	public void testMultipleInjectorFactoriesThrowsApplicationContextException() {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(InjectorFactoryConfig.class,
-				SecondInjectorFactoryConfig.class, ModuleRegistryConfiguration.class);
+				SecondInjectorFactoryConfig.class, ModulesConfig.class);
 		context.close();
+	}
+
+	@Configuration
+	@EnableGuiceModules
+	static class ModulesConfig {
 	}
 
 	@Configuration

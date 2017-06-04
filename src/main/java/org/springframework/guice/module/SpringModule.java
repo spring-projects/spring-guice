@@ -39,7 +39,6 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
-import org.springframework.guice.injector.GuiceAutowireCandidateResolver;
 import org.springframework.util.ClassUtils;
 
 /**

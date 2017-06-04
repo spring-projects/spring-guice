@@ -33,7 +33,6 @@ import org.springframework.context.ApplicationContextException;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
-import org.springframework.guice.injector.InjectorFactory;
 import org.springframework.guice.module.SpringModule;
 
 import com.google.inject.Binding;
@@ -45,7 +44,7 @@ import com.google.inject.name.Named;
 
 @Configuration
 @Order(Ordered.HIGHEST_PRECEDENCE + 10)
-public class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor, ApplicationContextAware {
+class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor, ApplicationContextAware {
 
 	ApplicationContext applicationContext;
 

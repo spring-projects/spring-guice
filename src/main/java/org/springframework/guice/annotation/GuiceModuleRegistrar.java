@@ -46,10 +46,12 @@ import org.springframework.guice.module.GuiceModuleMetadata;
 import org.springframework.util.Assert;
 
 /**
+ * Registers bean definitions for Guice modules.
+ * 
  * @author Dave Syer
  *
  */
-public class GuiceModuleRegistrar implements ImportBeanDefinitionRegistrar,
+class GuiceModuleRegistrar implements ImportBeanDefinitionRegistrar,
 		ResourceLoaderAware {
 
 	private ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -82,7 +84,7 @@ public class GuiceModuleRegistrar implements ImportBeanDefinitionRegistrar,
 		registry.registerBeanDefinition(name, definition);
 	}
 
-	public static class GuiceModuleMetadataFactory implements
+	protected static class GuiceModuleMetadataFactory implements
 			FactoryBean<GuiceModuleMetadata> {
 
 		private Collection<? extends TypeFilter> includeFilters;

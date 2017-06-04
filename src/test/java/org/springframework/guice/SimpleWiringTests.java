@@ -7,7 +7,8 @@ import javax.inject.Inject;
 import org.junit.Test;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.guice.annotation.ModuleRegistryConfiguration;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.guice.annotation.EnableGuiceModules;
 import org.springframework.guice.injector.SpringInjector;
 
 import com.google.inject.AbstractModule;
@@ -32,9 +33,14 @@ public class SimpleWiringTests {
 
 	@Test
 	public void hybridFoo() {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(TestConfig.class, ModuleRegistryConfiguration.class);
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(TestConfig.class, ModulesConfig.class);
 		Injector app = new SpringInjector(context);
 		assertNotNull(app.getInstance(Foo.class));
+	}
+
+	@Configuration
+	@EnableGuiceModules
+	static class ModulesConfig {
 	}
 
 	public static class TestConfig extends AbstractModule {

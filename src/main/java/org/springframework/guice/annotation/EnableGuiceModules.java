@@ -21,7 +21,12 @@ import java.lang.annotation.Target;
 
 import org.springframework.context.annotation.Import;
 
+import com.google.inject.Module;
+
 /**
+ * Enable spring beans that are themselves a Guice {@link Module} to contribute
+ * dependencies via the bindings in Guice.
+ * 
  * @author Dave Syer
  *
  */
