@@ -37,18 +37,19 @@ import org.springframework.core.OrderComparator;
 import com.google.inject.spi.ProvisionListener;
 
 /**
+ * <p>
  * A {@link Provider} for a {@link BeanFactory} from an
  * {@link ApplicationContext} that will not be refreshed until the Guice
  * injector wants to resolve dependencies. Delaying the refresh means that the
  * bean factory can resolve dependencies from Guice modules (and vice versa).
- * 
- * <br/>
- * 
+ * </p>
+ * <p>
  * Also implements {@link Closeable} so if you want to clean up resources used
  * in the application context then you can keep a reference to the provider and
  * call {@link #close()} on it when the application is shut down. Alternatively,
  * you could register an {@link ApplicationContextInitializer} that sets a
  * shutdown hook, so that the context is closed automatically when the JVM ends.
+ * </p>
  * 
  * @author Dave Syer
  *
@@ -63,7 +64,7 @@ public class BeanFactoryProvider implements Provider<ConfigurableListableBeanFac
 	/**
 	 * Create an application context by scanning these base packages.
 	 * 
-	 * @param basePackages
+	 * @param basePackages base packages to scan
 	 * @return a provider
 	 */
 	public static BeanFactoryProvider from(String... basePackages) {
@@ -73,7 +74,7 @@ public class BeanFactoryProvider implements Provider<ConfigurableListableBeanFac
 	/**
 	 * Create an application context using these configuration classes.
 	 * 
-	 * @param config
+	 * @param config classes to build an application
 	 * @return a provider
 	 */
 	public static BeanFactoryProvider from(Class<?>... config) {
