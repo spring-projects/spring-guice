@@ -28,13 +28,16 @@ jobs:
       image_resource:
         type: docker-image
         source: 
-          repository: springio/maven-base
+          repository: springio/spring-ci-base
       inputs:
         - name: source
       run:
         dir: source
         path: ./mvnw
-        args: [install]
+        args: [install, "-s", ".mvn/settings.xml"]
+    params:
+      TERM: dumb
+      passphrase: {{passphrase}}
 - name: next
   plan:
   - get: source
@@ -45,13 +48,16 @@ jobs:
       image_resource:
         type: docker-image
         source: 
-          repository: springio/maven-base
+          repository: springio/spring-ci-base
       inputs:
         - name: source
       run:
         dir: source
         path: ./mvnw
-        args: [install, "-Dspring.version=4.3.9.RELEASE"]
+        args: [install, "-Dspring.version=4.3.9.RELEASE", "-s", ".mvn/settings.xml"]
+    params:
+      TERM: dumb
+      passphrase: {{passphrase}}
 - name: deploy
   plan:
   - get: source
@@ -63,15 +69,15 @@ jobs:
       image_resource:
         type: docker-image
         source: 
-          repository: springio/maven-base
+          repository: springio/spring-ci-base
       inputs:
         - name: source
       run:
         dir: source
         path: ./mvnw
-        args: [clean, deploy, "-DskipTests", "-s", ".mvn/settings.xml", "-Dgpg.passphrase=${passphrase}"]
+        args: [clean, deploy, "-DskipTests", "-s", ".mvn/settings.xml"]
     params:
-      TERM: -dumb
+      TERM: dumb
       passphrase: {{passphrase}}
       sonatype_username: {{sonatype-username}}
       sonatype_password: {{sonatype-password}}
