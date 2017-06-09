@@ -97,6 +97,10 @@ public class SpringModule extends AbstractModule {
 			if (definition.isAutowireCandidate()
 					&& definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
 				Class<?> type = beanFactory.getType(name);
+				if(type == null) 
+				{
+				    continue;
+				}
 				final String beanName = name;
 				Provider<?> typeProvider = BeanFactoryProvider.typed(beanFactory, type);
 				Provider<?> namedProvider = BeanFactoryProvider.named(beanFactory,
