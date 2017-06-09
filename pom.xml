@@ -5,7 +5,7 @@
 
 	<groupId>org.springframework.guice</groupId>
 	<artifactId>spring-guice</artifactId>
-	<version>1.0.0.BUILD-SNAPSHOT</version>
+	<version>1.0.0.RELEASE</version>
 
 	<name>spring-guice</name>
 	<description>Utilities for using Spring with Guice and vice versa</description>
