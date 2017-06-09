@@ -22,7 +22,7 @@ jobs:
   plan:
   - get: source
     trigger: true
-  - task: maven
+  - task: build
     config:
       platform: linux
       image_resource:
@@ -34,7 +34,42 @@ jobs:
       run:
         dir: source
         path: ./mvnw
-        args: [deploy, "-s", ".mvn/settings.xml"]
+        args: [install]
+- name: next
+  plan:
+  - get: source
+    trigger: true
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source: 
+          repository: springio/maven-base
+      inputs:
+        - name: source
+      run:
+        dir: source
+        path: ./mvnw
+        args: [install, "-Dspring.version=4.3.9.RELEASE"]
+- name: deploy
+  plan:
+  - get: source
+    trigger: true
+    passed: [build, next]
+  - task: deploy
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source: 
+          repository: springio/maven-base
+      inputs:
+        - name: source
+      run:
+        dir: source
+        path: ./mvnw
+        args: [clean, deploy, "-DskipTests", "-s", ".mvn/settings.xml", "-Dgpg.passphrase=${passphrase}"]
     params:
       TERM: -dumb
       passphrase: {{passphrase}}
