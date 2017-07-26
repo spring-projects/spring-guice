@@ -16,6 +16,9 @@ package org.springframework.guice.annotation;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -125,6 +128,11 @@ public class GuiceModuleAnnotationTests {
 		@Bean
 		public Service service() {
 			return new MyService();
+		}
+		
+		@Bean
+		public Map<String,String> someParameterizedType() {
+			return new HashMap<String,String>();
 		}
 	}
 }

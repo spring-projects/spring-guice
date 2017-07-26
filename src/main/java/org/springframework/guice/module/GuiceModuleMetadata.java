@@ -18,6 +18,7 @@ package org.springframework.guice.module;
 
 import java.io.IOException;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.HashSet;
 import java.util.Set;
@@ -96,7 +97,8 @@ public class GuiceModuleMetadata implements BindingTypeMatcher {
 
 	@Override
 	public boolean matches(String name, Type type) {
-		if (!matches(name) || !matches(type)) {
+		Type rawType = type instanceof ParameterizedType ? ((ParameterizedType)type).getRawType() : type;
+		if (!matches(name) || !matches(rawType)) {
 			return false;
 		}
 		return true;
