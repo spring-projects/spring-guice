@@ -137,7 +137,7 @@ class GuiceModuleRegistrar implements ImportBeanDefinitionRegistrar,
 					.include(
 							includeNames.toArray(new String[includeNames.size()]))
 					.exclude(
-							excludeNames.toArray(new Pattern[excludeNames.size()]));
+							excludeNames.toArray(new String[excludeNames.size()]));
 		}
 
 		@Override
