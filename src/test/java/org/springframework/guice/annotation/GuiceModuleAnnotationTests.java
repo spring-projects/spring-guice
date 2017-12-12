@@ -68,6 +68,18 @@ public class GuiceModuleAnnotationTests {
 		assertNull(injector.getInstance(Service.class));
 	}
 
+	@Test(expected = ConfigurationException.class)
+	public void excludesNames() throws Exception {
+		Injector injector = createInjector(TestConfig.class, MetadataExcludeNamesConfig.class);
+		injector.getBinding(Service.class);
+	}
+
+	@Test(expected = ConfigurationException.class)
+	public void excludesPatterns() throws Exception {
+		Injector injector = createInjector(TestConfig.class, MetadataExcludePatternsConfig.class);
+		injector.getBinding(Service.class);
+	}
+
 	@Test
 	public void twoIncludes() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MetadataIncludesConfig.class, MetadataMoreIncludesConfig.class);
@@ -99,8 +111,13 @@ public class GuiceModuleAnnotationTests {
 	}
 
 	@Configuration
+	@GuiceModule(excludeNames="*")
+	protected static class MetadataExcludeNamesConfig {
+	}
+
+	@Configuration
 	@GuiceModule(excludePatterns=".*")
-	protected static class MetadataExcludesNameConfig {
+	protected static class MetadataExcludePatternsConfig {
 	}
 
 	@Configuration
