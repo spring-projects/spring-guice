@@ -51,6 +51,14 @@ public class EnableGuiceModulesTests {
 		context.close();
 	}
 
+	@Test
+	public void moduleBean() {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+				ModuleBeanConfig.class);
+		assertNotNull(context.getBean(Foo.class));
+		context.close();
+	}
+
 	interface Service {
 	}
 
@@ -88,7 +96,23 @@ public class EnableGuiceModulesTests {
 
 	@Configuration
 	@EnableGuiceModules
-	protected static class ModuleConfig {
+	protected static class ModuleConfig extends AbstractModule {
+
+		@Override
+		protected void configure() {
+			bind(Service.class).to(MyService.class);
+		}
+
+		@Bean
+		public Foo service(Service service) {
+			return new Foo(service);
+		}
+
+	}
+
+	@Configuration
+	@EnableGuiceModules
+	protected static class ModuleBeanConfig {
 
 		@Bean
 		public MyModule module() {
