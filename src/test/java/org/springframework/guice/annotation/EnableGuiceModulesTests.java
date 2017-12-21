@@ -13,21 +13,21 @@
 
 package org.springframework.guice.annotation;
 
-import static org.junit.Assert.assertNotNull;
-
 import javax.inject.Inject;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Injector;
+
 import org.junit.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.guice.annotation.EnableGuiceModules;
-import org.springframework.guice.annotation.GuiceModule;
+import org.springframework.context.annotation.FilterType;
 
-import com.google.inject.Injector;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * @author Dave Syer
@@ -37,7 +37,16 @@ public class EnableGuiceModulesTests {
 
 	@Test
 	public void test() {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(TestConfig.class);
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+				TestConfig.class);
+		assertNotNull(context.getBean(Foo.class));
+		context.close();
+	}
+
+	@Test
+	public void module() {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+				ModuleConfig.class);
 		assertNotNull(context.getBean(Foo.class));
 		context.close();
 	}
@@ -52,6 +61,7 @@ public class EnableGuiceModulesTests {
 
 		@Inject
 		public Foo(Service service) {
+			service.toString();
 		}
 
 	}
@@ -72,6 +82,31 @@ public class EnableGuiceModulesTests {
 		@Bean
 		public Service service() {
 			return new MyService();
+		}
+
+	}
+
+	@Configuration
+	@EnableGuiceModules
+	protected static class ModuleConfig {
+
+		@Bean
+		public MyModule module() {
+			return new MyModule();
+		}
+
+		@Bean
+		public Foo service(Service service) {
+			return new Foo(service);
+		}
+
+	}
+
+	protected static class MyModule extends AbstractModule {
+
+		@Override
+		protected void configure() {
+			bind(Service.class).to(MyService.class);
 		}
 
 	}

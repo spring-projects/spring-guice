@@ -92,7 +92,7 @@ bindings. Example:
 ```java
 @EnableGuiceModules
 @Configuration
-public static class TestConfig extends AbstractModule {
+public static class TestConfig {
 
     @Bean
     public MyModule myModule() {
