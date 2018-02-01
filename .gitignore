@@ -11,6 +11,8 @@ target/
 .DS_Store
 .settings/
 .springBeans
+.sts4-cache/
+.vscode/
 *.iml
 *.iws
 *.ipr

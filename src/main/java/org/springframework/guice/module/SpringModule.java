@@ -13,6 +13,7 @@
 
 package org.springframework.guice.module;
 
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -21,6 +22,14 @@ import java.util.List;
 import java.util.Map;
 
 import javax.inject.Provider;
+
+import org.springframework.beans.factory.BeanFactoryUtils;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.AbstractBeanDefinition;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.context.ApplicationContext;
+import org.springframework.util.ClassUtils;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
@@ -32,14 +41,6 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.matcher.Matchers;
 import com.google.inject.name.Names;
 import com.google.inject.spi.ProvisionListener;
-
-import org.springframework.beans.factory.BeanFactoryUtils;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.beans.factory.support.AbstractBeanDefinition;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.util.ClassUtils;
 
 /**
  * @author Dave Syer
@@ -126,6 +127,14 @@ public class SpringModule extends AbstractModule {
 		}
 		if (type.getTypeName().startsWith("com.google.inject")) {
 			return;
+		}
+		if (type instanceof ParameterizedType) {
+			ParameterizedType param = (ParameterizedType) type;
+			for (Type t : param.getActualTypeArguments()) {
+				if (!ClassUtils.isPresent(t.getTypeName(), null)) {
+					return;
+				}
+			}
 		}
 
 		if (this.bound.get(type) == null) {
