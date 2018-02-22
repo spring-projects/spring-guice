@@ -15,6 +15,10 @@ package org.springframework.guice.annotation;
 import javax.inject.Provider;
 
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.google.inject.Injector;
+import com.google.inject.Key;
 
 /**
  * Convenience class used to map a Guice {@link Provider} to a Spring bean.
@@ -22,17 +26,20 @@ import org.springframework.beans.factory.FactoryBean;
  * @author Dave Syer
  */
 class GuiceFactoryBean<T> implements FactoryBean<T> {
-	private final Provider<T> provider;
+	private final Key<T> key;
 	private final Class<T> beanType;
+	
+	@Autowired
+	private Injector injector;
 
-	public GuiceFactoryBean(Class<T> beanType, Provider<T> provider) {
-		this.provider = provider;
+	public GuiceFactoryBean(Class<T> beanType, Key<T> key) {
 		this.beanType = beanType;
+		this.key = key;
 	}
 
 	@Override
 	public T getObject() throws Exception {
-		return (T) provider.get();
+		return (T) injector.getInstance(key);
 	}
 
 	@Override
