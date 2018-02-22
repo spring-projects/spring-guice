@@ -14,6 +14,7 @@
 package org.springframework.guice.annotation;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
@@ -68,10 +69,9 @@ public class EnableGuiceModulesTests {
 	public static class Foo {
 
 		@Inject
-		public Foo(Service service) {
+		public Foo(@Named("service") Service service) {
 			service.toString();
 		}
-
 	}
 
 	@Configuration

@@ -36,6 +36,7 @@ import com.google.inject.Binder;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.ProvisionException;
+import com.google.inject.Scopes;
 import com.google.inject.Stage;
 import com.google.inject.TypeLiteral;
 import com.google.inject.matcher.Matchers;
@@ -95,6 +96,9 @@ public class SpringModule extends AbstractModule {
 	private void bind(ConfigurableListableBeanFactory beanFactory) {
 		for (String name : beanFactory.getBeanDefinitionNames()) {
 			BeanDefinition definition = beanFactory.getBeanDefinition(name);
+			if(definition.hasAttribute("spring-guice")){
+				continue;
+			}
 			if (definition.isAutowireCandidate()
 					&& definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
 				Class<?> type = beanFactory.getType(name);
@@ -140,8 +144,10 @@ public class SpringModule extends AbstractModule {
 		if (this.bound.get(type) == null) {
 			// Only bind one provider for each type
 			binder.withSource("spring-guice").bind(Key.get(type))
-					.toProvider(typeProvider);
-			this.bound.put(type, typeProvider);
+					.toProvider(typeProvider).in(Scopes.SINGLETON);
+			if(binder.currentStage() != Stage.TOOL) {
+				this.bound.put(type, typeProvider);
+			}
 		}
 		// But allow binding to named beans
 		binder.withSource("spring-guice").bind(TypeLiteral.get(type))
