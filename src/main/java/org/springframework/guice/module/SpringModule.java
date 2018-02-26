@@ -51,7 +51,7 @@ public class SpringModule extends AbstractModule {
 
 	private BindingTypeMatcher matcher = new GuiceModuleMetadata();
 
-	private Map<Type, Provider<?>> bound = new HashMap<Type, Provider<?>>();
+	private Map<StageTypeKey, Provider<?>> bound = new HashMap<StageTypeKey, Provider<?>>();
 
 	private ConfigurableListableBeanFactory beanFactory;
 
@@ -140,18 +140,55 @@ public class SpringModule extends AbstractModule {
 				}
 			}
 		}
-
-		if (this.bound.get(type) == null) {
+		StageTypeKey stageTypeKey = new StageTypeKey(binder.currentStage(), type);
+		if (this.bound.get(stageTypeKey) == null) {
 			// Only bind one provider for each type
 			binder.withSource("spring-guice").bind(Key.get(type))
-					.toProvider(typeProvider).in(Scopes.SINGLETON);
-			if(binder.currentStage() != Stage.TOOL) {
-				this.bound.put(type, typeProvider);
-			}
+					.toProvider(typeProvider);
+			this.bound.put(stageTypeKey, typeProvider);
 		}
 		// But allow binding to named beans
 		binder.withSource("spring-guice").bind(TypeLiteral.get(type))
 				.annotatedWith(Names.named(name)).toProvider(namedProvider);
+	}
+	
+	private static class StageTypeKey {
+		
+		private final Stage stage;
+		private final Type type;
+
+		public StageTypeKey(Stage stage, Type type) {
+			this.stage = stage;
+			this.type = type;
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((stage == null) ? 0 : stage.hashCode());
+			result = prime * result + ((type == null) ? 0 : type.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			StageTypeKey other = (StageTypeKey) obj;
+			if (stage != other.stage)
+				return false;
+			if (type == null) {
+				if (other.type != null)
+					return false;
+			} else if (!type.equals(other.type))
+				return false;
+			return true;
+		}
 	}
 
 	private static class BeanFactoryProvider<T> implements Provider<T> {

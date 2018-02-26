@@ -10,16 +10,16 @@ import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.guice.BeanPostProcessorTest.GuiceBeanThatWantsPostProcessedBean;
-import org.springframework.guice.BeanPostProcessorTest.GuiceBeanThatWantsSpringBean;
-import org.springframework.guice.BeanPostProcessorTest.PostProcessedBean;
-import org.springframework.guice.BeanPostProcessorTest.SpringBeanThatWantsPostProcessedBean;
+import org.springframework.guice.BeanPostProcessorTests.GuiceBeanThatWantsPostProcessedBean;
+import org.springframework.guice.BeanPostProcessorTests.GuiceBeanThatWantsSpringBean;
+import org.springframework.guice.BeanPostProcessorTests.PostProcessedBean;
+import org.springframework.guice.BeanPostProcessorTests.SpringBeanThatWantsPostProcessedBean;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 
-public class BeanPostProcessorTest {
+public class BeanPostProcessorTests {
 
 	/**
 	 * Verify BeanPostProcessor's such as Spring Boot's
