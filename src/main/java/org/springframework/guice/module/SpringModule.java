@@ -49,6 +49,8 @@ import com.google.inject.spi.ProvisionListener;
  */
 public class SpringModule extends AbstractModule {
 
+	public static final String SPRING_GUICE_SOURCE = "spring-guice";
+
 	private BindingTypeMatcher matcher = new GuiceModuleMetadata();
 
 	private Map<StageTypeKey, Provider<?>> bound = new HashMap<StageTypeKey, Provider<?>>();
@@ -96,7 +98,7 @@ public class SpringModule extends AbstractModule {
 	private void bind(ConfigurableListableBeanFactory beanFactory) {
 		for (String name : beanFactory.getBeanDefinitionNames()) {
 			BeanDefinition definition = beanFactory.getBeanDefinition(name);
-			if(definition.hasAttribute("spring-guice")){
+			if(definition.hasAttribute(SPRING_GUICE_SOURCE)){
 				continue;
 			}
 			if (definition.isAutowireCandidate()
@@ -143,12 +145,12 @@ public class SpringModule extends AbstractModule {
 		StageTypeKey stageTypeKey = new StageTypeKey(binder.currentStage(), type);
 		if (this.bound.get(stageTypeKey) == null) {
 			// Only bind one provider for each type
-			binder.withSource("spring-guice").bind(Key.get(type))
+			binder.withSource(SPRING_GUICE_SOURCE).bind(Key.get(type))
 					.toProvider(typeProvider);
 			this.bound.put(stageTypeKey, typeProvider);
 		}
 		// But allow binding to named beans
-		binder.withSource("spring-guice").bind(TypeLiteral.get(type))
+		binder.withSource(SPRING_GUICE_SOURCE).bind(TypeLiteral.get(type))
 				.annotatedWith(Names.named(name)).toProvider(namedProvider);
 	}
 	

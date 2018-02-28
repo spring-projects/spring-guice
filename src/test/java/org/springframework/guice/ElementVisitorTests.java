@@ -32,6 +32,7 @@ public class ElementVisitorTests {
 	
 	@BeforeClass
 	public static void init() {
+		System.setProperty("spring.guice.dedupeBindings", "true");
 		context = new AnnotationConfigApplicationContext(ElementVisitorTestConfig.class);
 	}
 	
