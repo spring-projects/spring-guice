@@ -1,0 +1,6 @@
+{"properties": [{
+  "name": "spring.guice.dedup",
+  "type": "java.lang.Boolean",
+  "description": "When using `@EnableGuiceModules`, if a Spring Bean and a Guice Binding both exist for the same type and Qualifier, the Spring Bean will be kept and the Guice Binding discarded.",
+  "defaultValue": "false"
+}]}

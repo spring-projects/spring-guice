@@ -23,6 +23,17 @@ import java.util.Map;
 
 import javax.inject.Provider;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.ProvisionException;
+import com.google.inject.Stage;
+import com.google.inject.TypeLiteral;
+import com.google.inject.matcher.Matchers;
+import com.google.inject.name.Names;
+import com.google.inject.spi.ProvisionListener;
+
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -31,23 +42,13 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.ClassUtils;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Binder;
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.ProvisionException;
-import com.google.inject.Scopes;
-import com.google.inject.Stage;
-import com.google.inject.TypeLiteral;
-import com.google.inject.matcher.Matchers;
-import com.google.inject.name.Names;
-import com.google.inject.spi.ProvisionListener;
-
 /**
  * @author Dave Syer
  *
  */
 public class SpringModule extends AbstractModule {
+
+	public static final String SPRING_GUICE_SOURCE = "spring-guice";
 
 	private BindingTypeMatcher matcher = new GuiceModuleMetadata();
 
@@ -96,15 +97,14 @@ public class SpringModule extends AbstractModule {
 	private void bind(ConfigurableListableBeanFactory beanFactory) {
 		for (String name : beanFactory.getBeanDefinitionNames()) {
 			BeanDefinition definition = beanFactory.getBeanDefinition(name);
-			if(definition.hasAttribute("spring-guice")){
+			if (definition.hasAttribute(SPRING_GUICE_SOURCE)) {
 				continue;
 			}
 			if (definition.isAutowireCandidate()
 					&& definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
 				Class<?> type = beanFactory.getType(name);
-				if(type == null) 
-				{
-				    continue;
+				if (type == null) {
+					continue;
 				}
 				final String beanName = name;
 				Provider<?> typeProvider = BeanFactoryProvider.typed(beanFactory, type);
@@ -143,17 +143,17 @@ public class SpringModule extends AbstractModule {
 		StageTypeKey stageTypeKey = new StageTypeKey(binder.currentStage(), type);
 		if (this.bound.get(stageTypeKey) == null) {
 			// Only bind one provider for each type
-			binder.withSource("spring-guice").bind(Key.get(type))
+			binder.withSource(SPRING_GUICE_SOURCE).bind(Key.get(type))
 					.toProvider(typeProvider);
 			this.bound.put(stageTypeKey, typeProvider);
 		}
 		// But allow binding to named beans
-		binder.withSource("spring-guice").bind(TypeLiteral.get(type))
+		binder.withSource(SPRING_GUICE_SOURCE).bind(TypeLiteral.get(type))
 				.annotatedWith(Names.named(name)).toProvider(namedProvider);
 	}
-	
+
 	private static class StageTypeKey {
-		
+
 		private final Stage stage;
 		private final Type type;
 
@@ -185,7 +185,8 @@ public class SpringModule extends AbstractModule {
 			if (type == null) {
 				if (other.type != null)
 					return false;
-			} else if (!type.equals(other.type))
+			}
+			else if (!type.equals(other.type))
 				return false;
 			return true;
 		}

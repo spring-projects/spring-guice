@@ -14,10 +14,12 @@
 package org.springframework.guice.annotation;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import com.google.inject.Binding;
 import com.google.inject.Guice;
@@ -61,7 +63,8 @@ import org.springframework.guice.module.SpringModule;
 class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor,
 		ApplicationContextAware, ApplicationListener<CreateInjectorSignalEvent> {
 
-	ApplicationContext applicationContext;
+	private static final String SPRING_GUICE_DEDUPE_BINDINGS_PROPERTY_NAME = "spring.guice.dedup";
+	private ApplicationContext applicationContext;
 	private List<Module> modules;
 	private ConfigurableListableBeanFactory beanFactory;
 
@@ -88,6 +91,7 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 		if (injector == null) {
 			injector = Guice.createInjector(modules);
 		}
+		beanFactory.registerResolvableDependency(Injector.class, injector);
 		beanFactory.registerSingleton("injector", injector);
 	}
 
@@ -95,7 +99,8 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 			BeanDefinitionRegistry registry) {
 		for (Entry<Key<?>, Binding<?>> entry : bindings.entrySet()) {
 			if (entry.getKey().getTypeLiteral().getRawType().equals(Injector.class)
-					|| "spring-guice".equals(entry.getValue().getSource().toString())) {
+					|| SpringModule.SPRING_GUICE_SOURCE
+							.equals(entry.getValue().getSource().toString())) {
 				continue;
 			}
 
@@ -113,9 +118,9 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 						((ElementSource) source).getDeclaringSource().toString());
 			}
 			else {
-				bean.setResourceDescription("spring-guice");
+				bean.setResourceDescription(SpringModule.SPRING_GUICE_SOURCE);
 			}
-			bean.setAttribute("spring-guice", true);
+			bean.setAttribute(SpringModule.SPRING_GUICE_SOURCE, true);
 			registry.registerBeanDefinition(extractName(key), bean);
 		}
 
@@ -133,32 +138,97 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 			throws BeansException {
 		modules = new ArrayList<Module>(((ConfigurableListableBeanFactory) registry)
 				.getBeansOfType(Module.class).values());
-
+		modules.add(new SpringModule(this.applicationContext));
 		Map<Key<?>, Binding<?>> bindings = new HashMap<Key<?>, Binding<?>>();
-		for (Element e : Elements.getElements(Stage.TOOL, modules)) {
+		List<Element> elements = Elements.getElements(Stage.TOOL, modules);
+		if (applicationContext.getEnvironment().getProperty(
+				SPRING_GUICE_DEDUPE_BINDINGS_PROPERTY_NAME, Boolean.class, false)) {
+			elements = removeDuplicates(elements);
+			modules = Collections.singletonList(Elements.getModule(elements));
+		}
+		for (Element e : elements) {
 			if (e instanceof Binding) {
 				Binding<?> binding = (Binding<?>) e;
 				bindings.put(binding.getKey(), binding);
-			} else if (e instanceof PrivateElements) {
+			}
+			else if (e instanceof PrivateElements) {
 				extractPrivateElements(bindings, (PrivateElements) e);
 			}
 		}
 		mapBindings(bindings, registry);
-		modules.add(new SpringModule(this.applicationContext));
+
 		// This event can be published now and it wont actually be processed until later
 		// (during onRefresh()). There's no other way to get a hook into this phase of the
 		// lifecycle.
 		applicationContext.publishEvent(new CreateInjectorSignalEvent());
 	}
 
-	private void extractPrivateElements(Map<Key<?>, Binding<?>> bindings, PrivateElements privateElements) {
+	private void extractPrivateElements(Map<Key<?>, Binding<?>> bindings,
+			PrivateElements privateElements) {
 		List<Element> elements = privateElements.getElements();
 		for (Element e : elements) {
-			if (e instanceof Binding && privateElements.getExposedKeys().contains(((Binding<?>) e).getKey())) {
+			if (e instanceof Binding && privateElements.getExposedKeys()
+					.contains(((Binding<?>) e).getKey())) {
 				Binding<?> binding = (Binding<?>) e;
 				bindings.put(binding.getKey(), binding);
-			} else if (e instanceof PrivateElements) {
+			}
+			else if (e instanceof PrivateElements) {
 				extractPrivateElements(bindings, (PrivateElements) e);
+			}
+		}
+	}
+
+	/***
+	 * Remove guice-sourced bindings in favor of spring-sourced bindings, when both exist
+	 * for a given binding key
+	 */
+	protected List<Element> removeDuplicates(List<Element> elements) {
+		List<Element> duplicateElements = elements.stream()
+				.filter(e -> e instanceof Binding).map(e -> (Binding<?>) e)
+				.collect(Collectors.groupingBy(Binding::getKey)).entrySet().stream()
+				.filter(e -> e.getValue().size() > 1 && e.getValue().stream().anyMatch(
+						binding -> binding.getSource() != null && binding.getSource()
+								.toString().contains(SpringModule.SPRING_GUICE_SOURCE))) // find
+																							// duplicates
+				.flatMap(e -> e.getValue().stream())
+				.filter(e -> e.getSource() != null && !e.getSource().toString()
+						.contains(SpringModule.SPRING_GUICE_SOURCE))
+				.collect(Collectors.toList());
+
+		@SuppressWarnings("unlikely-arg-type")
+		List<Element> dedupedElements = elements.stream().filter(e -> {
+			if (e instanceof Binding) {
+				return !duplicateElements
+						.contains(new SourceComparableBinding((Binding<?>) e));
+			}
+			else {
+				return true;
+			}
+		}).collect(Collectors.toList());
+		return dedupedElements;
+	}
+
+	private static class SourceComparableBinding {
+		private Binding<?> binding;
+
+		public SourceComparableBinding(Binding<?> binding) {
+			this.binding = binding;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj instanceof Binding) {
+				Binding<?> compareTo = (Binding<?>) obj;
+				if (compareTo.getSource() != null && this.binding != null) {
+					return binding.equals(compareTo)
+							&& binding.getSource().equals(compareTo.getSource());
+				}
+				else {
+					return binding.equals(compareTo);
+				}
+			}
+			else {
+				return false;
 			}
 		}
 	}
