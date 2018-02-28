@@ -29,6 +29,7 @@ import com.google.inject.name.Named;
 import com.google.inject.spi.Element;
 import com.google.inject.spi.ElementSource;
 import com.google.inject.spi.Elements;
+import com.google.inject.spi.PrivateElements;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -87,7 +88,7 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 		if (injector == null) {
 			injector = Guice.createInjector(modules);
 		}
-		beanFactory.registerResolvableDependency(Injector.class, injector);
+		beanFactory.registerSingleton("injector", injector);
 	}
 
 	private void mapBindings(Map<Key<?>, Binding<?>> bindings,
@@ -138,6 +139,8 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 			if (e instanceof Binding) {
 				Binding<?> binding = (Binding<?>) e;
 				bindings.put(binding.getKey(), binding);
+			} else if (e instanceof PrivateElements) {
+				extractPrivateElements(bindings, (PrivateElements) e);
 			}
 		}
 		mapBindings(bindings, registry);
@@ -146,6 +149,18 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 		// (during onRefresh()). There's no other way to get a hook into this phase of the
 		// lifecycle.
 		applicationContext.publishEvent(new CreateInjectorSignalEvent());
+	}
+
+	private void extractPrivateElements(Map<Key<?>, Binding<?>> bindings, PrivateElements privateElements) {
+		List<Element> elements = privateElements.getElements();
+		for (Element e : elements) {
+			if (e instanceof Binding && privateElements.getExposedKeys().contains(((Binding<?>) e).getKey())) {
+				Binding<?> binding = (Binding<?>) e;
+				bindings.put(binding.getKey(), binding);
+			} else if (e instanceof PrivateElements) {
+				extractPrivateElements(bindings, (PrivateElements) e);
+			}
+		}
 	}
 
 	@Override
