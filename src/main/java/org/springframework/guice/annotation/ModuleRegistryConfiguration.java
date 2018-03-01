@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import com.google.inject.Binding;
@@ -35,6 +36,7 @@ import com.google.inject.spi.PrivateElements;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -43,8 +45,6 @@ import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationContextException;
-import org.springframework.context.ApplicationEvent;
-import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -60,13 +60,13 @@ import org.springframework.guice.module.SpringModule;
  */
 @Configuration
 @Order(Ordered.HIGHEST_PRECEDENCE)
-class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor,
-		ApplicationContextAware, ApplicationListener<CreateInjectorSignalEvent> {
+class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor, ApplicationContextAware {
 
 	private static final String SPRING_GUICE_DEDUPE_BINDINGS_PROPERTY_NAME = "spring.guice.dedup";
 	private ApplicationContext applicationContext;
 	private List<Module> modules;
 	private ConfigurableListableBeanFactory beanFactory;
+	private AtomicBoolean injectorCreated = new AtomicBoolean(false);
 
 	private void createInjector(List<Module> modules,
 			ConfigurableListableBeanFactory beanFactory) {
@@ -156,11 +156,6 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 			}
 		}
 		mapBindings(bindings, registry);
-
-		// This event can be published now and it wont actually be processed until later
-		// (during onRefresh()). There's no other way to get a hook into this phase of the
-		// lifecycle.
-		applicationContext.publishEvent(new CreateInjectorSignalEvent());
 	}
 
 	private void extractPrivateElements(Map<Key<?>, Binding<?>> bindings,
@@ -237,6 +232,20 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory)
 			throws BeansException {
 		this.beanFactory = beanFactory;
+		beanFactory.registerSingleton("guiceInjectorInitializer", new GuiceInjectorInitializingBeanPostProcessor(){
+			@Override
+			public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+				return bean;
+			}
+			
+			@Override
+			public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+				if(injectorCreated.compareAndSet(false,true)) {
+					createInjector(modules, beanFactory);
+				}
+				return bean;
+			}
+		});
 	}
 
 	@Override
@@ -244,21 +253,14 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 			throws BeansException {
 		this.applicationContext = applicationContext;
 	}
-
-	@Override
-	public void onApplicationEvent(CreateInjectorSignalEvent event) {
-		createInjector(modules, beanFactory);
+	
+	private static class GuiceInjectorInitializingBeanPostProcessor implements BeanPostProcessor, Ordered {
+		@Override
+		public int getOrder() {
+			return Ordered.LOWEST_PRECEDENCE - 1;
+		}
 	}
 }
 
-/**
- * Signaling event used to trigger injector creation after BeanPostProcessors have been
- * applied.
- */
-class CreateInjectorSignalEvent extends ApplicationEvent {
-	private static final long serialVersionUID = -6546970378679850504L;
 
-	public CreateInjectorSignalEvent() {
-		super(serialVersionUID);
-	}
-}
+

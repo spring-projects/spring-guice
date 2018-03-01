@@ -3,7 +3,7 @@ package org.springframework.guice;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.springframework.context.ApplicationContextException;
+import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,7 +31,7 @@ public class InjectorFactoryTests {
 		context.close();
 	}
 
-	@Test(expected = ApplicationContextException.class)
+	@Test(expected = BeanCreationException.class)
 	public void testMultipleInjectorFactoriesThrowsApplicationContextException() {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(InjectorFactoryConfig.class,
 				SecondInjectorFactoryConfig.class, ModulesConfig.class);
