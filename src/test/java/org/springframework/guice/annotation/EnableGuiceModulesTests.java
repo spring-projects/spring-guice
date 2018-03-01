@@ -19,6 +19,7 @@ import javax.inject.Named;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 
+import org.junit.After;
 import org.junit.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,8 +37,22 @@ import static org.junit.Assert.assertNotNull;
  */
 public class EnableGuiceModulesTests {
 
+	@After
+	public void cleanUp() {
+		System.clearProperty("spring.guice.dedup");
+	}
+	
 	@Test
 	public void test() {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+				TestConfig.class);
+		assertNotNull(context.getBean(Foo.class));
+		context.close();
+	}
+	
+	@Test
+	public void testWithDedupFeatureEnabled() {
+		System.setProperty("spring.guice.dedup", "true");
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
 				TestConfig.class);
 		assertNotNull(context.getBean(Foo.class));

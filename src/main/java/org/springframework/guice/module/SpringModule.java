@@ -72,24 +72,22 @@ public class SpringModule extends AbstractModule {
 
 	@Override
 	public void configure() {
-		if (binder().currentStage() != Stage.TOOL) {
-			if (beanFactory == null) {
-				beanFactory = beanFactoryProvider.get();
-			}
-			if (beanFactory.getBeanNamesForType(ProvisionListener.class).length > 0) {
-				binder().bindListener(Matchers.any(),
-						beanFactory.getBeansOfType(ProvisionListener.class).values()
-								.toArray(new ProvisionListener[0]));
-			}
-			if (beanFactory instanceof DefaultListableBeanFactory) {
-				((DefaultListableBeanFactory) beanFactory)
-						.setAutowireCandidateResolver(new GuiceAutowireCandidateResolver(
-								binder().getProvider(Injector.class)));
-			}
-			if (beanFactory.getBeanNamesForType(GuiceModuleMetadata.class).length > 0) {
-				this.matcher = new CompositeTypeMatcher(
-						beanFactory.getBeansOfType(GuiceModuleMetadata.class).values());
-			}
+		if (beanFactory == null) {
+			beanFactory = beanFactoryProvider.get();
+		}
+		if (beanFactory.getBeanNamesForType(ProvisionListener.class).length > 0) {
+			binder().bindListener(Matchers.any(),
+					beanFactory.getBeansOfType(ProvisionListener.class).values()
+							.toArray(new ProvisionListener[0]));
+		}
+		if (beanFactory instanceof DefaultListableBeanFactory) {
+			((DefaultListableBeanFactory) beanFactory)
+					.setAutowireCandidateResolver(new GuiceAutowireCandidateResolver(
+							binder().getProvider(Injector.class)));
+		}
+		if (beanFactory.getBeanNamesForType(GuiceModuleMetadata.class).length > 0) {
+			this.matcher = new CompositeTypeMatcher(
+					beanFactory.getBeansOfType(GuiceModuleMetadata.class).values());
 		}
 		bind(beanFactory);
 	}
