@@ -163,7 +163,7 @@ exclude the `@Bean` type from the `Injector` bindings using the
 
 ## Configurable Options
 
-* Binding Deduplication - When using `@EnableGuiceModules`, if a Spring `Bean` and a Guice `Binding` both exist for the same type and `Qualifier`, creation of the `Injector` will fail. You may instead prefer to keep Spring's instance of the type instead of receiving this error. To accomplish this, you may set the property `spring.guice.dedupeBindings=true`.
+* Binding Deduplication - When using `@EnableGuiceModules`, if a Spring `Bean` and a Guice `Binding` both exist for the same type and `Qualifier`, creation of the `Injector` will fail. You may instead prefer to keep Spring's instance of the type instead of receiving this error. To accomplish this, you may set the property `spring.guice.dedup=true`.
 
 ## Limitations
 
