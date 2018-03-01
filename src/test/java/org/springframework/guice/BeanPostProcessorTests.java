@@ -7,9 +7,14 @@ import javax.inject.Inject;
 import org.junit.Test;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 import org.springframework.guice.BeanPostProcessorTests.GuiceBeanThatWantsPostProcessedBean;
 import org.springframework.guice.BeanPostProcessorTests.GuiceBeanThatWantsSpringBean;
 import org.springframework.guice.BeanPostProcessorTests.PostProcessedBean;
@@ -69,22 +74,42 @@ public class BeanPostProcessorTests {
 @EnableGuiceModules
 @Configuration
 class BeanPostProcessorTestConfig {
+	
+	public static class PostProcessorRegistrar implements BeanDefinitionRegistryPostProcessor {
+		@Override
+		public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
+			BeanDefinitionBuilder bean = BeanDefinitionBuilder.genericBeanDefinition(TestBeanPostProcessor.class);
+			registry.registerBeanDefinition("postProcessor", bean.getBeanDefinition());
+		}
+
+		@Override
+		public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {}
+		
+	}
+	
+	public static class TestBeanPostProcessor implements BeanPostProcessor, Ordered {
+		@Override
+		public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+			if(bean instanceof PostProcessedBean) {
+				((PostProcessedBean)bean).postProcessed = true;
+			}
+			return bean;
+		}
+
+		@Override
+		public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+			return bean;
+		}
+
+		@Override
+		public int getOrder() {
+			return 0;
+		}
+	}
+
 	@Bean
-	public BeanPostProcessor postProcessor() {
-		return new BeanPostProcessor() {
-			@Override
-			public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
-				if(bean instanceof PostProcessedBean) {
-					((PostProcessedBean)bean).postProcessed = true;
-				}
-				return bean;
-			}
-			
-			@Override
-			public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-				return bean;
-			}
-		};
+	public PostProcessorRegistrar postProcessorRegistrar() {
+		return new PostProcessorRegistrar();
 	}
 	
 	@Bean

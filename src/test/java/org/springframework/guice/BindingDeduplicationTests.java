@@ -1,12 +1,11 @@
 package org.springframework.guice;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.CreationException;
 import com.google.inject.Module;
 
 import org.junit.AfterClass;
 import org.junit.Test;
-
+import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,7 +31,7 @@ public class BindingDeduplicationTests {
 		context.close();
 	}
 
-	@Test(expected = CreationException.class)
+	@Test(expected = BeanCreationException.class)
 	public void verifyDuplicateBindingErrorWhenDedupeNotEnabled() {
 		System.setProperty("spring.guice.dedup", "false");
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
