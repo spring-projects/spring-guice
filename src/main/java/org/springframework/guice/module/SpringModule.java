@@ -13,13 +13,17 @@
 
 package org.springframework.guice.module;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.inject.Provider;
 
@@ -30,17 +34,23 @@ import com.google.inject.Key;
 import com.google.inject.ProvisionException;
 import com.google.inject.Stage;
 import com.google.inject.TypeLiteral;
+import com.google.inject.internal.Annotations;
 import com.google.inject.matcher.Matchers;
 import com.google.inject.name.Names;
 import com.google.inject.spi.ProvisionListener;
 
 import org.springframework.beans.factory.BeanFactoryUtils;
+import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.core.type.MethodMetadata;
+import org.springframework.core.type.StandardMethodMetadata;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.ReflectionUtils;
 
 /**
  * @author Dave Syer
@@ -95,9 +105,11 @@ public class SpringModule extends AbstractModule {
 	private void bind(ConfigurableListableBeanFactory beanFactory) {
 		for (String name : beanFactory.getBeanDefinitionNames()) {
 			BeanDefinition definition = beanFactory.getBeanDefinition(name);
+			
 			if (definition.hasAttribute(SPRING_GUICE_SOURCE)) {
 				continue;
 			}
+			Optional<Annotation> bindingAnnotation = getAnnotationForBeanDefinition(definition);
 			if (definition.isAutowireCandidate()
 					&& definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
 				Class<?> type = beanFactory.getType(name);
@@ -109,21 +121,84 @@ public class SpringModule extends AbstractModule {
 				Provider<?> namedProvider = BeanFactoryProvider.named(beanFactory,
 						beanName, type);
 				if (!type.isInterface() && !ClassUtils.isCglibProxyClass(type)) {
-					bindConditionally(binder(), name, type, typeProvider, namedProvider);
+					bindConditionally(binder(), name, type, typeProvider, namedProvider, bindingAnnotation);
 				}
 				for (Class<?> iface : ClassUtils.getAllInterfacesForClass(type)) {
-					bindConditionally(binder(), name, iface, typeProvider, namedProvider);
+					bindConditionally(binder(), name, iface, typeProvider, namedProvider, bindingAnnotation);
 				}
 				for (Type iface : type.getGenericInterfaces()) {
-					bindConditionally(binder(), name, iface, typeProvider, namedProvider);
+					bindConditionally(binder(), name, iface, typeProvider, namedProvider, bindingAnnotation);
 				}
 			}
 		}
 	}
 
+	private Optional<Annotation> getAnnotationForBeanDefinition(BeanDefinition definition) {
+		if (definition instanceof AnnotatedBeanDefinition
+				&& ((AnnotatedBeanDefinition) definition).getFactoryMethodMetadata() != null) {
+			try {
+				Method factoryMethod = getFactoryMethod(beanFactory, definition);
+				return Arrays.stream(AnnotationUtils.getAnnotations(factoryMethod))
+						.filter(a -> Annotations.isBindingAnnotation(a.annotationType())).findFirst();
+			} catch (Exception e) {
+				return Optional.empty();
+			}
+		} else {
+			return Optional.empty();
+		}
+	}
+
+	private Method getFactoryMethod(ConfigurableListableBeanFactory beanFactory,
+			BeanDefinition definition) throws Exception {
+		if (definition instanceof AnnotatedBeanDefinition) {
+			MethodMetadata factoryMethodMetadata = ((AnnotatedBeanDefinition) definition)
+					.getFactoryMethodMetadata();
+			if (factoryMethodMetadata instanceof StandardMethodMetadata) {
+				return ((StandardMethodMetadata) factoryMethodMetadata)
+						.getIntrospectedMethod();
+			}
+		}
+		BeanDefinition factoryDefinition = beanFactory
+				.getBeanDefinition(definition.getFactoryBeanName());
+		Class<?> factoryClass = ClassUtils.forName(factoryDefinition.getBeanClassName(),
+				beanFactory.getBeanClassLoader());
+		return getFactoryMethod(definition, factoryClass);
+	}
+
+	private Method getFactoryMethod(BeanDefinition definition, Class<?> factoryClass) {
+		Method uniqueMethod = null;
+		for (Method candidate : getCandidateFactoryMethods(definition, factoryClass)) {
+			if (candidate.getName().equals(definition.getFactoryMethodName())) {
+				if (uniqueMethod == null) {
+					uniqueMethod = candidate;
+				}
+				else if (!hasMatchingParameterTypes(candidate, uniqueMethod)) {
+					return null;
+				}
+			}
+		}
+		return uniqueMethod;
+	}
+
+	private Method[] getCandidateFactoryMethods(BeanDefinition definition,
+			Class<?> factoryClass) {
+		return shouldConsiderNonPublicMethods(definition)
+				? ReflectionUtils.getAllDeclaredMethods(factoryClass)
+				: factoryClass.getMethods();
+	}
+
+	private boolean shouldConsiderNonPublicMethods(BeanDefinition definition) {
+		return (definition instanceof AbstractBeanDefinition)
+				&& ((AbstractBeanDefinition) definition).isNonPublicAccessAllowed();
+	}
+
+	private boolean hasMatchingParameterTypes(Method candidate, Method current) {
+		return Arrays.equals(candidate.getParameterTypes(), current.getParameterTypes());
+	}
+
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void bindConditionally(Binder binder, String name, Type type,
-			Provider typeProvider, Provider namedProvider) {
+			Provider typeProvider, Provider namedProvider, Optional<Annotation> bindingAnnotation) {
 		if (!this.matcher.matches(name, type)) {
 			return;
 		}
@@ -141,7 +216,8 @@ public class SpringModule extends AbstractModule {
 		StageTypeKey stageTypeKey = new StageTypeKey(binder.currentStage(), type);
 		if (this.bound.get(stageTypeKey) == null) {
 			// Only bind one provider for each type
-			binder.withSource(SPRING_GUICE_SOURCE).bind(Key.get(type))
+			Key<Object> key = bindingAnnotation.map(a ->(Key<Object>)Key.get(type, a)).orElse((Key<Object>)Key.get(type));
+			binder.withSource(SPRING_GUICE_SOURCE).bind(key)
 					.toProvider(typeProvider);
 			this.bound.put(stageTypeKey, typeProvider);
 		}
