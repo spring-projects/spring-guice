@@ -13,6 +13,7 @@
 
 package org.springframework.guice.annotation;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -127,8 +128,11 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 	}
 
 	private String extractName(Key<?> key) {
-		if (key.getAnnotation() instanceof Named) {
-			return ((Named) key.getAnnotation()).value();
+		final Annotation annotation = key.getAnnotation();
+		if (annotation instanceof Named) {
+			return ((Named) annotation).value();
+		} else if (annotation instanceof javax.inject.Named) {
+			return ((javax.inject.Named) annotation).value();
 		}
 		return key.getTypeLiteral().getRawType().getSimpleName();
 	}
