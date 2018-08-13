@@ -47,9 +47,15 @@ public class BindingAnnotationTests {
 		SomeDependencyWithNamedAnnotationOnProvider someDependencyWithNamedAnnotationOnProvider = injector.getInstance(Key.get(SomeDependencyWithNamedAnnotationOnProvider.class, Names.named("javaxNamed")));
 		assertNotNull(someDependencyWithNamedAnnotationOnProvider);
 		
+		SomeDependencyWithNamedAnnotationOnProvider someSecondDependencyWithNamedAnnotationOnProvider = injector.getInstance(Key.get(SomeDependencyWithNamedAnnotationOnProvider.class, Names.named("javaxNamed2")));
+		assertNotNull(someSecondDependencyWithNamedAnnotationOnProvider);
+		
 		//Check Guice @Named
 		SomeDependencyWithGuiceNamedAnnotationOnProvider someDependencyWithGuiceNamedAnnotationOnProvider = injector.getInstance(Key.get(SomeDependencyWithGuiceNamedAnnotationOnProvider.class, Names.named("guiceNamed")));
 		assertNotNull(someDependencyWithGuiceNamedAnnotationOnProvider);
+		
+		SomeDependencyWithGuiceNamedAnnotationOnProvider someSecondDependencyWithGuiceNamedAnnotationOnProvider = injector.getInstance(Key.get(SomeDependencyWithGuiceNamedAnnotationOnProvider.class, Names.named("guiceNamed2")));
+		assertNotNull(someSecondDependencyWithGuiceNamedAnnotationOnProvider);
 		
 		//Check @Qualifier with Interface
 		SomeInterface someInterface = injector.getInstance(Key.get(SomeInterface.class, SomeQualifierAnnotation.class));
@@ -100,9 +106,21 @@ class BindingAnnotationTestsConfig {
 		return new SomeDependencyWithNamedAnnotationOnProvider();
 	}
 	
+	@Bean(name="javaxNamed2")
+	@Named("javaxNamed2")
+	public SomeDependencyWithNamedAnnotationOnProvider someSecondDependencyWithNamedAnnotationOnProvider() {
+		return new SomeDependencyWithNamedAnnotationOnProvider();
+	}
+	
 	@Bean
 	@com.google.inject.name.Named("guiceNamed")
 	public SomeDependencyWithGuiceNamedAnnotationOnProvider someDependencyWithGuiceNamedAnnotationOnProvider() {
+		return new SomeDependencyWithGuiceNamedAnnotationOnProvider();
+	}
+	
+	@Bean
+	@com.google.inject.name.Named("guiceNamed2")
+	public SomeDependencyWithGuiceNamedAnnotationOnProvider someSecondDependencyWithGuiceNamedAnnotationOnProvider() {
 		return new SomeDependencyWithGuiceNamedAnnotationOnProvider();
 	}
 	
