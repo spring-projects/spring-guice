@@ -36,6 +36,7 @@ import com.google.inject.Stage;
 import com.google.inject.TypeLiteral;
 import com.google.inject.internal.Annotations;
 import com.google.inject.matcher.Matchers;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.spi.ProvisionListener;
 
@@ -109,7 +110,7 @@ public class SpringModule extends AbstractModule {
 			if (definition.hasAttribute(SPRING_GUICE_SOURCE)) {
 				continue;
 			}
-			Optional<Annotation> bindingAnnotation = getAnnotationForBeanDefinition(definition);
+			Optional<Annotation> bindingAnnotation = getAnnotationForBeanDefinition(definition, beanFactory);
 			if (definition.isAutowireCandidate()
 					&& definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
 				Class<?> type = beanFactory.getType(name);
@@ -117,9 +118,9 @@ public class SpringModule extends AbstractModule {
 					continue;
 				}
 				final String beanName = name;
-				Provider<?> typeProvider = BeanFactoryProvider.typed(beanFactory, type);
+				Provider<?> typeProvider = BeanFactoryProvider.typed(beanFactory, type, bindingAnnotation);
 				Provider<?> namedProvider = BeanFactoryProvider.named(beanFactory,
-						beanName, type);
+						beanName, type, bindingAnnotation);
 				if (!type.isInterface() && !ClassUtils.isCglibProxyClass(type)) {
 					bindConditionally(binder(), name, type, typeProvider, namedProvider, bindingAnnotation);
 				}
@@ -133,7 +134,22 @@ public class SpringModule extends AbstractModule {
 		}
 	}
 
-	private Optional<Annotation> getAnnotationForBeanDefinition(BeanDefinition definition) {
+	private static String getNameFromBindingAnnotation(Optional<Annotation> bindingAnnotation) {
+		if (bindingAnnotation.isPresent()) {
+			Annotation annotation = bindingAnnotation.get();
+			if (annotation instanceof Named) {
+				return ((Named) annotation).value();
+			} else if (annotation instanceof javax.inject.Named) {
+				return ((javax.inject.Named) annotation).value();
+			} else {
+				return null;
+			}
+		} else {
+			return null;
+		}
+	}
+	
+	private static Optional<Annotation> getAnnotationForBeanDefinition(BeanDefinition definition, ConfigurableListableBeanFactory beanFactory) {
 		if (definition instanceof AnnotatedBeanDefinition
 				&& ((AnnotatedBeanDefinition) definition).getFactoryMethodMetadata() != null) {
 			try {
@@ -148,7 +164,7 @@ public class SpringModule extends AbstractModule {
 		}
 	}
 
-	private Method getFactoryMethod(ConfigurableListableBeanFactory beanFactory,
+	private static Method getFactoryMethod(ConfigurableListableBeanFactory beanFactory,
 			BeanDefinition definition) throws Exception {
 		if (definition instanceof AnnotatedBeanDefinition) {
 			MethodMetadata factoryMethodMetadata = ((AnnotatedBeanDefinition) definition)
@@ -165,7 +181,7 @@ public class SpringModule extends AbstractModule {
 		return getFactoryMethod(definition, factoryClass);
 	}
 
-	private Method getFactoryMethod(BeanDefinition definition, Class<?> factoryClass) {
+	private static Method getFactoryMethod(BeanDefinition definition, Class<?> factoryClass) {
 		Method uniqueMethod = null;
 		for (Method candidate : getCandidateFactoryMethods(definition, factoryClass)) {
 			if (candidate.getName().equals(definition.getFactoryMethodName())) {
@@ -180,19 +196,19 @@ public class SpringModule extends AbstractModule {
 		return uniqueMethod;
 	}
 
-	private Method[] getCandidateFactoryMethods(BeanDefinition definition,
+	private static Method[] getCandidateFactoryMethods(BeanDefinition definition,
 			Class<?> factoryClass) {
 		return shouldConsiderNonPublicMethods(definition)
 				? ReflectionUtils.getAllDeclaredMethods(factoryClass)
 				: factoryClass.getMethods();
 	}
 
-	private boolean shouldConsiderNonPublicMethods(BeanDefinition definition) {
+	private static boolean shouldConsiderNonPublicMethods(BeanDefinition definition) {
 		return (definition instanceof AbstractBeanDefinition)
 				&& ((AbstractBeanDefinition) definition).isNonPublicAccessAllowed();
 	}
 
-	private boolean hasMatchingParameterTypes(Method candidate, Method current) {
+	private static boolean hasMatchingParameterTypes(Method candidate, Method current) {
 		return Arrays.equals(candidate.getParameterTypes(), current.getParameterTypes());
 	}
 
@@ -213,35 +229,39 @@ public class SpringModule extends AbstractModule {
 				}
 			}
 		}
-		StageTypeKey stageTypeKey = new StageTypeKey(binder.currentStage(), type);
+		Key<?> key = bindingAnnotation.map(a ->(Key<Object>)Key.get(type, a)).orElse((Key<Object>)Key.get(type));
+		StageTypeKey stageTypeKey = new StageTypeKey(binder.currentStage(), key);
 		if (this.bound.get(stageTypeKey) == null) {
 			// Only bind one provider for each type
-			Key<Object> key = bindingAnnotation.map(a ->(Key<Object>)Key.get(type, a)).orElse((Key<Object>)Key.get(type));
+			
 			binder.withSource(SPRING_GUICE_SOURCE).bind(key)
 					.toProvider(typeProvider);
 			this.bound.put(stageTypeKey, typeProvider);
 		}
-		// But allow binding to named beans
-		binder.withSource(SPRING_GUICE_SOURCE).bind(TypeLiteral.get(type))
-				.annotatedWith(Names.named(name)).toProvider(namedProvider);
+		// But allow binding to named beans if not already bound
+		if (!name.equals(getNameFromBindingAnnotation(bindingAnnotation))) {
+			binder.withSource(SPRING_GUICE_SOURCE).bind(TypeLiteral.get(type))
+					.annotatedWith(Names.named(name)).toProvider(namedProvider);
+		}
 	}
 
 	private static class StageTypeKey {
 
 		private final Stage stage;
-		private final Type type;
+		private Key<?> key;
 
-		public StageTypeKey(Stage stage, Type type) {
+		public StageTypeKey(Stage stage, Key<?> key) {
 			this.stage = stage;
-			this.type = type;
+			this.key = key;
+
 		}
 
 		@Override
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
+			result = prime * result + ((key == null) ? 0 : key.hashCode());
 			result = prime * result + ((stage == null) ? 0 : stage.hashCode());
-			result = prime * result + ((type == null) ? 0 : type.hashCode());
 			return result;
 		}
 
@@ -254,13 +274,12 @@ public class SpringModule extends AbstractModule {
 			if (getClass() != obj.getClass())
 				return false;
 			StageTypeKey other = (StageTypeKey) obj;
-			if (stage != other.stage)
-				return false;
-			if (type == null) {
-				if (other.type != null)
+			if (key == null) {
+				if (other.key != null)
 					return false;
-			}
-			else if (!type.equals(other.type))
+			} else if (!key.equals(other.key))
+				return false;
+			if (stage != other.stage)
 				return false;
 			return true;
 		}
@@ -276,21 +295,24 @@ public class SpringModule extends AbstractModule {
 
 		private T result;
 
+		private Optional<Annotation> bindingAnnotation;
+
 		private BeanFactoryProvider(ConfigurableListableBeanFactory beanFactory,
-				String name, Class<T> type) {
+				String name, Class<T> type, Optional<Annotation> bindingAnnotation) {
 			this.beanFactory = beanFactory;
 			this.name = name;
+			this.bindingAnnotation = bindingAnnotation;
 			this.type = type;
 		}
 
 		public static <S> Provider<S> named(ConfigurableListableBeanFactory beanFactory,
-				String name, Class<S> type) {
-			return new BeanFactoryProvider<S>(beanFactory, name, type);
+				String name, Class<S> type, Optional<Annotation> bindingAnnotation) {
+			return new BeanFactoryProvider<S>(beanFactory, name, type, bindingAnnotation);
 		}
 
 		public static <S> Provider<S> typed(ConfigurableListableBeanFactory beanFactory,
-				Class<S> type) {
-			return new BeanFactoryProvider<S>(beanFactory, null, type);
+				Class<S> type, Optional<Annotation> bindingAnnotation) {
+			return new BeanFactoryProvider<S>(beanFactory, null, type, bindingAnnotation);
 		}
 
 		@Override
@@ -305,6 +327,15 @@ public class SpringModule extends AbstractModule {
 				}
 				else {
 					for (String name : named) {
+						if(bindingAnnotation.isPresent()) {
+							if (bindingAnnotation.get() instanceof Named || bindingAnnotation.get() instanceof javax.inject.Named) {
+								Optional<Annotation> annotation = SpringModule.getAnnotationForBeanDefinition(beanFactory.getMergedBeanDefinition(name), beanFactory);
+								String boundName = getNameFromBindingAnnotation(bindingAnnotation);
+								if(annotation.isPresent() && bindingAnnotation.get().equals(annotation.get()) || name.equals(boundName)) {
+									names.add(name);
+								}
+							}
+						}
 						if (name.equals(this.name))
 							names.add(name);
 					}
