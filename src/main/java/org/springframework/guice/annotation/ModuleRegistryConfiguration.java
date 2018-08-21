@@ -37,9 +37,11 @@ import com.google.inject.spi.PrivateElements;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
+import org.springframework.beans.factory.support.AutowireCandidateQualifier;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.beans.factory.support.RootBeanDefinition;
@@ -66,7 +68,6 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 	private static final String SPRING_GUICE_DEDUPE_BINDINGS_PROPERTY_NAME = "spring.guice.dedup";
 	private ApplicationContext applicationContext;
 	private List<Module> modules;
-	private ConfigurableListableBeanFactory beanFactory;
 	private AtomicBoolean injectorCreated = new AtomicBoolean(false);
 
 	private void createInjector(List<Module> modules,
@@ -122,19 +123,33 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 				bean.setResourceDescription(SpringModule.SPRING_GUICE_SOURCE);
 			}
 			bean.setAttribute(SpringModule.SPRING_GUICE_SOURCE, true);
+			if (key.getAnnotation() != null) {
+				bean.addQualifier(new AutowireCandidateQualifier(Qualifier.class,
+						getValueAttributeForNamed(key.getAnnotation())));
+			}
 			registry.registerBeanDefinition(extractName(key), bean);
 		}
 
 	}
 
 	private String extractName(Key<?> key) {
-		final Annotation annotation = key.getAnnotation();
+		final String className = key.getTypeLiteral().getRawType().getSimpleName();
+		String valueAttribute = getValueAttributeForNamed(key.getAnnotation());
+		if (valueAttribute != null) {
+			return valueAttribute + "_" + className;
+		} else {
+			return className;
+		}
+	}
+
+	private String getValueAttributeForNamed(Annotation annotation) {
 		if (annotation instanceof Named) {
 			return ((Named) annotation).value();
 		} else if (annotation instanceof javax.inject.Named) {
 			return ((javax.inject.Named) annotation).value();
+		} else {
+			return null;
 		}
-		return key.getTypeLiteral().getRawType().getSimpleName();
 	}
 
 	@Override
@@ -235,7 +250,6 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 	@Override
 	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory)
 			throws BeansException {
-		this.beanFactory = beanFactory;
 		beanFactory.registerSingleton("guiceInjectorInitializer", new GuiceInjectorInitializingBeanPostProcessor(){
 			@Override
 			public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {

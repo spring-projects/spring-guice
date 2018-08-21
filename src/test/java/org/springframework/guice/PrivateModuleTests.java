@@ -7,6 +7,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -45,7 +46,8 @@ public class PrivateModuleTests {
 		assertNotNull(injectorProvidedPrivateBinding);
 		SomeInterface springProvidedPrivateBinding = context.getBean(SomeInterface.class);
 		assertNotNull(springProvidedPrivateBinding);
-		SomeInterface namedPrivateBinding = context.getBean("exposed",SomeInterface.class);
+		SomeInterface namedPrivateBinding = BeanFactoryAnnotationUtils.qualifiedBeanOfType(context.getBeanFactory(),
+				SomeInterface.class, "exposed");
 		assertNotNull(namedPrivateBinding);
 		assertEquals(injectorProvidedPrivateBinding, springProvidedPrivateBinding);
 		assertEquals(injectorProvidedPrivateBinding, namedPrivateBinding);
@@ -63,6 +65,11 @@ public class PrivateModuleTests {
 	@Test(expected=NoSuchBeanDefinitionException.class)
 	public void verifyPrivateModulesPrivateBindingsAreNotExposedViaSpring() {
 		context.getBean("notexposed",SomeInterface.class);
+	}
+	
+	@Test(expected = NoSuchBeanDefinitionException.class)
+	public void verifyPrivateModulesPrivateBindingsAreNotExposedViaSpringWithQualifier() {
+		BeanFactoryAnnotationUtils.qualifiedBeanOfType(context.getBeanFactory(), SomeInterface.class, "notexposed");
 	}
 
 	public static interface SomeInterface {}

@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.ApplicationContext;
@@ -128,8 +129,12 @@ public class SpringInjector implements Injector {
 		@SuppressWarnings("unchecked")
 		final Class<T> cls = (Class<T>) type;
 		return new Provider<T>() {
+			@SuppressWarnings("unchecked")
 			@Override
 			public T get() {
+				if(key.getAnnotation() != null) {
+					return (T) BeanFactoryAnnotationUtils.qualifiedBeanOfType(SpringInjector.this.beanFactory, type, name);
+				}
 				return SpringInjector.this.beanFactory.getBean(cls);
 			}
 		};
