@@ -20,6 +20,8 @@ import org.springframework.guice.BindingAnnotationTests.SomeDependencyWithNamedA
 import org.springframework.guice.BindingAnnotationTests.SomeDependencyWithQualifierOnProvider;
 import org.springframework.guice.BindingAnnotationTests.SomeDependencyWithQualifierOnProviderWhichImplementsSomeInterface;
 import org.springframework.guice.BindingAnnotationTests.SomeInterface;
+import org.springframework.guice.BindingAnnotationTests.SomeNamedDepWithType1;
+import org.springframework.guice.BindingAnnotationTests.SomeNamedDepWithType2;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
 import com.google.inject.BindingAnnotation;
@@ -61,6 +63,12 @@ public class BindingAnnotationTests {
 		SomeInterface someInterface = injector.getInstance(Key.get(SomeInterface.class, SomeQualifierAnnotation.class));
 		assertNotNull(someInterface);
 		
+		//Check different types with same @Named
+		assertNotNull(injector.getInstance(SomeNamedDepWithType1.class));
+		assertNotNull(injector.getInstance(SomeNamedDepWithType2.class));
+		
+		assertNotNull(injector.getInstance(Key.get(SomeNamedDepWithType1.class, Names.named("sameNameDifferentType"))));
+		assertNotNull(injector.getInstance(Key.get(SomeNamedDepWithType2.class, Names.named("sameNameDifferentType"))));
 		context.close();
 	}
 	
@@ -71,6 +79,8 @@ public class BindingAnnotationTests {
 	public static class SomeDependencyWithGuiceNamedAnnotationOnProvider {}
 	public static interface SomeInterface{}
 	public static class SomeDependencyWithQualifierOnProviderWhichImplementsSomeInterface implements SomeInterface {}
+	public static class SomeNamedDepWithType1 {} 
+	public static class SomeNamedDepWithType2 {} 
 }
 
 @Qualifier
@@ -128,5 +138,17 @@ class BindingAnnotationTestsConfig {
 	@SomeQualifierAnnotation
 	public SomeInterface someInterface() {
 		return new SomeDependencyWithQualifierOnProviderWhichImplementsSomeInterface();
+	}
+	
+	@Bean
+	@Named("sameNameDifferentType")
+	public SomeNamedDepWithType1 someNamedDepWithType1() {
+		return new SomeNamedDepWithType1();
+	}
+	
+	@Bean
+	@Named("sameNameDifferentType")
+	public SomeNamedDepWithType2 someNamedDepWithType2() {
+		return new SomeNamedDepWithType2();
 	}
 }
