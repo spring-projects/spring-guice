@@ -17,6 +17,7 @@ package org.springframework.guice.module;
 
 import javax.inject.Provider;
 
+import com.google.inject.Key;
 import org.springframework.aop.TargetSource;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -30,6 +31,7 @@ import com.google.inject.Injector;
 /**
  * @author Dave Syer
  * @author Taylor Wicksell
+ * @author Howard Yuan
  *
  */
 class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateResolver {
@@ -78,10 +80,10 @@ class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateR
                 try {
                     target = beanFactory.doResolveDependency(descriptor, beanName, null, null);
                 } catch (NoSuchBeanDefinitionException e) {
-                    target = injectorProvider.get().getInstance(descriptor.getDependencyType());
+                    target = injectorProvider.get().getInstance(Key.get(descriptor.getResolvableType().getType()));
                 }
                 if (target == null) {
-                    throw new NoSuchBeanDefinitionException(descriptor.getDependencyType(),
+                     throw new NoSuchBeanDefinitionException(descriptor.getDependencyType(),
                             "Optional dependency not present for lazy injection point");
                 }
                 return target;

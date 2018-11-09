@@ -50,6 +50,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationContextException;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
+import org.springframework.core.ResolvableType;
 import org.springframework.core.annotation.Order;
 import org.springframework.guice.module.SpringModule;
 
@@ -59,6 +60,7 @@ import org.springframework.guice.module.SpringModule;
  * 
  * @author Dave Syer
  * @author Talylor Wicksell
+ * @author Howard Yuan
  *
  */
 @Configuration
@@ -115,6 +117,7 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 			args.addIndexedArgumentValue(0, key.getTypeLiteral().getRawType());
 			args.addIndexedArgumentValue(1, key);
 			bean.setConstructorArgumentValues(args);
+			bean.setTargetType(ResolvableType.forType(key.getTypeLiteral().getType()));
 			if (source != null && source instanceof ElementSource) {
 				bean.setResourceDescription(
 						((ElementSource) source).getDeclaringSource().toString());
@@ -133,7 +136,7 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 	}
 
 	private String extractName(Key<?> key) {
-		final String className = key.getTypeLiteral().getRawType().getSimpleName();
+		final String className = key.getTypeLiteral().getType().getTypeName();
 		String valueAttribute = getValueAttributeForNamed(key.getAnnotation());
 		if (valueAttribute != null) {
 			return valueAttribute + "_" + className;
