@@ -25,7 +25,7 @@ import com.google.inject.Key;
  * 
  * @author Dave Syer
  */
-class GuiceFactoryBean<T> implements FactoryBean<T> {
+public class GuiceFactoryBean<T> implements FactoryBean<T> {
 	private final Key<T> key;
 	private final Class<T> beanType;
 	
