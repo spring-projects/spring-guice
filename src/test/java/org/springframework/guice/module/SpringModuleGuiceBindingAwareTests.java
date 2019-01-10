@@ -67,14 +67,15 @@ public class SpringModuleGuiceBindingAwareTests {
 
 		@Override
 		protected void configure() {
-			bind(IGuiceDependency1.class).to(GuiceDependency1.class).in(Scopes.SINGLETON); // test
-																							// normal
-																							// binding
+			// test normal binding
+			bind(IGuiceDependency1.class).to(GuiceDependency1.class).in(Scopes.SINGLETON);
+			// test instance binding
 			bind(IGuiceDependency2.class).toInstance(new IGuiceDependency2() {
-			}); // test instance binding
+			});
+			// test provider binding
 			bind(IGuiceDependency3.class)
 					.toProvider(Providers.of(new IGuiceDependency3() {
-					})); // test provider binding
+					}));
 		}
 	}
 
@@ -109,6 +110,7 @@ public class SpringModuleGuiceBindingAwareTests {
 	}
 
 	static class GuiceDependency1 implements IGuiceDependency1 {
+		@Override
 		public String doWork() {
 			return "done";
 		}
