@@ -25,6 +25,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.inject.Provider;
 
+import com.google.inject.spi.ProvisionListener;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -34,27 +36,26 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.OrderComparator;
 
-import com.google.inject.spi.ProvisionListener;
-
 /**
  * <p>
- * A {@link Provider} for a {@link BeanFactory} from an
- * {@link ApplicationContext} that will not be refreshed until the Guice
- * injector wants to resolve dependencies. Delaying the refresh means that the
- * bean factory can resolve dependencies from Guice modules (and vice versa).
+ * A {@link Provider} for a {@link BeanFactory} from an {@link ApplicationContext} that
+ * will not be refreshed until the Guice injector wants to resolve dependencies. Delaying
+ * the refresh means that the bean factory can resolve dependencies from Guice modules
+ * (and vice versa).
  * </p>
  * <p>
- * Also implements {@link Closeable} so if you want to clean up resources used
- * in the application context then you can keep a reference to the provider and
- * call {@link #close()} on it when the application is shut down. Alternatively,
- * you could register an {@link ApplicationContextInitializer} that sets a
- * shutdown hook, so that the context is closed automatically when the JVM ends.
+ * Also implements {@link Closeable} so if you want to clean up resources used in the
+ * application context then you can keep a reference to the provider and call
+ * {@link #close()} on it when the application is shut down. Alternatively, you could
+ * register an {@link ApplicationContextInitializer} that sets a shutdown hook, so that
+ * the context is closed automatically when the JVM ends.
  * </p>
  * 
  * @author Dave Syer
  *
  */
-public class BeanFactoryProvider implements Provider<ConfigurableListableBeanFactory>, Closeable {
+public class BeanFactoryProvider
+		implements Provider<ConfigurableListableBeanFactory>, Closeable {
 
 	private Class<?>[] config;
 	private String[] basePackages;
@@ -130,17 +131,21 @@ public class BeanFactoryProvider implements Provider<ConfigurableListableBeanFac
 		return context.getBeanFactory();
 	}
 
-	private static final class PartiallyRefreshableApplicationContext extends AnnotationConfigApplicationContext {
+	private static final class PartiallyRefreshableApplicationContext
+			extends AnnotationConfigApplicationContext {
 
 		private final AtomicBoolean partiallyRefreshed = new AtomicBoolean(false);
 
 		/*
-		 * Initializes beanFactoryPostProcessors only to ensure that all
-		 * BeanDefinition's are available
+		 * Initializes beanFactoryPostProcessors only to ensure that all BeanDefinition's
+		 * are available
 		 */
 		private void partialRefresh() {
-			getBeanFactory().registerSingleton("refreshListener", new ContextRefreshingProvisionListener(this));
-			invokeBeanFactoryPostProcessors(getBeanFactory());
+			ConfigurableListableBeanFactory beanFactory = getBeanFactory();
+			beanFactory.registerSingleton("refreshListener",
+					new ContextRefreshingProvisionListener(this));
+			prepareBeanFactory(beanFactory);
+			invokeBeanFactoryPostProcessors(beanFactory);
 		}
 
 		private void delayedRefresh() throws BeansException, IllegalStateException {
@@ -152,18 +157,21 @@ public class BeanFactoryProvider implements Provider<ConfigurableListableBeanFac
 		}
 
 		@Override
-		protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory) {
+		protected void invokeBeanFactoryPostProcessors(
+				ConfigurableListableBeanFactory beanFactory) {
 			if (partiallyRefreshed.compareAndSet(false, true)) {
 				super.invokeBeanFactoryPostProcessors(beanFactory);
 			}
 		}
 	}
 
-	private static final class ContextRefreshingProvisionListener implements ProvisionListener {
+	private static final class ContextRefreshingProvisionListener
+			implements ProvisionListener {
 		private final PartiallyRefreshableApplicationContext context;
 		private final AtomicBoolean initialized = new AtomicBoolean(false);
 
-		private ContextRefreshingProvisionListener(PartiallyRefreshableApplicationContext context) {
+		private ContextRefreshingProvisionListener(
+				PartiallyRefreshableApplicationContext context) {
 			this.context = context;
 		}
 

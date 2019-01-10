@@ -65,7 +65,8 @@ import org.springframework.guice.module.SpringModule;
  */
 @Configuration
 @Order(Ordered.HIGHEST_PRECEDENCE)
-class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor, ApplicationContextAware {
+class ModuleRegistryConfiguration
+		implements BeanDefinitionRegistryPostProcessor, ApplicationContextAware {
 
 	private static final String SPRING_GUICE_DEDUPE_BINDINGS_PROPERTY_NAME = "spring.guice.dedup";
 	private ApplicationContext applicationContext;
@@ -140,7 +141,8 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 		String valueAttribute = getValueAttributeForNamed(key.getAnnotation());
 		if (valueAttribute != null) {
 			return valueAttribute + "_" + className;
-		} else {
+		}
+		else {
 			return className;
 		}
 	}
@@ -148,9 +150,11 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 	private String getValueAttributeForNamed(Annotation annotation) {
 		if (annotation instanceof Named) {
 			return ((Named) annotation).value();
-		} else if (annotation instanceof javax.inject.Named) {
+		}
+		else if (annotation instanceof javax.inject.Named) {
 			return ((javax.inject.Named) annotation).value();
-		} else {
+		}
+		else {
 			return null;
 		}
 	}
@@ -160,7 +164,7 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 			throws BeansException {
 		modules = new ArrayList<Module>(((ConfigurableListableBeanFactory) registry)
 				.getBeansOfType(Module.class).values());
-		modules.add(new SpringModule(this.applicationContext));
+		modules.add(new SpringModule((ConfigurableListableBeanFactory) registry));
 		Map<Key<?>, Binding<?>> bindings = new HashMap<Key<?>, Binding<?>>();
 		List<Element> elements = Elements.getElements(Stage.TOOL, modules);
 		if (applicationContext.getEnvironment().getProperty(
@@ -253,20 +257,23 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 	@Override
 	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory)
 			throws BeansException {
-		beanFactory.registerSingleton("guiceInjectorInitializer", new GuiceInjectorInitializingBeanPostProcessor(){
-			@Override
-			public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
-				return bean;
-			}
-			
-			@Override
-			public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-				if(injectorCreated.compareAndSet(false,true)) {
-					createInjector(modules, beanFactory);
-				}
-				return bean;
-			}
-		});
+		beanFactory.registerSingleton("guiceInjectorInitializer",
+				new GuiceInjectorInitializingBeanPostProcessor() {
+					@Override
+					public Object postProcessBeforeInitialization(Object bean,
+							String beanName) throws BeansException {
+						return bean;
+					}
+
+					@Override
+					public Object postProcessAfterInitialization(Object bean,
+							String beanName) throws BeansException {
+						if (injectorCreated.compareAndSet(false, true)) {
+							createInjector(modules, beanFactory);
+						}
+						return bean;
+					}
+				});
 	}
 
 	@Override
@@ -274,14 +281,12 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 			throws BeansException {
 		this.applicationContext = applicationContext;
 	}
-	
-	private static class GuiceInjectorInitializingBeanPostProcessor implements BeanPostProcessor, Ordered {
+
+	private static class GuiceInjectorInitializingBeanPostProcessor
+			implements BeanPostProcessor, Ordered {
 		@Override
 		public int getOrder() {
 			return Ordered.LOWEST_PRECEDENCE - 1;
 		}
 	}
 }
-
-
-
