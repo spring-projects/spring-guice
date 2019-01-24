@@ -15,6 +15,7 @@ package org.springframework.guice.annotation;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -171,6 +172,14 @@ class ModuleRegistryConfiguration
 				SPRING_GUICE_DEDUPE_BINDINGS_PROPERTY_NAME, Boolean.class, false)) {
 			elements = removeDuplicates(elements);
 			modules = Collections.singletonList(Elements.getModule(elements));
+		}
+		if (applicationContext.getEnvironment().containsProperty("spring.guice.modules.exclude")) {
+			String[] modulesToFilter = applicationContext.getEnvironment()
+					.getProperty("spring.guice.modules.exclude").split(",");
+			elements = elements.stream()
+					.filter(e -> !Arrays.stream(modulesToFilter)
+							.filter(ex -> (e.getSource().toString().contains(ex))).findFirst().isPresent())
+					.collect(Collectors.toList());
 		}
 		for (Element e : elements) {
 			if (e instanceof Binding) {
