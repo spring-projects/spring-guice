@@ -15,8 +15,7 @@
  */
 package org.springframework.guice.module;
 
-import javax.inject.Provider;
-
+import com.google.inject.Injector;
 import com.google.inject.Key;
 import org.springframework.aop.TargetSource;
 import org.springframework.aop.framework.ProxyFactory;
@@ -26,7 +25,11 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.annotation.ContextAnnotationAutowireCandidateResolver;
 import org.springframework.util.Assert;
 
-import com.google.inject.Injector;
+
+import javax.inject.Provider;
+import java.util.Collection;
+import java.util.Map;
+
 
 /**
  * @author Dave Syer
@@ -35,7 +38,7 @@ import com.google.inject.Injector;
  *
  */
 class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateResolver {
-    
+
     private Provider<Injector> injectorProvider;
 
     public GuiceAutowireCandidateResolver(Provider<Injector> injectorProvider) {
@@ -51,6 +54,11 @@ class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateR
         Assert.state(getBeanFactory() instanceof DefaultListableBeanFactory,
                 "BeanFactory needs to be a DefaultListableBeanFactory");
         final DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) getBeanFactory();
+
+        if (isCollectionType(descriptor.getDependencyType())) {
+            return false;
+        }
+
         try {
             beanFactory.doResolveDependency(descriptor, beanName, null, null);
         } catch (NoSuchBeanDefinitionException e) {
@@ -82,6 +90,7 @@ class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateR
                 } catch (NoSuchBeanDefinitionException e) {
                     target = injectorProvider.get().getInstance(Key.get(descriptor.getResolvableType().getType()));
                 }
+
                 if (target == null) {
                      throw new NoSuchBeanDefinitionException(descriptor.getDependencyType(),
                             "Optional dependency not present for lazy injection point");
@@ -102,4 +111,7 @@ class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateR
         return pf.getProxy(beanFactory.getBeanClassLoader());
     }
 
+    private boolean isCollectionType(Class<?> type) {
+        return Collection.class.isAssignableFrom(type) || Map.class == type;
+    }
 }
