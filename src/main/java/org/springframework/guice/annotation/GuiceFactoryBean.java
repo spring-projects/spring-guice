@@ -28,13 +28,16 @@ import com.google.inject.Key;
 class GuiceFactoryBean<T> implements FactoryBean<T> {
 	private final Key<T> key;
 	private final Class<T> beanType;
+	private final boolean isSingleton;
 	
 	@Autowired
 	private Injector injector;
+		
 
-	public GuiceFactoryBean(Class<T> beanType, Key<T> key) {
+	public GuiceFactoryBean(Class<T> beanType, Key<T> key, boolean isSingleton) {
 		this.beanType = beanType;
 		this.key = key;
+		this.isSingleton = isSingleton;
 	}
 
 	@Override
@@ -49,6 +52,6 @@ class GuiceFactoryBean<T> implements FactoryBean<T> {
 
 	@Override
 	public boolean isSingleton() {
-		return true;
+		return this.isSingleton;
 	}
 }
