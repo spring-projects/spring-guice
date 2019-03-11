@@ -29,6 +29,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
 import com.google.inject.Stage;
 import com.google.inject.name.Named;
 import com.google.inject.spi.Element;
@@ -40,6 +41,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.support.AutowireCandidateQualifier;
@@ -118,8 +120,12 @@ class ModuleRegistryConfiguration
 			ConstructorArgumentValues args = new ConstructorArgumentValues();
 			args.addIndexedArgumentValue(0, key.getTypeLiteral().getRawType());
 			args.addIndexedArgumentValue(1, key);
+			args.addIndexedArgumentValue(2, Scopes.isSingleton(binding));
 			bean.setConstructorArgumentValues(args);
 			bean.setTargetType(ResolvableType.forType(key.getTypeLiteral().getType()));
+			if(!Scopes.isSingleton(binding)) {
+				bean.setScope(ConfigurableBeanFactory.SCOPE_PROTOTYPE);
+			}
 			if (source != null && source instanceof ElementSource) {
 				bean.setResourceDescription(
 						((ElementSource) source).getDeclaringSource().toString());
