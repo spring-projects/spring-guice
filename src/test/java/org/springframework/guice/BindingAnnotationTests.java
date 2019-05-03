@@ -1,5 +1,6 @@
 package org.springframework.guice;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.lang.annotation.ElementType;
@@ -10,7 +11,9 @@ import java.lang.annotation.Target;
 import javax.inject.Named;
 import javax.inject.Qualifier;
 
+import com.google.inject.AbstractModule;
 import org.junit.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,17 +44,19 @@ public class BindingAnnotationTests {
 		SomeDependencyWithQualifierOnProvider someDependencyWithQualifierOnClass = injector.getInstance(Key.get(SomeDependencyWithQualifierOnProvider.class, SomeQualifierAnnotation.class));
 		assertNotNull(someDependencyWithQualifierOnClass);
 		
-		//Check @BindingAnnotaiton
+		//Check @BindingAnnotation on Spring @Bean available in Guice
 		SomeDependencyWithQualifierOnProvider someDependencyWithBindingAnnotationOnProvider = injector.getInstance(Key.get(SomeDependencyWithQualifierOnProvider.class, SomeQualifierAnnotation.class));
 		assertNotNull(someDependencyWithBindingAnnotationOnProvider);
-		
+
+		//Check @BindingAnnotation on Guice Binding available in Spring
+		SomeStringHolder stringHolder = context.getBean(SomeStringHolder.class);
+		assertEquals("annotated", stringHolder.annotatedString);
+		assertEquals("other", stringHolder.otherAnnotatedString);
+
 		//Check javax @Named
 		SomeDependencyWithNamedAnnotationOnProvider someDependencyWithNamedAnnotationOnProvider = injector.getInstance(Key.get(SomeDependencyWithNamedAnnotationOnProvider.class, Names.named("javaxNamed")));
 		assertNotNull(someDependencyWithNamedAnnotationOnProvider);
-		
-		SomeDependencyWithNamedAnnotationOnProvider someSecondDependencyWithNamedAnnotationOnProvider = injector.getInstance(Key.get(SomeDependencyWithNamedAnnotationOnProvider.class, Names.named("javaxNamed2")));
-		assertNotNull(someSecondDependencyWithNamedAnnotationOnProvider);
-		
+
 		//Check Guice @Named
 		SomeDependencyWithGuiceNamedAnnotationOnProvider someDependencyWithGuiceNamedAnnotationOnProvider = injector.getInstance(Key.get(SomeDependencyWithGuiceNamedAnnotationOnProvider.class, Names.named("guiceNamed")));
 		assertNotNull(someDependencyWithGuiceNamedAnnotationOnProvider);
@@ -77,10 +82,10 @@ public class BindingAnnotationTests {
 	public static class SomeDependencyWithBindingAnnotationOnProvider {}
 	public static class SomeDependencyWithNamedAnnotationOnProvider {}
 	public static class SomeDependencyWithGuiceNamedAnnotationOnProvider {}
-	public static interface SomeInterface{}
+	public interface SomeInterface{}
 	public static class SomeDependencyWithQualifierOnProviderWhichImplementsSomeInterface implements SomeInterface {}
 	public static class SomeNamedDepWithType1 {} 
-	public static class SomeNamedDepWithType2 {} 
+	public static class SomeNamedDepWithType2 {}
 }
 
 @Qualifier
@@ -89,10 +94,27 @@ public class BindingAnnotationTests {
 @interface SomeQualifierAnnotation {}
 
 @BindingAnnotation
-@Target({ElementType.TYPE, ElementType.METHOD})
+@Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
 @interface SomeBindingAnnotation {}
 
+@BindingAnnotation
+@Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})
+@Retention(RetentionPolicy.RUNTIME)
+@interface SomeOtherBindingAnnotation {}
+
+class SomeStringHolder {
+
+
+	@Autowired
+	@SomeBindingAnnotation
+	public String annotatedString;
+
+	@Autowired
+	@SomeOtherBindingAnnotation
+	String otherAnnotatedString;
+
+}
 
 @EnableGuiceModules
 @Configuration
@@ -150,5 +172,21 @@ class BindingAnnotationTestsConfig {
 	@Named("sameNameDifferentType")
 	public SomeNamedDepWithType2 someNamedDepWithType2() {
 		return new SomeNamedDepWithType2();
+	}
+
+	@Bean
+	public SomeStringHolder stringHolder() {
+		return new SomeStringHolder();
+	}
+
+	@Bean
+	public AbstractModule module() {
+		return new AbstractModule() {
+			@Override
+			protected void configure() {
+				bind(String.class).annotatedWith(SomeBindingAnnotation.class).toInstance("annotated");
+				bind(String.class).annotatedWith(SomeOtherBindingAnnotation.class).toInstance("other");
+			}
+		};
 	}
 }

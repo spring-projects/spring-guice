@@ -55,6 +55,7 @@ import org.springframework.context.ApplicationContextException;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.ResolvableType;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.annotation.Order;
 import org.springframework.guice.module.SpringModule;
 
@@ -140,9 +141,10 @@ class ModuleRegistryConfiguration
 				bean.setResourceDescription(SpringModule.SPRING_GUICE_SOURCE);
 			}
 			bean.setAttribute(SpringModule.SPRING_GUICE_SOURCE, true);
-			if (key.getAnnotation() != null) {
+			if (key.getAnnotationType() != null) {
 				bean.addQualifier(new AutowireCandidateQualifier(Qualifier.class,
-						getValueAttributeForNamed(key.getAnnotation())));
+						getValueAttributeForNamed(key)));
+				bean.addQualifier(new AutowireCandidateQualifier(key.getAnnotationType(), getValueAttributeForNamed(key)));
 			}
 			registry.registerBeanDefinition(extractName(key), bean);
 		}
@@ -151,7 +153,7 @@ class ModuleRegistryConfiguration
 
 	private String extractName(Key<?> key) {
 		final String className = key.getTypeLiteral().getType().getTypeName();
-		String valueAttribute = getValueAttributeForNamed(key.getAnnotation());
+		String valueAttribute = getValueAttributeForNamed(key);
 		if (valueAttribute != null) {
 			return valueAttribute + "_" + className;
 		}
@@ -160,12 +162,15 @@ class ModuleRegistryConfiguration
 		}
 	}
 
-	private String getValueAttributeForNamed(Annotation annotation) {
-		if (annotation instanceof Named) {
-			return ((Named) annotation).value();
+	private String getValueAttributeForNamed(Key<?> key) {
+		if (key.getAnnotation() instanceof Named) {
+			return ((Named) key.getAnnotation()).value();
 		}
-		else if (annotation instanceof javax.inject.Named) {
-			return ((javax.inject.Named) annotation).value();
+		else if (key.getAnnotation() instanceof javax.inject.Named) {
+			return ((javax.inject.Named) key.getAnnotation()).value();
+		}
+		else if (key.getAnnotationType() != null){
+			return key.getAnnotationType().getName();
 		}
 		else {
 			return null;

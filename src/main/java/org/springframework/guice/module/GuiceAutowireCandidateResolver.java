@@ -15,8 +15,11 @@
  */
 package org.springframework.guice.module;
 
+import com.google.inject.BindingAnnotation;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.aop.TargetSource;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -40,9 +43,11 @@ import java.util.Map;
 class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateResolver {
 
     private Provider<Injector> injectorProvider;
+    private final Log logger = LogFactory.getLog(getClass());
 
     public GuiceAutowireCandidateResolver(Provider<Injector> injectorProvider) {
         this.injectorProvider = injectorProvider;
+        addQualifierType(BindingAnnotation.class);
     }
 
     @Override
@@ -102,13 +107,18 @@ class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateR
             public void releaseTarget(Object target) {
             }
         };
-        ProxyFactory pf = new ProxyFactory();
-        pf.setTargetSource(ts);
-        Class<?> dependencyType = descriptor.getDependencyType();
-        if (dependencyType.isInterface()) {
-            pf.addInterface(dependencyType);
+        try {
+            ProxyFactory pf = new ProxyFactory();
+            pf.setTargetSource(ts);
+            Class<?> dependencyType = descriptor.getDependencyType();
+            if (dependencyType.isInterface()) {
+                pf.addInterface(dependencyType);
+            }
+            return pf.getProxy(beanFactory.getBeanClassLoader());
+        } catch(Exception e) {
+            logger.debug("Failed to build lazy resolution proxy to Guice", e);
         }
-        return pf.getProxy(beanFactory.getBeanClassLoader());
+        return null;
     }
 
     private boolean isCollectionType(Class<?> type) {
