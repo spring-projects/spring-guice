@@ -3,6 +3,7 @@ package org.springframework.guice;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 
+import com.google.inject.multibindings.OptionalBinder;
 import org.junit.AfterClass;
 import org.junit.Test;
 import org.springframework.beans.factory.BeanCreationException;
@@ -10,6 +11,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.BindingDeduplicationTests.SomeDependency;
+import org.springframework.guice.BindingDeduplicationTests.SomeOptionalDependency;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
 import static org.junit.Assert.assertNotNull;
@@ -28,6 +30,8 @@ public class BindingDeduplicationTests {
 				BindingDeduplicationTestsConfig.class);
 		SomeDependency someDependency = context.getBean(SomeDependency.class);
 		assertNotNull(someDependency);
+		SomeOptionalDependency someOptionalDependency = context.getBean(SomeOptionalDependency.class);
+		assertNotNull(someOptionalDependency);
 		context.close();
 	}
 
@@ -39,8 +43,8 @@ public class BindingDeduplicationTests {
 		context.close();
 	}
 
-	public static class SomeDependency {
-	}
+	public static class SomeDependency {}
+	public static class SomeOptionalDependency {}
 
 }
 
@@ -49,8 +53,13 @@ public class BindingDeduplicationTests {
 class BindingDeduplicationTestsConfig {
 
 	@Bean
-	public SomeDependency stringBean() {
+	public SomeDependency someBean() {
 		return new SomeDependency();
+	}
+
+	@Bean
+	public SomeOptionalDependency someOptionalBean() {
+		return new SomeOptionalDependency();
 	}
 
 	@Bean
@@ -59,6 +68,10 @@ class BindingDeduplicationTestsConfig {
 			@Override
 			protected void configure() {
 				bind(SomeDependency.class).asEagerSingleton();
+				OptionalBinder
+						.newOptionalBinder(binder(), SomeOptionalDependency.class)
+						.setDefault()
+						.to(SomeOptionalDependency.class);
 			}
 		};
 	}
