@@ -31,6 +31,7 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.Stage;
+import com.google.inject.internal.LinkedBindingImpl;
 import com.google.inject.name.Named;
 import com.google.inject.spi.Element;
 import com.google.inject.spi.ElementSource;
@@ -109,6 +110,11 @@ class ModuleRegistryConfiguration
 			if (entry.getKey().getTypeLiteral().getRawType().equals(Injector.class)
 					|| SpringModule.SPRING_GUICE_SOURCE
 							.equals(entry.getValue().getSource().toString())) {
+				continue;
+			}
+			if (entry.getKey().getAnnotationType() != null &&
+					entry.getKey().getAnnotationType().getName()
+							.startsWith("com.google.inject.multibindings")) {
 				continue;
 			}
 
