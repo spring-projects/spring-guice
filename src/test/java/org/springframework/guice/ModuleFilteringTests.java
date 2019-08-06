@@ -2,6 +2,7 @@ package org.springframework.guice;
 
 import static org.junit.Assert.assertNotNull;
 
+import com.google.inject.*;
 import org.junit.AfterClass;
 import org.junit.Test;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -11,8 +12,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.ModuleFilteringTests.FilterThisModule;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Module;
+import org.springframework.guice.annotation.InjectorFactory;
+
+import java.util.List;
 
 public class ModuleFilteringTests {
 
@@ -21,7 +23,7 @@ public class ModuleFilteringTests {
 		System.clearProperty("spring.guice.modules.exclude");
 	}
 
-	@Test
+	@Test(expected = RuntimeException.class)
 	public void verifyAllIsWellWhenNoModulesFiltered() {
 		System.setProperty("spring.guice.modules.exclude", "FilterSomeNonExistentModule");
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
@@ -44,10 +46,13 @@ public class ModuleFilteringTests {
 	}
 
 	public static interface SomeInterface {}
-	
+
 	public static class SomeDependency implements SomeInterface {
+		public SomeDependency() {
+			throw new RuntimeException("Should never be instantiated");
+		}
 	}
-	
+
 	public static class FilterThisModule extends AbstractModule {
 		@Override
 		protected void configure() {
@@ -59,14 +64,19 @@ public class ModuleFilteringTests {
 @EnableGuiceModules
 @Configuration
 class ModuleFilteringTestsConfig {
-	
+
+	@Bean
+	public InjectorFactory injectorFactory() {
+		return modules -> Guice.createInjector(Stage.PRODUCTION, modules);
+	}
+
 	@Bean
 	public Module module() {
 		return new AbstractModule() {
-			
+
 			@Override
 			protected void configure() {
-				install(new FilterThisModule());		
+				install(new FilterThisModule());
 			}
 		};
 	}

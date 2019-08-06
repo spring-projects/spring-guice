@@ -197,6 +197,7 @@ class ModuleRegistryConfiguration
 					.filter(e -> !Arrays.stream(modulesToFilter)
 							.filter(ex -> (e.getSource().toString().contains(ex))).findFirst().isPresent())
 					.collect(Collectors.toList());
+			modules = Collections.singletonList(Elements.getModule(elements));
 		}
 		for (Element e : elements) {
 			if (e instanceof Binding) {
