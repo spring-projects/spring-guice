@@ -1,6 +1,16 @@
-{"properties": [{
-  "name": "spring.guice.dedup",
-  "type": "java.lang.Boolean",
-  "description": "When using `@EnableGuiceModules`, if a Spring Bean and a Guice Binding both exist for the same type and Qualifier, the Spring Bean will be kept and the Guice Binding discarded.",
-  "defaultValue": "false"
-}]}
+{
+  "properties": [
+    {
+      "name": "spring.guice.dedup",
+      "type": "java.lang.Boolean",
+      "description": "When using `@EnableGuiceModules`, if a Spring Bean and a Guice Binding both exist for the same type and Qualifier, the Spring Bean will be kept and the Guice Binding discarded.",
+      "defaultValue": "false"
+    },
+    {
+      "name": "spring.guice.autowireJIT",
+      "type": "java.lang.Boolean",
+      "description": "When enabled, beans without explicit definitions will be created using Guice just-in-time bindings. Otherwise, it will fail with UnsatisfiedDependencyException.",
+      "defaultValue": "true"
+    }
+  ]
+}

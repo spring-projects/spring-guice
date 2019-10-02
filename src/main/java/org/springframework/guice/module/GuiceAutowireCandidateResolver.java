@@ -67,6 +67,10 @@ class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateR
         try {
             beanFactory.doResolveDependency(descriptor, beanName, null, null);
         } catch (NoSuchBeanDefinitionException e) {
+            if (e.getResolvableType() != null) {
+                logger.info(String.format("Use just in time binding for %s in bean: %s",
+                        e.getResolvableType().getType().getTypeName(), beanName));
+            }
             return true;
         }
         return super.isLazy(descriptor);

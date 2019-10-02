@@ -73,12 +73,23 @@ public class SpringModule extends AbstractModule {
 
 	private Provider<ConfigurableListableBeanFactory> beanFactoryProvider;
 
+	private boolean enableJustInTimeBinding = true;
+
 	public SpringModule(ApplicationContext context) {
-		this((ConfigurableListableBeanFactory) context.getAutowireCapableBeanFactory());
+		this(context, true);
+	}
+
+	public SpringModule(ApplicationContext context, boolean enableJustInTimeBinding) {
+		this((ConfigurableListableBeanFactory) context.getAutowireCapableBeanFactory(), enableJustInTimeBinding);
 	}
 
 	public SpringModule(ConfigurableListableBeanFactory beanFactory) {
+		this(beanFactory, true);
+	}
+
+	public SpringModule(ConfigurableListableBeanFactory beanFactory, boolean enableJustInTimeBinding) {
 		this.beanFactory = beanFactory;
+		this.enableJustInTimeBinding = enableJustInTimeBinding;
 	}
 
 	public SpringModule(Provider<ConfigurableListableBeanFactory> beanFactoryProvider) {
@@ -95,10 +106,12 @@ public class SpringModule extends AbstractModule {
 					beanFactory.getBeansOfType(ProvisionListener.class).values()
 							.toArray(new ProvisionListener[0]));
 		}
-		if (beanFactory instanceof DefaultListableBeanFactory) {
-			((DefaultListableBeanFactory) beanFactory)
-					.setAutowireCandidateResolver(new GuiceAutowireCandidateResolver(
-							binder().getProvider(Injector.class)));
+		if (enableJustInTimeBinding) {
+			if (beanFactory instanceof DefaultListableBeanFactory) {
+				((DefaultListableBeanFactory) beanFactory)
+						.setAutowireCandidateResolver(new GuiceAutowireCandidateResolver(
+								binder().getProvider(Injector.class)));
+			}
 		}
 		if (beanFactory.getBeanNamesForType(GuiceModuleMetadata.class).length > 0) {
 			this.matcher = new CompositeTypeMatcher(

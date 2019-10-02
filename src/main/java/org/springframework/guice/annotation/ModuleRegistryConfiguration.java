@@ -70,9 +70,12 @@ class ModuleRegistryConfiguration
 		implements BeanDefinitionRegistryPostProcessor, ApplicationContextAware {
 
 	private static final String SPRING_GUICE_DEDUPE_BINDINGS_PROPERTY_NAME = "spring.guice.dedup";
+	private static final String SPRING_GUICE_AUTOWIRE_JIT_PROPERTY_NAME = "spring.guice.autowireJIT";
+
 	private ApplicationContext applicationContext;
 	private List<Module> modules;
 	private AtomicBoolean injectorCreated = new AtomicBoolean(false);
+	private boolean enableJustInTimeBinding = true;
 
 	private void createInjector(List<Module> modules,
 			ConfigurableListableBeanFactory beanFactory) {
@@ -178,7 +181,7 @@ class ModuleRegistryConfiguration
 			throws BeansException {
 		modules = new ArrayList<Module>(((ConfigurableListableBeanFactory) registry)
 				.getBeansOfType(Module.class).values());
-		modules.add(new SpringModule((ConfigurableListableBeanFactory) registry));
+		modules.add(new SpringModule((ConfigurableListableBeanFactory) registry, enableJustInTimeBinding));
 		Map<Key<?>, Binding<?>> bindings = new HashMap<Key<?>, Binding<?>>();
 		List<Element> elements = Elements.getElements(Stage.TOOL, modules);
 		if (applicationContext.getEnvironment().getProperty(
@@ -303,6 +306,8 @@ class ModuleRegistryConfiguration
 	public void setApplicationContext(ApplicationContext applicationContext)
 			throws BeansException {
 		this.applicationContext = applicationContext;
+		this.enableJustInTimeBinding = applicationContext.getEnvironment()
+				.getProperty(SPRING_GUICE_AUTOWIRE_JIT_PROPERTY_NAME, Boolean.class, true);
 	}
 
 	private static class GuiceInjectorInitializingBeanPostProcessor
