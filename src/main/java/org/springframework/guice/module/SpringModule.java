@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -124,8 +125,10 @@ public class SpringModule extends AbstractModule {
 				if (!type.isInterface() && !ClassUtils.isCglibProxyClass(type)) {
 					bindConditionally(binder(), name, type, typeProvider, namedProvider, bindingAnnotation);
 				}
-				for (Class<?> iface : ClassUtils.getAllInterfacesForClass(type)) {
-					bindConditionally(binder(), name, iface, typeProvider, namedProvider, bindingAnnotation);
+				for (Class<?> iface : getAllSuperInterfaces(new Class[]{type})) {
+					if (!ClassUtils.isCglibProxyClass(iface)) {
+						bindConditionally(binder(), name, iface, typeProvider, namedProvider, bindingAnnotation);
+					}
 				}
 				for (Type iface : type.getGenericInterfaces()) {
 					bindConditionally(binder(), name, iface, typeProvider, namedProvider, bindingAnnotation);
@@ -210,6 +213,17 @@ public class SpringModule extends AbstractModule {
 
 	private static boolean hasMatchingParameterTypes(Method candidate, Method current) {
 		return Arrays.equals(candidate.getParameterTypes(), current.getParameterTypes());
+	}
+
+	private static Class[] getAllSuperInterfaces(Class[] childInterfaces) {
+		List<Class> allInterfaces = new LinkedList<>();
+		for (Class childInterface : childInterfaces) {
+			allInterfaces.add(childInterface);
+			allInterfaces.addAll(
+					Arrays.asList(
+							getAllSuperInterfaces(childInterface.getInterfaces())));
+		}
+		return allInterfaces.toArray(new Class[0]);
 	}
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
