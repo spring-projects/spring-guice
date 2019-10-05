@@ -13,21 +13,6 @@
 
 package org.springframework.guice.module;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import javax.inject.Provider;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Injector;
@@ -40,19 +25,37 @@ import com.google.inject.matcher.Matchers;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.spi.ProvisionListener;
-
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.ResolvableType;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.type.MethodMetadata;
 import org.springframework.core.type.StandardMethodMetadata;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
+
+import javax.inject.Provider;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Queue;
+import java.util.Set;
 
 /**
  * @author Dave Syer
@@ -114,23 +117,31 @@ public class SpringModule extends AbstractModule {
 			Optional<Annotation> bindingAnnotation = getAnnotationForBeanDefinition(definition, beanFactory);
 			if (definition.isAutowireCandidate()
 					&& definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
-				Class<?> type = beanFactory.getType(name);
+				Type type;
+				RootBeanDefinition rootBeanDefinition = (RootBeanDefinition) beanFactory.getMergedBeanDefinition(name);
+				if (rootBeanDefinition.getFactoryBeanName() != null && rootBeanDefinition.getResolvedFactoryMethod() != null) {
+					type = rootBeanDefinition.getResolvedFactoryMethod().getGenericReturnType();
+				} else {
+					type = rootBeanDefinition.getResolvableType().getType();
+				}
 				if (type == null) {
 					continue;
 				}
 				final String beanName = name;
-				Provider<?> typeProvider = BeanFactoryProvider.typed(beanFactory, type, bindingAnnotation);
-				Provider<?> namedProvider = BeanFactoryProvider.named(beanFactory,
+				Provider typeProvider = BeanFactoryProvider.typed(beanFactory, type, bindingAnnotation);
+				Provider namedProvider = BeanFactoryProvider.named(beanFactory,
 						beanName, type, bindingAnnotation);
-				if (!type.isInterface() && !ClassUtils.isCglibProxyClass(type)) {
-					bindConditionally(binder(), name, type, typeProvider, namedProvider, bindingAnnotation);
+
+				Class clazz = (type instanceof Class) ? (Class) type : beanFactory.getType(beanName);
+				if (!clazz.isInterface() && !ClassUtils.isCglibProxyClass(clazz)) {
+					bindConditionally(binder(), name, clazz, typeProvider, namedProvider, bindingAnnotation);
 				}
-				for (Class<?> iface : getAllSuperInterfaces(new Class[]{type})) {
-					if (!ClassUtils.isCglibProxyClass(iface)) {
+				for (Type iface : getAllSuperInterfaces(type, clazz)) {
+					if (!ClassUtils.isCglibProxyClassName(iface.getTypeName())) {
 						bindConditionally(binder(), name, iface, typeProvider, namedProvider, bindingAnnotation);
 					}
 				}
-				for (Type iface : type.getGenericInterfaces()) {
+				for (Type iface : clazz.getGenericInterfaces()) {
 					bindConditionally(binder(), name, iface, typeProvider, namedProvider, bindingAnnotation);
 				}
 			}
@@ -215,16 +226,32 @@ public class SpringModule extends AbstractModule {
 		return Arrays.equals(candidate.getParameterTypes(), current.getParameterTypes());
 	}
 
-	private static Class[] getAllSuperInterfaces(Class[] childInterfaces) {
-		List<Class> allInterfaces = new LinkedList<>();
-		for (Class childInterface : childInterfaces) {
-			allInterfaces.add(childInterface);
-			allInterfaces.addAll(
-					Arrays.asList(
-							getAllSuperInterfaces(childInterface.getInterfaces())));
+	private static Set<Type> getAllSuperInterfaces(Type originalType, Class clazz) {
+		Set<Type> allInterfaces = new HashSet<>();
+		TypeLiteral typeToken = TypeLiteral.get(originalType);
+		Queue<Type> queue = new LinkedList<>();
+		queue.add(clazz);
+		if (originalType != clazz) {
+			queue.add(originalType);
 		}
-		return allInterfaces.toArray(new Class[0]);
+		while (!queue.isEmpty()) {
+			Type type = queue.poll();
+			allInterfaces.add(type);
+			if (type instanceof Class) {
+				for (Type i : ((Class) type).getInterfaces()) {
+					if (i instanceof Class && ((Class) i).isAssignableFrom(typeToken.getRawType())) {
+						Type superType = typeToken.getSupertype((Class) i).getType();
+						queue.add(superType);
+						if (!(superType instanceof Class)) {
+							queue.add(i);
+						}
+					}
+				}
+			}
+		}
+		return allInterfaces;
 	}
+
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void bindConditionally(Binder binder, String name, Type type,
@@ -299,42 +326,42 @@ public class SpringModule extends AbstractModule {
 		}
 	}
 
-	private static class BeanFactoryProvider<T> implements Provider<T> {
+	private static class BeanFactoryProvider implements Provider {
 
 		private ConfigurableListableBeanFactory beanFactory;
 
 		private String name;
 
-		private Class<T> type;
+		private Type type;
 
-		private T result;
+		private Object result;
 
 		private Optional<Annotation> bindingAnnotation;
 
 		private BeanFactoryProvider(ConfigurableListableBeanFactory beanFactory,
-				String name, Class<T> type, Optional<Annotation> bindingAnnotation) {
+				String name, Type type, Optional<Annotation> bindingAnnotation) {
 			this.beanFactory = beanFactory;
 			this.name = name;
 			this.bindingAnnotation = bindingAnnotation;
 			this.type = type;
 		}
 
-		public static <S> Provider<S> named(ConfigurableListableBeanFactory beanFactory,
-				String name, Class<S> type, Optional<Annotation> bindingAnnotation) {
-			return new BeanFactoryProvider<S>(beanFactory, name, type, bindingAnnotation);
+		public static  Provider named(ConfigurableListableBeanFactory beanFactory,
+				String name, Type type, Optional<Annotation> bindingAnnotation) {
+			return new BeanFactoryProvider(beanFactory, name, type, bindingAnnotation);
 		}
 
-		public static <S> Provider<S> typed(ConfigurableListableBeanFactory beanFactory,
-				Class<S> type, Optional<Annotation> bindingAnnotation) {
-			return new BeanFactoryProvider<S>(beanFactory, null, type, bindingAnnotation);
+		public static Provider typed(ConfigurableListableBeanFactory beanFactory,
+				Type type, Optional<Annotation> bindingAnnotation) {
+			return new BeanFactoryProvider(beanFactory, null, type, bindingAnnotation);
 		}
 
 		@Override
-		public T get() {
+		public Object get() {
 			if (this.result == null) {
 
 				String[] named = BeanFactoryUtils
-						.beanNamesForTypeIncludingAncestors(this.beanFactory, this.type);
+						.beanNamesForTypeIncludingAncestors(this.beanFactory, ResolvableType.forType(type));
 				List<String> names = new ArrayList<String>(named.length);
 				if (named.length == 1) {
 					names.add(named[0]);
@@ -355,12 +382,12 @@ public class SpringModule extends AbstractModule {
 					}
 				}
 				if (names.size() == 1) {
-					this.result = this.beanFactory.getBean(names.get(0), this.type);
+					this.result = this.beanFactory.getBean(names.get(0));
 				}
 				else {
 					for (String name : named) {
 						if (this.beanFactory.getBeanDefinition(name).isPrimary()) {
-							this.result = this.beanFactory.getBean(name, this.type);
+							this.result = this.beanFactory.getBean(name);
 							break;
 						}
 					}

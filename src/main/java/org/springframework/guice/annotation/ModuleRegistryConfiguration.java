@@ -13,17 +13,6 @@
 
 package org.springframework.guice.annotation;
 
-import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-
 import com.google.inject.Binding;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -31,13 +20,11 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.Stage;
-import com.google.inject.internal.LinkedBindingImpl;
 import com.google.inject.name.Named;
 import com.google.inject.spi.Element;
 import com.google.inject.spi.ElementSource;
 import com.google.inject.spi.Elements;
 import com.google.inject.spi.PrivateElements;
-
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -55,9 +42,18 @@ import org.springframework.context.ApplicationContextException;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.ResolvableType;
-import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.annotation.Order;
 import org.springframework.guice.module.SpringModule;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 /**
  * Configuration postprocessor that registers all the bindings in Guice modules as Spring
