@@ -146,6 +146,9 @@ public class SpringModule extends AbstractModule {
 						beanName, type, bindingAnnotation);
 
 				Class clazz = (type instanceof Class) ? (Class) type : beanFactory.getType(beanName);
+				if (clazz == null) {
+					continue;
+				}
 				if (!clazz.isInterface() && !ClassUtils.isCglibProxyClass(clazz)) {
 					bindConditionally(binder(), name, clazz, typeProvider, namedProvider, bindingAnnotation);
 				}
