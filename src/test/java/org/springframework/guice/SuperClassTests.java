@@ -157,36 +157,108 @@ public class SuperClassTests {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ModulesConfig.class);
         IFoo iFoo = context.getBean(IFoo.class);
         assertTrue(iFoo instanceof Foo);
+        assertTrue(iFoo instanceof SubFoo);
+
+        Foo foo = context.getBean(Foo.class);
+        assertTrue(foo instanceof SubFoo);
     }
 
     @Test
     public void testGuiceClass() {
-        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ModulesConfig.class);
+        baseTestGuiceClass(ModulesConfig.class);
+    }
+
+    @Test
+    public void testImportGuiceClass() {
+        baseTestGuiceClass(ImportConfig.class);
+    }
+
+    @Test
+    public void testComponentScanGuiceClass() {
+        baseTestGuiceClass(ComponentScanConfig.class);
+    }
+
+    private void baseTestGuiceClass(Class configClass) {
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClass);
         Injector injector = context.getBean(Injector.class);
         IFoo iFoo = injector.getInstance(IFoo.class);
         assertTrue(iFoo instanceof Foo);
+        assertTrue(iFoo instanceof SubFoo);
+
+        Foo foo = injector.getInstance(Foo.class);
+        assertTrue(foo instanceof SubFoo);
     }
 
     @Test
     public void testSpringClassWithType() {
-        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ModulesConfig.class);
+        baseTestSpringClassWithType(ModulesConfig.class);
+    }
+
+    @Test
+    public void testImportSpringClassWithType() {
+        baseTestSpringClassWithType(ImportConfig.class);
+    }
+
+    @Test
+    public void testComponentScanSpringClassWithType() {
+        baseTestSpringClassWithType(ComponentScanConfig.class);
+    }
+
+    private void baseTestSpringClassWithType(Class configClass) {
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClass);
         String[] stringBeanNames = context.getBeanNamesForType(ResolvableType.forClassWithGenerics(IFooWithType.class, String.class));
         assertEquals(1, stringBeanNames.length);
         assertTrue(context.getBean(stringBeanNames[0]) instanceof StringFoo);
+        assertTrue(context.getBean(stringBeanNames[0]) instanceof SubStringFoo);
+
+        stringBeanNames = context.getBeanNamesForType(StringFoo.class);
+        assertEquals(1, stringBeanNames.length);
+        assertTrue(context.getBean(stringBeanNames[0]) instanceof StringFoo);
+        assertTrue(context.getBean(stringBeanNames[0]) instanceof SubStringFoo);
 
         String[] integerBeanNames = context.getBeanNamesForType(ResolvableType.forClassWithGenerics(IFooWithType.class, Integer.class));
         assertEquals(1, integerBeanNames.length);
         assertTrue(context.getBean(integerBeanNames[0]) instanceof IntegerFoo);
+        assertTrue(context.getBean(integerBeanNames[0]) instanceof SubIntegerFoo);
+
+        integerBeanNames = context.getBeanNamesForType(IntegerFoo.class);
+        assertEquals(1, integerBeanNames.length);
+        assertTrue(context.getBean(integerBeanNames[0]) instanceof IntegerFoo);
+        assertTrue(context.getBean(integerBeanNames[0]) instanceof SubIntegerFoo);
     }
 
     @Test
     public void testGuiceClassWithType() {
-        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ModulesConfig.class);
+        baseTestGuiceClassWithType(ModulesConfig.class);
+    }
+
+    @Test
+    public void testImportGuiceClassWithType() {
+        baseTestGuiceClassWithType(ImportConfig.class);
+    }
+
+    @Test
+    public void testComponentScanGuiceClassWithType() {
+        baseTestGuiceClassWithType(ComponentScanConfig.class);
+    }
+
+    private void baseTestGuiceClassWithType(Class configClass) {
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClass);
         Injector injector = context.getBean(Injector.class);
-        IFooWithType<String> stringFoo = injector.getInstance(Key.get(new TypeLiteral<IFooWithType<String>>(){}));
-        assertTrue(stringFoo instanceof StringFoo);
-        IFooWithType<Integer> integerFoo = injector.getInstance(Key.get(new TypeLiteral<IFooWithType<Integer>>(){}));
-        assertTrue(integerFoo instanceof IntegerFoo);
+
+        IFooWithType<String> iFooWithTypeString = injector.getInstance(Key.get(new TypeLiteral<IFooWithType<String>>(){}));
+        assertTrue(iFooWithTypeString instanceof StringFoo);
+        assertTrue(iFooWithTypeString instanceof SubStringFoo);
+
+        StringFoo stringFoo = injector.getInstance(StringFoo.class);
+        assertTrue(stringFoo instanceof SubStringFoo);
+
+        IFooWithType<Integer> iFooWithTypeInteger = injector.getInstance(Key.get(new TypeLiteral<IFooWithType<Integer>>(){}));
+        assertTrue(iFooWithTypeInteger instanceof IntegerFoo);
+        assertTrue(iFooWithTypeInteger instanceof SubIntegerFoo);
+
+        IntegerFoo integerFoo = injector.getInstance(IntegerFoo.class);
+        assertTrue(integerFoo instanceof SubIntegerFoo);
     }
 
     static class DisableJITConfig {
@@ -220,19 +292,18 @@ public class SuperClassTests {
             return new IGrandChildInteger();
         }
 
-
         @Bean
-        public Foo iFoo() {
-            return new Foo();
+        public SubFoo subFoo() {
+            return new SubFoo();
         }
 
         @Bean
-        public StringFoo stringFoo() {
-            return new StringFoo();
+        public SubStringFoo stringFoo() {
+            return new SubStringFoo();
         }
 
-        @Bean IntegerFoo integerFoo() {
-            return new IntegerFoo();
+        @Bean SubIntegerFoo integerFoo() {
+            return new SubIntegerFoo();
         }
 
 
@@ -240,7 +311,7 @@ public class SuperClassTests {
 
     @Configuration
     @EnableGuiceModules
-    @Import({IGrandChildImpl.class, IGrandChildString.class, IGrandChildInteger.class})
+    @Import({IGrandChildImpl.class, IGrandChildString.class, IGrandChildInteger.class, SubFoo.class, SubStringFoo.class, SubIntegerFoo.class})
     static class ImportConfig extends DisableJITConfig {
     }
 
@@ -299,6 +370,11 @@ public class SuperClassTests {
 
     }
 
+    @Component
+    public static class SubFoo extends Foo {
+
+    }
+
     public interface IFooWithType<T> {
 
     }
@@ -307,7 +383,17 @@ public class SuperClassTests {
 
     }
 
+    @Component
+    public static class SubStringFoo extends StringFoo {
+
+    }
+
     public static class IntegerFoo implements IFooWithType<Integer> {
+
+    }
+
+    @Component
+    public static class SubIntegerFoo extends IntegerFoo {
 
     }
 
