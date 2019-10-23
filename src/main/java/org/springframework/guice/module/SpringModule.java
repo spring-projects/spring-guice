@@ -152,9 +152,9 @@ public class SpringModule extends AbstractModule {
 				if (!clazz.isInterface() && !ClassUtils.isCglibProxyClass(clazz)) {
 					bindConditionally(binder(), name, clazz, typeProvider, namedProvider, bindingAnnotation);
 				}
-				for (Type iface : getAllSuperInterfaces(type, clazz)) {
-					if (!ClassUtils.isCglibProxyClassName(iface.getTypeName())) {
-						bindConditionally(binder(), name, iface, typeProvider, namedProvider, bindingAnnotation);
+				for (Type superType : getAllSuperTypes(type, clazz)) {
+					if (!ClassUtils.isCglibProxyClassName(superType.getTypeName())) {
+						bindConditionally(binder(), name, superType, typeProvider, namedProvider, bindingAnnotation);
 					}
 				}
 				for (Type iface : clazz.getGenericInterfaces()) {
@@ -242,7 +242,7 @@ public class SpringModule extends AbstractModule {
 		return Arrays.equals(candidate.getParameterTypes(), current.getParameterTypes());
 	}
 
-	private static Set<Type> getAllSuperInterfaces(Type originalType, Class clazz) {
+	private static Set<Type> getAllSuperTypes(Type originalType, Class clazz) {
 		Set<Type> allInterfaces = new HashSet<>();
 		TypeLiteral typeToken = TypeLiteral.get(originalType);
 		Queue<Type> queue = new LinkedList<>();
@@ -256,12 +256,16 @@ public class SpringModule extends AbstractModule {
 			if (type instanceof Class) {
 				for (Type i : ((Class) type).getInterfaces()) {
 					if (i instanceof Class && ((Class) i).isAssignableFrom(typeToken.getRawType())) {
-						Type superType = typeToken.getSupertype((Class) i).getType();
-						queue.add(superType);
-						if (!(superType instanceof Class)) {
+						Type superInterface = typeToken.getSupertype((Class) i).getType();
+						queue.add(superInterface);
+						if (!(superInterface instanceof Class)) {
 							queue.add(i);
 						}
 					}
+				}
+				if (((Class) type).getSuperclass() != null && ((Class) type).isAssignableFrom(typeToken.getRawType())) {
+					Type superClass = typeToken.getSupertype(((Class) type).getSuperclass()).getType();
+					queue.add(superClass);
 				}
 			}
 		}
