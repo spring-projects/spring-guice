@@ -82,6 +82,7 @@ public class BeanFactoryProvider
 		return new BeanFactoryProvider(config, null);
 	}
 
+	@SuppressWarnings("unchecked")
 	public BeanFactoryProvider initializer(
 			ApplicationContextInitializer<ConfigurableApplicationContext>... initializers) {
 		this.initializers.addAll(Arrays.asList(initializers));

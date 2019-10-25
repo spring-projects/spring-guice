@@ -13,34 +13,6 @@
 
 package org.springframework.guice.module;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Binder;
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.ProvisionException;
-import com.google.inject.Stage;
-import com.google.inject.TypeLiteral;
-import com.google.inject.internal.Annotations;
-import com.google.inject.matcher.Matchers;
-import com.google.inject.name.Named;
-import com.google.inject.name.Names;
-import com.google.inject.spi.ProvisionListener;
-import org.springframework.beans.factory.BeanFactoryUtils;
-import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.beans.factory.support.AbstractBeanDefinition;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.beans.factory.support.RootBeanDefinition;
-import org.springframework.context.ApplicationContext;
-import org.springframework.core.ResolvableType;
-import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.core.type.MethodMetadata;
-import org.springframework.core.type.StandardMethodMetadata;
-import org.springframework.util.ClassUtils;
-import org.springframework.util.ReflectionUtils;
-
-import javax.inject.Provider;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -56,6 +28,36 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
+
+import javax.inject.Provider;
+
+import com.google.inject.AbstractModule;
+import com.google.inject.Binder;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.ProvisionException;
+import com.google.inject.Stage;
+import com.google.inject.TypeLiteral;
+import com.google.inject.internal.Annotations;
+import com.google.inject.matcher.Matchers;
+import com.google.inject.name.Named;
+import com.google.inject.name.Names;
+import com.google.inject.spi.ProvisionListener;
+
+import org.springframework.beans.factory.BeanFactoryUtils;
+import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.AbstractBeanDefinition;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.context.ApplicationContext;
+import org.springframework.core.ResolvableType;
+import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.core.type.MethodMetadata;
+import org.springframework.core.type.StandardMethodMetadata;
+import org.springframework.util.ClassUtils;
+import org.springframework.util.ReflectionUtils;
 
 /**
  * @author Dave Syer
@@ -80,14 +82,16 @@ public class SpringModule extends AbstractModule {
 	}
 
 	public SpringModule(ApplicationContext context, boolean enableJustInTimeBinding) {
-		this((ConfigurableListableBeanFactory) context.getAutowireCapableBeanFactory(), enableJustInTimeBinding);
+		this((ConfigurableListableBeanFactory) context.getAutowireCapableBeanFactory(),
+				enableJustInTimeBinding);
 	}
 
 	public SpringModule(ConfigurableListableBeanFactory beanFactory) {
 		this(beanFactory, true);
 	}
 
-	public SpringModule(ConfigurableListableBeanFactory beanFactory, boolean enableJustInTimeBinding) {
+	public SpringModule(ConfigurableListableBeanFactory beanFactory,
+			boolean enableJustInTimeBinding) {
 		this.beanFactory = beanFactory;
 		this.enableJustInTimeBinding = enableJustInTimeBinding;
 	}
@@ -123,73 +127,92 @@ public class SpringModule extends AbstractModule {
 	private void bind(ConfigurableListableBeanFactory beanFactory) {
 		for (String name : beanFactory.getBeanDefinitionNames()) {
 			BeanDefinition definition = beanFactory.getBeanDefinition(name);
-			
+
 			if (definition.hasAttribute(SPRING_GUICE_SOURCE)) {
 				continue;
 			}
-			Optional<Annotation> bindingAnnotation = getAnnotationForBeanDefinition(definition, beanFactory);
+			Optional<Annotation> bindingAnnotation = getAnnotationForBeanDefinition(
+					definition, beanFactory);
 			if (definition.isAutowireCandidate()
 					&& definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
 				Type type;
-				RootBeanDefinition rootBeanDefinition = (RootBeanDefinition) beanFactory.getMergedBeanDefinition(name);
-				if (rootBeanDefinition.getFactoryBeanName() != null && rootBeanDefinition.getResolvedFactoryMethod() != null) {
-					type = rootBeanDefinition.getResolvedFactoryMethod().getGenericReturnType();
-				} else {
+				RootBeanDefinition rootBeanDefinition = (RootBeanDefinition) beanFactory
+						.getMergedBeanDefinition(name);
+				if (rootBeanDefinition.getFactoryBeanName() != null
+						&& rootBeanDefinition.getResolvedFactoryMethod() != null) {
+					type = rootBeanDefinition.getResolvedFactoryMethod()
+							.getGenericReturnType();
+				}
+				else {
 					type = rootBeanDefinition.getResolvableType().getType();
 				}
 				if (type == null) {
 					continue;
 				}
 				final String beanName = name;
-				Provider typeProvider = BeanFactoryProvider.typed(beanFactory, type, bindingAnnotation);
-				Provider namedProvider = BeanFactoryProvider.named(beanFactory,
+				Provider<?> typeProvider = BeanFactoryProvider.typed(beanFactory, type,
+						bindingAnnotation);
+				Provider<?> namedProvider = BeanFactoryProvider.named(beanFactory,
 						beanName, type, bindingAnnotation);
 
-				Class clazz = (type instanceof Class) ? (Class) type : beanFactory.getType(beanName);
+				Class<?> clazz = (type instanceof Class) ? (Class<?>) type
+						: beanFactory.getType(beanName);
 				if (clazz == null) {
 					continue;
 				}
 				if (!clazz.isInterface() && !ClassUtils.isCglibProxyClass(clazz)) {
-					bindConditionally(binder(), name, clazz, typeProvider, namedProvider, bindingAnnotation);
+					bindConditionally(binder(), name, clazz, typeProvider, namedProvider,
+							bindingAnnotation);
 				}
 				for (Type superType : getAllSuperTypes(type, clazz)) {
 					if (!ClassUtils.isCglibProxyClassName(superType.getTypeName())) {
-						bindConditionally(binder(), name, superType, typeProvider, namedProvider, bindingAnnotation);
+						bindConditionally(binder(), name, superType, typeProvider,
+								namedProvider, bindingAnnotation);
 					}
 				}
 				for (Type iface : clazz.getGenericInterfaces()) {
-					bindConditionally(binder(), name, iface, typeProvider, namedProvider, bindingAnnotation);
+					bindConditionally(binder(), name, iface, typeProvider, namedProvider,
+							bindingAnnotation);
 				}
 			}
 		}
 	}
 
-	private static String getNameFromBindingAnnotation(Optional<Annotation> bindingAnnotation) {
+	private static String getNameFromBindingAnnotation(
+			Optional<Annotation> bindingAnnotation) {
 		if (bindingAnnotation.isPresent()) {
 			Annotation annotation = bindingAnnotation.get();
 			if (annotation instanceof Named) {
 				return ((Named) annotation).value();
-			} else if (annotation instanceof javax.inject.Named) {
+			}
+			else if (annotation instanceof javax.inject.Named) {
 				return ((javax.inject.Named) annotation).value();
-			} else {
+			}
+			else {
 				return null;
 			}
-		} else {
+		}
+		else {
 			return null;
 		}
 	}
-	
-	private static Optional<Annotation> getAnnotationForBeanDefinition(BeanDefinition definition, ConfigurableListableBeanFactory beanFactory) {
+
+	private static Optional<Annotation> getAnnotationForBeanDefinition(
+			BeanDefinition definition, ConfigurableListableBeanFactory beanFactory) {
 		if (definition instanceof AnnotatedBeanDefinition
-				&& ((AnnotatedBeanDefinition) definition).getFactoryMethodMetadata() != null) {
+				&& ((AnnotatedBeanDefinition) definition)
+						.getFactoryMethodMetadata() != null) {
 			try {
 				Method factoryMethod = getFactoryMethod(beanFactory, definition);
 				return Arrays.stream(AnnotationUtils.getAnnotations(factoryMethod))
-						.filter(a -> Annotations.isBindingAnnotation(a.annotationType())).findFirst();
-			} catch (Exception e) {
+						.filter(a -> Annotations.isBindingAnnotation(a.annotationType()))
+						.findFirst();
+			}
+			catch (Exception e) {
 				return Optional.empty();
 			}
-		} else {
+		}
+		else {
 			return Optional.empty();
 		}
 	}
@@ -211,7 +234,8 @@ public class SpringModule extends AbstractModule {
 		return getFactoryMethod(definition, factoryClass);
 	}
 
-	private static Method getFactoryMethod(BeanDefinition definition, Class<?> factoryClass) {
+	private static Method getFactoryMethod(BeanDefinition definition,
+			Class<?> factoryClass) {
 		Method uniqueMethod = null;
 		for (Method candidate : getCandidateFactoryMethods(definition, factoryClass)) {
 			if (candidate.getName().equals(definition.getFactoryMethodName())) {
@@ -242,9 +266,9 @@ public class SpringModule extends AbstractModule {
 		return Arrays.equals(candidate.getParameterTypes(), current.getParameterTypes());
 	}
 
-	private static Set<Type> getAllSuperTypes(Type originalType, Class clazz) {
+	private static Set<Type> getAllSuperTypes(Type originalType, Class<?> clazz) {
 		Set<Type> allInterfaces = new HashSet<>();
-		TypeLiteral typeToken = TypeLiteral.get(originalType);
+		TypeLiteral<?> typeToken = TypeLiteral.get(originalType);
 		Queue<Type> queue = new LinkedList<>();
 		queue.add(clazz);
 		if (originalType != clazz) {
@@ -254,17 +278,21 @@ public class SpringModule extends AbstractModule {
 			Type type = queue.poll();
 			allInterfaces.add(type);
 			if (type instanceof Class) {
-				for (Type i : ((Class) type).getInterfaces()) {
-					if (i instanceof Class && ((Class) i).isAssignableFrom(typeToken.getRawType())) {
-						Type superInterface = typeToken.getSupertype((Class) i).getType();
+				for (Type i : ((Class<?>) type).getInterfaces()) {
+					if (i instanceof Class
+							&& ((Class<?>) i).isAssignableFrom(typeToken.getRawType())) {
+						Type superInterface = typeToken.getSupertype((Class<?>) i)
+								.getType();
 						queue.add(superInterface);
 						if (!(superInterface instanceof Class)) {
 							queue.add(i);
 						}
 					}
 				}
-				if (((Class) type).getSuperclass() != null && ((Class) type).isAssignableFrom(typeToken.getRawType())) {
-					Type superClass = typeToken.getSupertype(((Class) type).getSuperclass()).getType();
+				if (((Class<?>) type).getSuperclass() != null
+						&& ((Class<?>) type).isAssignableFrom(typeToken.getRawType())) {
+					Type superClass = typeToken
+							.getSupertype(((Class<?>) type).getSuperclass()).getType();
 					queue.add(superClass);
 				}
 			}
@@ -272,10 +300,10 @@ public class SpringModule extends AbstractModule {
 		return allInterfaces;
 	}
 
-
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void bindConditionally(Binder binder, String name, Type type,
-			Provider typeProvider, Provider namedProvider, Optional<Annotation> bindingAnnotation) {
+			Provider typeProvider, Provider namedProvider,
+			Optional<Annotation> bindingAnnotation) {
 		if (!this.matcher.matches(name, type)) {
 			return;
 		}
@@ -290,13 +318,13 @@ public class SpringModule extends AbstractModule {
 				}
 			}
 		}
-		Key<?> key = bindingAnnotation.map(a ->(Key<Object>)Key.get(type, a)).orElse((Key<Object>)Key.get(type));
+		Key<?> key = bindingAnnotation.map(a -> (Key<Object>) Key.get(type, a))
+				.orElse((Key<Object>) Key.get(type));
 		StageTypeKey stageTypeKey = new StageTypeKey(binder.currentStage(), key);
 		if (this.bound.get(stageTypeKey) == null) {
 			// Only bind one provider for each type
-			
-			binder.withSource(SPRING_GUICE_SOURCE).bind(key)
-					.toProvider(typeProvider);
+
+			binder.withSource(SPRING_GUICE_SOURCE).bind(key).toProvider(typeProvider);
 			this.bound.put(stageTypeKey, typeProvider);
 		}
 		// But allow binding to named beans if not already bound
@@ -338,7 +366,8 @@ public class SpringModule extends AbstractModule {
 			if (key == null) {
 				if (other.key != null)
 					return false;
-			} else if (!key.equals(other.key))
+			}
+			else if (!key.equals(other.key))
 				return false;
 			if (stage != other.stage)
 				return false;
@@ -346,7 +375,7 @@ public class SpringModule extends AbstractModule {
 		}
 	}
 
-	private static class BeanFactoryProvider implements Provider {
+	private static class BeanFactoryProvider implements Provider<Object> {
 
 		private ConfigurableListableBeanFactory beanFactory;
 
@@ -366,12 +395,12 @@ public class SpringModule extends AbstractModule {
 			this.type = type;
 		}
 
-		public static  Provider named(ConfigurableListableBeanFactory beanFactory,
+		public static Provider<?> named(ConfigurableListableBeanFactory beanFactory,
 				String name, Type type, Optional<Annotation> bindingAnnotation) {
 			return new BeanFactoryProvider(beanFactory, name, type, bindingAnnotation);
 		}
 
-		public static Provider typed(ConfigurableListableBeanFactory beanFactory,
+		public static Provider<?> typed(ConfigurableListableBeanFactory beanFactory,
 				Type type, Optional<Annotation> bindingAnnotation) {
 			return new BeanFactoryProvider(beanFactory, null, type, bindingAnnotation);
 		}
@@ -380,19 +409,28 @@ public class SpringModule extends AbstractModule {
 		public Object get() {
 			if (this.result == null) {
 
-				String[] named = BeanFactoryUtils
-						.beanNamesForTypeIncludingAncestors(this.beanFactory, ResolvableType.forType(type));
+				String[] named = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
+						this.beanFactory, ResolvableType.forType(type));
 				List<String> names = new ArrayList<String>(named.length);
 				if (named.length == 1) {
 					names.add(named[0]);
 				}
 				else {
 					for (String name : named) {
-						if(bindingAnnotation.isPresent()) {
-							if (bindingAnnotation.get() instanceof Named || bindingAnnotation.get() instanceof javax.inject.Named) {
-								Optional<Annotation> annotation = SpringModule.getAnnotationForBeanDefinition(beanFactory.getMergedBeanDefinition(name), beanFactory);
-								String boundName = getNameFromBindingAnnotation(bindingAnnotation);
-								if(annotation.isPresent() && bindingAnnotation.get().equals(annotation.get()) || name.equals(boundName)) {
+						if (bindingAnnotation.isPresent()) {
+							if (bindingAnnotation.get() instanceof Named
+									|| bindingAnnotation
+											.get() instanceof javax.inject.Named) {
+								Optional<Annotation> annotation = SpringModule
+										.getAnnotationForBeanDefinition(
+												beanFactory.getMergedBeanDefinition(name),
+												beanFactory);
+								String boundName = getNameFromBindingAnnotation(
+										bindingAnnotation);
+								if (annotation.isPresent()
+										&& bindingAnnotation.get()
+												.equals(annotation.get())
+										|| name.equals(boundName)) {
 									names.add(name);
 								}
 							}

@@ -1,20 +1,21 @@
 package org.springframework.guice;
 
-import static org.junit.Assert.assertNotNull;
-
-import com.google.inject.*;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Module;
+import com.google.inject.Stage;
 import org.junit.AfterClass;
 import org.junit.Test;
+
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.ModuleFilteringTests.FilterThisModule;
 import org.springframework.guice.annotation.EnableGuiceModules;
-
 import org.springframework.guice.annotation.InjectorFactory;
 
-import java.util.List;
+import static org.junit.Assert.assertNotNull;
 
 public class ModuleFilteringTests {
 
@@ -33,19 +34,21 @@ public class ModuleFilteringTests {
 		context.close();
 	}
 
-	@Test(expected=NoSuchBeanDefinitionException.class)
+	@Test(expected = NoSuchBeanDefinitionException.class)
 	public void verifyFilteredModuleIsFiltered() {
 		System.setProperty("spring.guice.modules.exclude", "FilterThisModule");
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
 				ModuleFilteringTestsConfig.class);
 		try {
-		context.getBean(SomeInterface.class);
-		} finally {
+			context.getBean(SomeInterface.class);
+		}
+		finally {
 			context.close();
 		}
 	}
 
-	public static interface SomeInterface {}
+	public static interface SomeInterface {
+	}
 
 	public static class SomeDependency implements SomeInterface {
 		public SomeDependency() {
