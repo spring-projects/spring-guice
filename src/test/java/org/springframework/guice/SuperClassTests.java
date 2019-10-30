@@ -6,6 +6,7 @@ import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
 import org.junit.Test;
 
+import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -308,6 +309,52 @@ public class SuperClassTests {
 		assertTrue(integerFoo instanceof SubIntegerFoo);
 	}
 
+	@Test
+	public void testSpringFactoryBean() {
+		baseTestSpringFactoryBean(ModulesConfig.class);
+	}
+
+	@Test
+	public void testImportSpringFactoryBean() {
+		baseTestSpringFactoryBean(ImportConfig.class);
+	}
+
+	@Test
+	public void testComponentScanSpringFactoryBean() {
+		baseTestSpringFactoryBean(ComponentScanConfig.class);
+	}
+
+	private void baseTestSpringFactoryBean(Class<?> configClass) {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+				configClass);
+
+		Bar bar = context.getBean(Bar.class);
+		assertTrue(bar instanceof Bar);
+	}
+
+	@Test
+	public void testGuiceFactoryBean() {
+		baseTestGuiceFactoryBean(ModulesConfig.class);
+	}
+
+	@Test
+	public void testImportGuiceFactoryBean() {
+		baseTestGuiceFactoryBean(ImportConfig.class);
+	}
+
+	@Test
+	public void testComponentScanGuiceFactoryBean() {
+		baseTestGuiceFactoryBean(ComponentScanConfig.class);
+	}
+
+	private void baseTestGuiceFactoryBean(Class<?> configClass) {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+				configClass);
+		Injector injector = context.getBean(Injector.class);
+		Bar bar = injector.getInstance(Bar.class);
+		assertTrue(bar instanceof Bar);
+	}
+
 	static class DisableJITConfig {
 		@Bean
 		public AbstractModule disableJITModule() {
@@ -354,12 +401,17 @@ public class SuperClassTests {
 			return new SubIntegerFoo();
 		}
 
+		@Bean
+		BarFactory barFactory() {
+			return new BarFactory();
+		}
+
 	}
 
 	@Configuration
 	@EnableGuiceModules
 	@Import({ IGrandChildImpl.class, IGrandChildString.class, IGrandChildInteger.class,
-			SubFoo.class, SubStringFoo.class, SubIntegerFoo.class })
+			SubFoo.class, SubStringFoo.class, SubIntegerFoo.class, BarFactory.class })
 	static class ImportConfig extends DisableJITConfig {
 	}
 
@@ -443,4 +495,20 @@ public class SuperClassTests {
 
 	}
 
+	public static class Bar {}
+
+
+	@Component
+	public static class BarFactory implements FactoryBean<Bar> {
+
+		@Override
+		public Bar getObject() {
+			return new Bar();
+		}
+
+		@Override
+		public Class<?> getObjectType() {
+			return Bar.class;
+		}
+	}
 }

@@ -44,7 +44,9 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.spi.ProvisionListener;
 
+import com.google.inject.util.Types;
 import org.springframework.beans.factory.BeanFactoryUtils;
+import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -136,30 +138,42 @@ public class SpringModule extends AbstractModule {
 			if (definition.isAutowireCandidate()
 					&& definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
 				Type type;
-				RootBeanDefinition rootBeanDefinition = (RootBeanDefinition) beanFactory
-						.getMergedBeanDefinition(name);
-				if (rootBeanDefinition.getFactoryBeanName() != null
-						&& rootBeanDefinition.getResolvedFactoryMethod() != null) {
-					type = rootBeanDefinition.getResolvedFactoryMethod()
-							.getGenericReturnType();
-				}
-				else {
-					type = rootBeanDefinition.getResolvableType().getType();
-				}
-				if (type == null) {
-					continue;
-				}
-				final String beanName = name;
-				Provider<?> typeProvider = BeanFactoryProvider.typed(beanFactory, type,
-						bindingAnnotation);
-				Provider<?> namedProvider = BeanFactoryProvider.named(beanFactory,
-						beanName, type, bindingAnnotation);
-
-				Class<?> clazz = (type instanceof Class) ? (Class<?>) type
-						: beanFactory.getType(beanName);
+				Class<?> clazz = beanFactory.getType(name);
 				if (clazz == null) {
 					continue;
 				}
+				if (clazz.getTypeParameters().length > 0) {
+					RootBeanDefinition rootBeanDefinition = (RootBeanDefinition) beanFactory
+							.getMergedBeanDefinition(name);
+					if (rootBeanDefinition.getFactoryBeanName() != null
+							&& rootBeanDefinition.getResolvedFactoryMethod() != null) {
+						type = rootBeanDefinition.getResolvedFactoryMethod()
+								.getGenericReturnType();
+					}
+					else {
+						type = rootBeanDefinition.getResolvableType().getType();
+					}
+					if (type instanceof ParameterizedType) {
+						ParameterizedType parameterizedType = (ParameterizedType) type;
+						if (parameterizedType.getRawType() instanceof Class &&
+								FactoryBean.class.isAssignableFrom((Class<?>) parameterizedType.getRawType())) {
+							type = Types.newParameterizedTypeWithOwner(parameterizedType.getOwnerType(),
+									clazz, parameterizedType.getActualTypeArguments());
+						}
+					}
+
+				} else {
+					type = clazz;
+				}
+
+				if (type == null) {
+					continue;
+				}
+				Provider<?> typeProvider = BeanFactoryProvider.typed(beanFactory, type,
+						bindingAnnotation);
+				Provider<?> namedProvider = BeanFactoryProvider.named(beanFactory,
+						name, type, bindingAnnotation);
+
 				if (!clazz.isInterface() && !ClassUtils.isCglibProxyClass(clazz)) {
 					bindConditionally(binder(), name, clazz, typeProvider, namedProvider,
 							bindingAnnotation);
