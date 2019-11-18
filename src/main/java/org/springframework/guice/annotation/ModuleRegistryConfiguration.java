@@ -52,6 +52,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -109,7 +111,7 @@ class ModuleRegistryConfiguration
 		for (Entry<Key<?>, Binding<?>> entry : bindings.entrySet()) {
 			if (entry.getKey().getTypeLiteral().getRawType().equals(Injector.class)
 					|| SpringModule.SPRING_GUICE_SOURCE
-							.equals(entry.getValue().getSource().toString())) {
+							.equals(Optional.ofNullable(entry.getValue().getSource()).map(Object::toString).orElse(""))) {
 				continue;
 			}
 			if (entry.getKey().getAnnotationType() != null &&
@@ -132,7 +134,7 @@ class ModuleRegistryConfiguration
 			if(!Scopes.isSingleton(binding)) {
 				bean.setScope(ConfigurableBeanFactory.SCOPE_PROTOTYPE);
 			}
-			if (source != null && source instanceof ElementSource) {
+			if (source instanceof ElementSource) {
 				bean.setResourceDescription(
 						((ElementSource) source).getDeclaringSource().toString());
 			}
@@ -193,8 +195,8 @@ class ModuleRegistryConfiguration
 			String[] modulesToFilter = applicationContext.getEnvironment()
 					.getProperty("spring.guice.modules.exclude").split(",");
 			elements = elements.stream()
-					.filter(e -> !Arrays.stream(modulesToFilter)
-							.filter(ex -> (e.getSource().toString().contains(ex))).findFirst().isPresent())
+					.filter(e -> Arrays.stream(modulesToFilter)
+							.noneMatch(ex -> (Optional.ofNullable(e.getSource()).map(Object::toString).orElse("").contains(ex))))
 					.collect(Collectors.toList());
 			modules = Collections.singletonList(Elements.getModule(elements));
 		}
@@ -268,10 +270,10 @@ class ModuleRegistryConfiguration
 				Binding<?> compareTo = (Binding<?>) obj;
 				if (compareTo.getSource() != null && this.binding != null) {
 					return binding.equals(compareTo)
-							&& binding.getSource().equals(compareTo.getSource());
+							&& Objects.equals(binding.getSource(), compareTo.getSource());
 				}
 				else {
-					return binding.equals(compareTo);
+					return Objects.equals(binding, compareTo);
 				}
 			}
 			else {
