@@ -325,6 +325,7 @@ public class SuperClassTests {
 	}
 
 	private void baseTestSpringFactoryBean(Class<?> configClass) {
+		@SuppressWarnings("resource")
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
 				configClass);
 
@@ -495,8 +496,8 @@ public class SuperClassTests {
 
 	}
 
-	public static class Bar {}
-
+	public static class Bar {
+	}
 
 	@Component
 	public static class BarFactory implements FactoryBean<Bar> {
