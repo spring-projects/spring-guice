@@ -25,6 +25,8 @@ import com.google.inject.spi.Element;
 import com.google.inject.spi.ElementSource;
 import com.google.inject.spi.Elements;
 import com.google.inject.spi.PrivateElements;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -60,7 +62,7 @@ import java.util.stream.Collectors;
 /**
  * Configuration postprocessor that registers all the bindings in Guice modules as Spring
  * beans.
- * 
+ *
  * @author Dave Syer
  * @author Talylor Wicksell
  * @author Howard Yuan
@@ -73,6 +75,8 @@ class ModuleRegistryConfiguration
 
 	private static final String SPRING_GUICE_DEDUPE_BINDINGS_PROPERTY_NAME = "spring.guice.dedup";
 	private static final String SPRING_GUICE_AUTOWIRE_JIT_PROPERTY_NAME = "spring.guice.autowireJIT";
+
+	private final Log logger = LogFactory.getLog(getClass());
 
 	private ApplicationContext applicationContext;
 	private List<Module> modules;
@@ -193,11 +197,8 @@ class ModuleRegistryConfiguration
 		}
 		if (applicationContext.getEnvironment().containsProperty("spring.guice.modules.exclude")) {
 			String[] modulesToFilter = applicationContext.getEnvironment()
-					.getProperty("spring.guice.modules.exclude").split(",");
-			elements = elements.stream()
-					.filter(e -> Arrays.stream(modulesToFilter)
-							.noneMatch(ex -> (Optional.ofNullable(e.getSource()).map(Object::toString).orElse("").contains(ex))))
-					.collect(Collectors.toList());
+					.getProperty("spring.guice.modules.exclude", "").split(",");
+			elements = elements.stream().filter(e -> elementFilter(modulesToFilter, e)).collect(Collectors.toList());
 			modules = Collections.singletonList(Elements.getModule(elements));
 		}
 		for (Element e : elements) {
@@ -210,6 +211,16 @@ class ModuleRegistryConfiguration
 			}
 		}
 		mapBindings(bindings, registry);
+	}
+
+	private boolean elementFilter(String[] modulesToFilter, Element element){
+		try {
+			return Arrays.stream(modulesToFilter)
+					.noneMatch(ex -> Optional.of(element).map(Element::getSource).map(Object::toString).orElse("").contains(ex));
+		} catch (Exception e){
+			logger.error(String.format("Unable fo filter element[%s] with filter [%s]", element, Arrays.toString(modulesToFilter)), e);
+			return false;
+		}
 	}
 
 	private void extractPrivateElements(Map<Key<?>, Binding<?>> bindings,
