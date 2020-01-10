@@ -64,6 +64,10 @@ class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateR
             return false;
         }
 
+        if (super.isLazy(descriptor)) {
+            return true;
+        }
+
         try {
             beanFactory.doResolveDependency(descriptor, beanName, null, null);
         } catch (NoSuchBeanDefinitionException e) {
@@ -73,7 +77,8 @@ class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateR
             }
             return true;
         }
-        return super.isLazy(descriptor);
+
+        return false;
     }
 
     protected Object buildLazyResolutionProxy(final DependencyDescriptor descriptor, final String beanName) {
