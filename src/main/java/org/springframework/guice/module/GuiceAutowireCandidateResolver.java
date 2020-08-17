@@ -28,10 +28,12 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.annotation.ContextAnnotationAutowireCandidateResolver;
 import org.springframework.util.Assert;
 
-
 import javax.inject.Provider;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 
 /**
@@ -86,6 +88,8 @@ class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateR
                 "BeanFactory needs to be a DefaultListableBeanFactory");
         final DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) getBeanFactory();
         TargetSource ts = new TargetSource() {
+            private Optional<Boolean> isGuiceResolvable = Optional.empty();
+
             @Override
             public Class<?> getTargetClass() {
                 return descriptor.getDependencyType();
@@ -99,14 +103,18 @@ class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateR
             @Override
             public Object getTarget() {
                 Object target = null;
-                try {
-                    target = beanFactory.doResolveDependency(descriptor, beanName, null, null);
-                } catch (NoSuchBeanDefinitionException e) {
+                if (isGuiceResolvable.isPresent() && isGuiceResolvable.get()) {
                     target = injectorProvider.get().getInstance(Key.get(descriptor.getResolvableType().getType()));
+                } else {
+                    try {
+                        target = beanFactory.doResolveDependency(descriptor, beanName, null, null);
+                    } catch (NoSuchBeanDefinitionException e) {
+                        target = injectorProvider.get().getInstance(Key.get(descriptor.getResolvableType().getType()));
+                        isGuiceResolvable = Optional.of(true);
+                    }
                 }
-
                 if (target == null) {
-                     throw new NoSuchBeanDefinitionException(descriptor.getDependencyType(),
+                    throw new NoSuchBeanDefinitionException(descriptor.getDependencyType(),
                             "Optional dependency not present for lazy injection point");
                 }
                 return target;
