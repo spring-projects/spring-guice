@@ -397,7 +397,7 @@ public class SpringModule extends AbstractModule {
 
 		private Type type;
 
-		private Object result;
+		private Provider<Object> resultProvider;
 
 		private Optional<Annotation> bindingAnnotation;
 
@@ -421,7 +421,7 @@ public class SpringModule extends AbstractModule {
 
 		@Override
 		public Object get() {
-			if (this.result == null) {
+			if (this.resultProvider == null) {
 
 				String[] named = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
 						this.beanFactory, ResolvableType.forType(type));
@@ -454,22 +454,22 @@ public class SpringModule extends AbstractModule {
 					}
 				}
 				if (names.size() == 1) {
-					this.result = this.beanFactory.getBean(names.get(0));
+					this.resultProvider = () -> this.beanFactory.getBean(names.get(0));
 				}
 				else {
 					for (String name : named) {
 						if (this.beanFactory.getBeanDefinition(name).isPrimary()) {
-							this.result = this.beanFactory.getBean(name);
+							this.resultProvider = () -> this.beanFactory.getBean(name);
 							break;
 						}
 					}
-					if (this.result == null) {
+					if (this.resultProvider == null) {
 						throw new ProvisionException(
 								"No primary bean definition for type: " + this.type);
 					}
 				}
 			}
-			return this.result;
+			return this.resultProvider.get();
 		}
 	}
 
