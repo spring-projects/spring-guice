@@ -15,6 +15,8 @@ Injector injector = Guice.createInjector(new SpringModule(context), new MyModule
 Service service = injector.getInstance(Service.class);
 ```
 
+`SpringModule` (`org.springframework.guice.module.SpringModule`) will wrap the existing spring configurations for you.
+
 Note that the `ApplicationContext` in this example might contain the
 `Service` definition or it might be in the Guice `Module`
 (`MyModule`), or if `Service` is a concrete class it could be neither,
