@@ -75,6 +75,7 @@ class ModuleRegistryConfiguration
 
 	private static final String SPRING_GUICE_DEDUPE_BINDINGS_PROPERTY_NAME = "spring.guice.dedup";
 	private static final String SPRING_GUICE_AUTOWIRE_JIT_PROPERTY_NAME = "spring.guice.autowireJIT";
+	private static final String SPRING_GUICE_STAGE_PROPERTY_NAME = "spring.guice.stage";
 
 	private final Log logger = LogFactory.getLog(getClass());
 
@@ -111,11 +112,13 @@ class ModuleRegistryConfiguration
 	}
 
 	private void mapBindings(Map<Key<?>, Binding<?>> bindings,
-			BeanDefinitionRegistry registry) {
+							 BeanDefinitionRegistry registry) {
+		Stage stage = applicationContext.getEnvironment().getProperty(SPRING_GUICE_STAGE_PROPERTY_NAME, Stage.class, Stage.PRODUCTION);
+		boolean ifLazyInit = stage.equals(Stage.DEVELOPMENT);
 		for (Entry<Key<?>, Binding<?>> entry : bindings.entrySet()) {
 			if (entry.getKey().getTypeLiteral().getRawType().equals(Injector.class)
 					|| SpringModule.SPRING_GUICE_SOURCE
-							.equals(Optional.ofNullable(entry.getValue().getSource()).map(Object::toString).orElse(""))) {
+					.equals(Optional.ofNullable(entry.getValue().getSource()).map(Object::toString).orElse(""))) {
 				continue;
 			}
 			if (entry.getKey().getAnnotationType() != null &&
@@ -150,6 +153,9 @@ class ModuleRegistryConfiguration
 				bean.addQualifier(new AutowireCandidateQualifier(Qualifier.class,
 						getValueAttributeForNamed(key)));
 				bean.addQualifier(new AutowireCandidateQualifier(key.getAnnotationType(), getValueAttributeForNamed(key)));
+			}
+			if (ifLazyInit) {
+				bean.setLazyInit(true);
 			}
 			registry.registerBeanDefinition(extractName(key), bean);
 		}
