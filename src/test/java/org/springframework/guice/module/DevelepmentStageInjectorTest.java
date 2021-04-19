@@ -14,6 +14,7 @@ import org.springframework.guice.annotation.InjectorFactory;
 import java.util.List;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class DevelepmentStageInjectorTest {
 
@@ -32,6 +33,8 @@ public class DevelepmentStageInjectorTest {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(DevelepmentStageInjectorTest.ModulesConfig.class);
         TestGuiceModule testGuiceModule = context.getBean(TestGuiceModule.class);
         assertFalse(testGuiceModule.getProviderExecuted());
+        GuiceToken guiceToken = context.getBean(GuiceToken.class);
+        assertTrue(testGuiceModule.getProviderExecuted());
         context.close();
     }
 
