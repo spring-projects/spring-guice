@@ -13,32 +13,27 @@
 
 package org.springframework.guice.injector;
 
-import java.lang.annotation.Annotation;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import com.google.inject.Module;
+import com.google.inject.*;
+import com.google.inject.name.Named;
+import com.google.inject.spi.Element;
+import com.google.inject.spi.InjectionPoint;
+import com.google.inject.spi.TypeConverterBinding;
 import org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.ApplicationContext;
 
-import com.google.inject.Binding;
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.MembersInjector;
-import com.google.inject.Module;
-import com.google.inject.Provider;
-import com.google.inject.Scope;
-import com.google.inject.TypeLiteral;
-import com.google.inject.name.Named;
-import com.google.inject.spi.TypeConverterBinding;
+import java.lang.annotation.Annotation;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * An {@link Injector} that wraps an {@link ApplicationContext}, and can be used
  * to expose the Guice APIs over a Spring application. Does not use Guice at all
  * internally: just adapts the Spring API to the Guice one.
- * 
+ *
  * @author Dave Syer
  *
  */
@@ -61,12 +56,7 @@ public class SpringInjector implements Injector {
 
 	@Override
 	public <T> MembersInjector<T> getMembersInjector(TypeLiteral<T> typeLiteral) {
-		return new MembersInjector<T>() {
-			@Override
-			public void injectMembers(T instance) {
-				SpringInjector.this.beanFactory.autowireBean(instance);
-			}
-		};
+		return instance -> SpringInjector.this.beanFactory.autowireBean(instance);
 	}
 
 	@Override
@@ -105,9 +95,9 @@ public class SpringInjector implements Injector {
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public <T> Provider<T> getProvider(Key<T> key) {
-		// TODO: support for other metadata in the key (apart from name and
-		// type)
+		// TODO: support for other metadata in the key (apart from name and type)
 		Class<? super T> type = key.getTypeLiteral().getRawType();
 		final String name = extractName(key);
 		if (this.beanFactory.getBeanNamesForType(type, true, false).length == 0) {
@@ -118,25 +108,14 @@ public class SpringInjector implements Injector {
 			this.beanFactory.registerBeanDefinition(name, new RootBeanDefinition(type));
 		}
 		if (this.beanFactory.containsBean(name) && this.beanFactory.isTypeMatch(name, type)) {
-			return new Provider<T>() {
-				@SuppressWarnings("unchecked")
-				@Override
-				public T get() {
-					return (T) SpringInjector.this.beanFactory.getBean(name);
-				}
-			};
+			return () -> (T) SpringInjector.this.beanFactory.getBean(name);
 		}
-		@SuppressWarnings("unchecked")
 		final Class<T> cls = (Class<T>) type;
-		return new Provider<T>() {
-			@SuppressWarnings("unchecked")
-			@Override
-			public T get() {
-				if(key.getAnnotation() != null) {
-					return (T) BeanFactoryAnnotationUtils.qualifiedBeanOfType(SpringInjector.this.beanFactory, type, name);
-				}
-				return SpringInjector.this.beanFactory.getBean(cls);
+		return () -> {
+			if(key.getAnnotation() != null) {
+				return (T) BeanFactoryAnnotationUtils.qualifiedBeanOfType(SpringInjector.this.beanFactory, type, name);
 			}
+			return SpringInjector.this.beanFactory.getBean(cls);
 		};
 	}
 
@@ -167,27 +146,37 @@ public class SpringInjector implements Injector {
 
 	@Override
 	public Injector getParent() {
-		return null;
+		return this.injector != null ? this.injector.getParent() : null;
 	}
 
 	@Override
 	public Injector createChildInjector(Iterable<? extends Module> modules) {
-		return null;
+		return this.injector != null ? this.injector.createChildInjector(modules) : null;
 	}
 
 	@Override
 	public Injector createChildInjector(Module... modules) {
-		return null;
+		return this.injector != null ? this.injector.createChildInjector(modules) : null;
 	}
 
 	@Override
 	public Map<Class<? extends Annotation>, Scope> getScopeBindings() {
-		return null;
+		return this.injector != null ? this.injector.getScopeBindings() : null;
 	}
 
 	@Override
 	public Set<TypeConverterBinding> getTypeConverterBindings() {
-		return null;
+		return this.injector != null ? this.injector.getTypeConverterBindings() : null;
+	}
+
+	@Override
+	public List<Element> getElements() {
+		return this.injector != null ? this.injector.getElements() : null;
+	}
+
+	@Override
+	public Map<TypeLiteral<?>, List<InjectionPoint>> getAllMembersInjectorInjectionPoints() {
+		return this.injector != null ? this.injector.getAllMembersInjectorInjectionPoints() : null;
 	}
 
 }

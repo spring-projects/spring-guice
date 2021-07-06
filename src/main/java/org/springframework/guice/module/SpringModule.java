@@ -13,37 +13,12 @@
 
 package org.springframework.guice.module;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Queue;
-import java.util.Set;
-
-import javax.inject.Provider;
-
-import com.google.inject.AbstractModule;
-import com.google.inject.Binder;
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.ProvisionException;
-import com.google.inject.Stage;
-import com.google.inject.TypeLiteral;
+import com.google.inject.*;
 import com.google.inject.internal.Annotations;
 import com.google.inject.matcher.Matchers;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.spi.ProvisionListener;
-
 import com.google.inject.util.Types;
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.FactoryBean;
@@ -61,6 +36,13 @@ import org.springframework.core.type.StandardMethodMetadata;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
 
+import javax.inject.Provider;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.*;
+
 /**
  * @author Dave Syer
  *
@@ -71,7 +53,7 @@ public class SpringModule extends AbstractModule {
 
 	private BindingTypeMatcher matcher = new GuiceModuleMetadata();
 
-	private Map<StageTypeKey, Provider<?>> bound = new HashMap<StageTypeKey, Provider<?>>();
+	private Map<StageTypeKey, Provider<?>> bound = new HashMap<>();
 
 	private ConfigurableListableBeanFactory beanFactory;
 
@@ -126,6 +108,7 @@ public class SpringModule extends AbstractModule {
 		bind(beanFactory);
 	}
 
+	@SuppressWarnings("deprecation")
 	private void bind(ConfigurableListableBeanFactory beanFactory) {
 		for (String name : beanFactory.getBeanDefinitionNames()) {
 			BeanDefinition definition = beanFactory.getBeanDefinition(name);
@@ -166,9 +149,6 @@ public class SpringModule extends AbstractModule {
 					type = clazz;
 				}
 
-				if (type == null) {
-					continue;
-				}
 				Provider<?> typeProvider = BeanFactoryProvider.typed(beanFactory, type,
 						bindingAnnotation);
 				Provider<?> namedProvider = BeanFactoryProvider.named(beanFactory,
@@ -192,8 +172,7 @@ public class SpringModule extends AbstractModule {
 		}
 	}
 
-	private static String getNameFromBindingAnnotation(
-			Optional<Annotation> bindingAnnotation) {
+	private static String getNameFromBindingAnnotation(Optional<Annotation> bindingAnnotation) {
 		if (bindingAnnotation.isPresent()) {
 			Annotation annotation = bindingAnnotation.get();
 			if (annotation instanceof Named) {
@@ -211,6 +190,7 @@ public class SpringModule extends AbstractModule {
 		}
 	}
 
+	@SuppressWarnings("deprecation")
 	private static Optional<Annotation> getAnnotationForBeanDefinition(
 			BeanDefinition definition, ConfigurableListableBeanFactory beanFactory) {
 		if (definition instanceof AnnotatedBeanDefinition
@@ -218,7 +198,11 @@ public class SpringModule extends AbstractModule {
 						.getFactoryMethodMetadata() != null) {
 			try {
 				Method factoryMethod = getFactoryMethod(beanFactory, definition);
-				return Arrays.stream(AnnotationUtils.getAnnotations(factoryMethod))
+				Annotation[] annotations = AnnotationUtils.getAnnotations(factoryMethod);
+				if (null == annotations || annotations.length == 0) {
+					return Optional.empty();
+				}
+				return Arrays.stream(annotations)
 						.filter(a -> Annotations.isBindingAnnotation(a.annotationType()))
 						.findFirst();
 			}
@@ -241,10 +225,12 @@ public class SpringModule extends AbstractModule {
 						.getIntrospectedMethod();
 			}
 		}
-		BeanDefinition factoryDefinition = beanFactory
-				.getBeanDefinition(definition.getFactoryBeanName());
-		Class<?> factoryClass = ClassUtils.forName(factoryDefinition.getBeanClassName(),
-				beanFactory.getBeanClassLoader());
+		String factoryBeanName = definition.getFactoryBeanName();
+		assert factoryBeanName != null;
+		BeanDefinition factoryDefinition = beanFactory.getBeanDefinition(factoryBeanName);
+		String beanClassName = factoryDefinition.getBeanClassName();
+		assert beanClassName != null;
+		Class<?> factoryClass = ClassUtils.forName(beanClassName, beanFactory.getBeanClassLoader());
 		return getFactoryMethod(definition, factoryClass);
 	}
 
@@ -383,9 +369,7 @@ public class SpringModule extends AbstractModule {
 			}
 			else if (!key.equals(other.key))
 				return false;
-			if (stage != other.stage)
-				return false;
-			return true;
+			return stage == other.stage;
 		}
 	}
 

@@ -2,7 +2,6 @@ package org.springframework.guice;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
-
 import com.google.inject.multibindings.OptionalBinder;
 import org.junit.AfterClass;
 import org.junit.Test;
@@ -10,8 +9,6 @@ import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.guice.BindingDeduplicationTests.SomeDependency;
-import org.springframework.guice.BindingDeduplicationTests.SomeOptionalDependency;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
 import static org.junit.Assert.assertNotNull;
@@ -28,9 +25,9 @@ public class BindingDeduplicationTests {
 		System.setProperty("spring.guice.dedup", "true");
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
 				BindingDeduplicationTestsConfig.class);
-		SomeDependency someDependency = context.getBean(SomeDependency.class);
+		SomeDependency someDependency = context.getBean("someBean", SomeDependency.class);
 		assertNotNull(someDependency);
-		SomeOptionalDependency someOptionalDependency = context.getBean(SomeOptionalDependency.class);
+		SomeOptionalDependency someOptionalDependency = context.getBean("someOptionalBean", SomeOptionalDependency.class);
 		assertNotNull(someOptionalDependency);
 		context.close();
 	}
@@ -42,24 +39,31 @@ public class BindingDeduplicationTests {
 				BindingDeduplicationTestsConfig.class);
 		context.close();
 	}
+}
 
-	public static class SomeDependency {}
-	public static class SomeOptionalDependency {}
+class SomeDependency {
+	public SomeDependency() {}
+}
 
+interface SomeOptionalDependency {
+}
+
+class SomeOptionalDependencyImpl implements SomeOptionalDependency {
+	public SomeOptionalDependencyImpl() {}
 }
 
 @EnableGuiceModules
 @Configuration
 class BindingDeduplicationTestsConfig {
 
-	@Bean
+	@Bean("someBean")
 	public SomeDependency someBean() {
 		return new SomeDependency();
 	}
 
-	@Bean
+	@Bean("someOptionalBean")
 	public SomeOptionalDependency someOptionalBean() {
-		return new SomeOptionalDependency();
+		return new SomeOptionalDependencyImpl();
 	}
 
 	@Bean
@@ -71,7 +75,7 @@ class BindingDeduplicationTestsConfig {
 				OptionalBinder
 						.newOptionalBinder(binder(), SomeOptionalDependency.class)
 						.setDefault()
-						.to(SomeOptionalDependency.class);
+						.to(SomeOptionalDependencyImpl.class);
 			}
 		};
 	}
