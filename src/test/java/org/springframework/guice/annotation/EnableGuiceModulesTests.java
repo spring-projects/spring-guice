@@ -19,6 +19,8 @@ import javax.inject.Named;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import org.junit.After;
 import org.junit.Test;
 
@@ -72,6 +74,13 @@ public class EnableGuiceModulesTests {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
 				ModuleBeanConfig.class);
 		assertNotNull(context.getBean(Foo.class));
+		context.close();
+	}
+
+	@Test
+	public void testInjectorCreationDoesNotCauseCircularDependencyError() {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(MySpringConfig.class);
+		assertNotNull(context.getBean(SpringProvidedBean.class));
 		context.close();
 	}
 
@@ -146,6 +155,52 @@ public class EnableGuiceModulesTests {
 		@Override
 		protected void configure() {
 			bind(Service.class).to(MyService.class);
+		}
+
+	}
+
+	public static class SpringProvidedBean {
+		public SpringProvidedBean(GuiceProvidedBean guiceProvidedBean) {
+		}
+	}
+
+	public static class GuiceProvidedBean {
+	}
+
+	public static class GuiceService {
+
+		@Inject
+		public GuiceService(SpringProvidedBean springProvidedBean) {
+		}
+	}
+
+	public static class MyGuiceModule extends AbstractModule {
+
+		@Override
+		protected void configure() {
+			bind(GuiceService.class).asEagerSingleton();
+		}
+
+		@Provides
+		@Singleton
+		public GuiceProvidedBean guiceProvidedBean() {
+			return new GuiceProvidedBean();
+		}
+
+	}
+
+	@Configuration
+	@EnableGuiceModules
+	public static class MySpringConfig {
+
+		@Bean
+		public SpringProvidedBean baz(GuiceProvidedBean guiceProvidedBean) {
+			return new SpringProvidedBean(guiceProvidedBean);
+		}
+
+		@Bean
+		public MyGuiceModule bazModule() {
+			return new MyGuiceModule();
 		}
 
 	}
