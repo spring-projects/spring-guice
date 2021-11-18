@@ -87,7 +87,7 @@ class BeanPostProcessorTestConfig {
 		
 	}
 	
-	public static class TestBeanPostProcessor implements BeanPostProcessor, Ordered {
+	public static class TestBeanPostProcessor implements BeanPostProcessor {
 		@Override
 		public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
 			if(bean instanceof PostProcessedBean) {
@@ -99,11 +99,6 @@ class BeanPostProcessorTestConfig {
 		@Override
 		public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
 			return bean;
-		}
-
-		@Override
-		public int getOrder() {
-			return 0;
 		}
 	}
 

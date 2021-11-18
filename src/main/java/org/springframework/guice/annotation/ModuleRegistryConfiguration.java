@@ -41,6 +41,9 @@ import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationContextException;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.ResolvableType;
@@ -70,8 +73,7 @@ import java.util.stream.Collectors;
  */
 @Configuration
 @Order(Ordered.HIGHEST_PRECEDENCE)
-class ModuleRegistryConfiguration
-		implements BeanDefinitionRegistryPostProcessor, ApplicationContextAware {
+class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor, ApplicationContextAware {
 
 	private static final String SPRING_GUICE_DEDUPE_BINDINGS_PROPERTY_NAME = "spring.guice.dedup";
 	private static final String SPRING_GUICE_AUTOWIRE_JIT_PROPERTY_NAME = "spring.guice.autowireJIT";
@@ -80,39 +82,59 @@ class ModuleRegistryConfiguration
 	private final Log logger = LogFactory.getLog(getClass());
 
 	private ApplicationContext applicationContext;
-	private List<Module> modules;
-	private AtomicBoolean injectorCreated = new AtomicBoolean(false);
 	private boolean enableJustInTimeBinding = true;
 
-	private void createInjector(List<Module> modules,
-			ConfigurableListableBeanFactory beanFactory) {
-		Injector injector = null;
-		try {
-			Map<String, InjectorFactory> beansOfType = beanFactory
-					.getBeansOfType(InjectorFactory.class);
-			if (beansOfType.size() > 1) {
-				throw new ApplicationContextException("Found multiple beans of type "
-						+ InjectorFactory.class.getName()
-						+ "  Please ensure that only one InjectorFactory bean is defined. InjectorFactory beans found: "
-						+ beansOfType.keySet());
-			}
-			else if (beansOfType.size() == 1) {
-				InjectorFactory injectorFactory = beansOfType.values().iterator().next();
-				injector = injectorFactory.createInjector(modules);
-			}
-		}
-		catch (NoSuchBeanDefinitionException e) {
-
-		}
-		if (injector == null) {
-			injector = Guice.createInjector(modules);
-		}
-		beanFactory.registerResolvableDependency(Injector.class, injector);
-		beanFactory.registerSingleton("injector", injector);
+	@Override
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		this.applicationContext = applicationContext;
+		this.enableJustInTimeBinding = applicationContext.getEnvironment()
+				.getProperty(SPRING_GUICE_AUTOWIRE_JIT_PROPERTY_NAME, Boolean.class, true);
 	}
 
-	private void mapBindings(Map<Key<?>, Binding<?>> bindings,
-							 BeanDefinitionRegistry registry) {
+	@Override
+	public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
+		List<Module> modules = new ArrayList<>(((ConfigurableListableBeanFactory) registry)
+				.getBeansOfType(Module.class).values());
+		modules.add(new SpringModule((ConfigurableListableBeanFactory) registry, enableJustInTimeBinding));
+		Map<Key<?>, Binding<?>> bindings = new HashMap<Key<?>, Binding<?>>();
+		List<Element> elements = Elements.getElements(Stage.TOOL, modules);
+		if (applicationContext.getEnvironment().getProperty(
+				SPRING_GUICE_DEDUPE_BINDINGS_PROPERTY_NAME, Boolean.class, false)) {
+			elements = removeDuplicates(elements);
+			modules = Collections.singletonList(Elements.getModule(elements));
+		}
+		if (applicationContext.getEnvironment().containsProperty("spring.guice.modules.exclude")) {
+			String[] modulesToFilter = applicationContext.getEnvironment()
+					.getProperty("spring.guice.modules.exclude", "").split(",");
+			elements = elements.stream().filter(e -> elementFilter(modulesToFilter, e)).collect(Collectors.toList());
+			modules = Collections.singletonList(Elements.getModule(elements));
+		}
+		for (Element e : elements) {
+			if (e instanceof Binding) {
+				Binding<?> binding = (Binding<?>) e;
+				bindings.put(binding.getKey(), binding);
+			}
+			else if (e instanceof PrivateElements) {
+				extractPrivateElements(bindings, (PrivateElements) e);
+			}
+		}
+		mapBindings(bindings, registry);
+
+		// Register the injector initializer
+		RootBeanDefinition beanDefinition = new RootBeanDefinition(GuiceInjectorInitializer.class);
+		ConstructorArgumentValues args = new ConstructorArgumentValues();
+		args.addIndexedArgumentValue(0, modules);
+		args.addIndexedArgumentValue(1, applicationContext);
+		beanDefinition.setConstructorArgumentValues(args);
+		registry.registerBeanDefinition("guiceInjectorInitializer", beanDefinition);
+	}
+
+	@Override
+	public void postProcessBeanFactory(ConfigurableListableBeanFactory configurableListableBeanFactory) {
+
+	}
+
+	private void mapBindings(Map<Key<?>, Binding<?>> bindings, BeanDefinitionRegistry registry) {
 		Stage stage = applicationContext.getEnvironment().getProperty(SPRING_GUICE_STAGE_PROPERTY_NAME, Stage.class, Stage.PRODUCTION);
 		boolean ifLazyInit = stage.equals(Stage.DEVELOPMENT);
 		for (Entry<Key<?>, Binding<?>> entry : bindings.entrySet()) {
@@ -186,37 +208,6 @@ class ModuleRegistryConfiguration
 		else {
 			return null;
 		}
-	}
-
-	@Override
-	public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry)
-			throws BeansException {
-		modules = new ArrayList<Module>(((ConfigurableListableBeanFactory) registry)
-				.getBeansOfType(Module.class).values());
-		modules.add(new SpringModule((ConfigurableListableBeanFactory) registry, enableJustInTimeBinding));
-		Map<Key<?>, Binding<?>> bindings = new HashMap<Key<?>, Binding<?>>();
-		List<Element> elements = Elements.getElements(Stage.TOOL, modules);
-		if (applicationContext.getEnvironment().getProperty(
-				SPRING_GUICE_DEDUPE_BINDINGS_PROPERTY_NAME, Boolean.class, false)) {
-			elements = removeDuplicates(elements);
-			modules = Collections.singletonList(Elements.getModule(elements));
-		}
-		if (applicationContext.getEnvironment().containsProperty("spring.guice.modules.exclude")) {
-			String[] modulesToFilter = applicationContext.getEnvironment()
-					.getProperty("spring.guice.modules.exclude", "").split(",");
-			elements = elements.stream().filter(e -> elementFilter(modulesToFilter, e)).collect(Collectors.toList());
-			modules = Collections.singletonList(Elements.getModule(elements));
-		}
-		for (Element e : elements) {
-			if (e instanceof Binding) {
-				Binding<?> binding = (Binding<?>) e;
-				bindings.put(binding.getKey(), binding);
-			}
-			else if (e instanceof PrivateElements) {
-				extractPrivateElements(bindings, (PrivateElements) e);
-			}
-		}
-		mapBindings(bindings, registry);
 	}
 
 	private boolean elementFilter(String[] modulesToFilter, Element element){
@@ -298,42 +289,81 @@ class ModuleRegistryConfiguration
 			}
 		}
 	}
+}
 
-	@Override
-	public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory)
-			throws BeansException {
-		beanFactory.registerSingleton("guiceInjectorInitializer",
-				new GuiceInjectorInitializingBeanPostProcessor() {
-					@Override
-					public Object postProcessBeforeInitialization(Object bean,
-							String beanName) throws BeansException {
-						return bean;
-					}
+/**
+ * Creates the Guice injector and registers it.
+ *
+ * The correct time to create the injector is after all Bean Post Processors were registered (after the
+ * registerBeanPostProcessors() phase), but before other beans get resolved. To achieve this, we create the injector
+ * when the first bean gets resolved - in its post-processing phase. However, this creates a possibility for a circular
+ * initialization error (i.e. if the first bean is also being dependant on by a Guice provided binding). To resolve
+ * this we publish an event that will be triggered in the registerListeners() phase, and create the injector then.
+ * Combining both initialization mechanisms (post-processor and the event publishing) ensures the injector will be
+ * created no later then the registerListeners() phase, but after the registerBeanPostProcessors() phase.
+ * For application contexts that override onRefresh() and create beans then (i.e. WebServer based application contexts)
+ * the post-processor initialization will kick-in and create the injector before.
+ */
+class GuiceInjectorInitializer implements BeanPostProcessor, ApplicationListener<GuiceInjectorInitializer.CreateInjectorEvent> {
+	private final AtomicBoolean injectorCreated = new AtomicBoolean(false);
+	private final List<Module> modules;
+	private final ConfigurableApplicationContext applicationContext;
 
-					@Override
-					public Object postProcessAfterInitialization(Object bean,
-							String beanName) throws BeansException {
-						if (injectorCreated.compareAndSet(false, true)) {
-							createInjector(modules, beanFactory);
-						}
-						return bean;
-					}
-				});
-	}
-
-	@Override
-	public void setApplicationContext(ApplicationContext applicationContext)
-			throws BeansException {
+	public GuiceInjectorInitializer(List<Module> modules,
+									ConfigurableApplicationContext applicationContext) {
+		this.modules = modules;
 		this.applicationContext = applicationContext;
-		this.enableJustInTimeBinding = applicationContext.getEnvironment()
-				.getProperty(SPRING_GUICE_AUTOWIRE_JIT_PROPERTY_NAME, Boolean.class, true);
+
+		applicationContext.publishEvent(new CreateInjectorEvent());
 	}
 
-	private static class GuiceInjectorInitializingBeanPostProcessor
-			implements BeanPostProcessor, Ordered {
-		@Override
-		public int getOrder() {
-			return Ordered.LOWEST_PRECEDENCE - 1;
+	@Override
+	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+		if (injectorCreated.compareAndSet(false, true)) {
+			createInjector();
+		}
+		return bean;
+	}
+
+	@Override
+	public void onApplicationEvent(CreateInjectorEvent event) {
+		if (injectorCreated.compareAndSet(false, true)) {
+			createInjector();
+		}
+	}
+
+	private void createInjector() {
+		Injector injector = null;
+		try {
+			Map<String, InjectorFactory> beansOfType = applicationContext.getBeansOfType(InjectorFactory.class);
+			if (beansOfType.size() > 1) {
+				throw new ApplicationContextException("Found multiple beans of type "
+						+ InjectorFactory.class.getName()
+						+ "  Please ensure that only one InjectorFactory bean is defined. InjectorFactory beans found: "
+						+ beansOfType.keySet());
+			}
+			else if (beansOfType.size() == 1) {
+				InjectorFactory injectorFactory = beansOfType.values().iterator().next();
+				injector = injectorFactory.createInjector(modules);
+			}
+		}
+		catch (NoSuchBeanDefinitionException e) {
+
+		}
+		if (injector == null) {
+			injector = Guice.createInjector(modules);
+		}
+		applicationContext.getBeanFactory().registerResolvableDependency(Injector.class, injector);
+		applicationContext.getBeanFactory().registerSingleton("injector", injector);
+	}
+
+	static class CreateInjectorEvent extends ApplicationEvent {
+		private static final long serialVersionUID = -6546970378679850504L;
+
+		public CreateInjectorEvent() {
+			super(serialVersionUID);
 		}
 	}
 }
+
+
