@@ -59,7 +59,7 @@ public class BeanFactoryProvider
 
 	private Class<?>[] config;
 	private String[] basePackages;
-	private List<ApplicationContextInitializer<ConfigurableApplicationContext>> initializers = new ArrayList<ApplicationContextInitializer<ConfigurableApplicationContext>>();
+	private List<ApplicationContextInitializer<ConfigurableApplicationContext>> initializers = new ArrayList<>();
 	private PartiallyRefreshableApplicationContext context;
 
 	/**
@@ -151,10 +151,6 @@ public class BeanFactoryProvider
 
 		private void delayedRefresh() throws BeansException, IllegalStateException {
 			super.refresh();
-		}
-
-		@Override
-		public void refresh() {
 		}
 
 		@Override

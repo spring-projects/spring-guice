@@ -35,6 +35,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.Module;
 import com.google.inject.ProvisionException;
 import com.google.inject.Stage;
 import com.google.inject.TypeLiteral;
@@ -65,13 +66,13 @@ import org.springframework.util.ReflectionUtils;
  * @author Dave Syer
  *
  */
-public class SpringModule extends AbstractModule {
+public class SpringModule implements Module {
 
 	public static final String SPRING_GUICE_SOURCE = "spring-guice";
 
 	private BindingTypeMatcher matcher = new GuiceModuleMetadata();
 
-	private Map<StageTypeKey, Provider<?>> bound = new HashMap<StageTypeKey, Provider<?>>();
+	private Map<StageTypeKey, Provider<?>> bound = new HashMap<>();
 
 	private ConfigurableListableBeanFactory beanFactory;
 
@@ -103,12 +104,12 @@ public class SpringModule extends AbstractModule {
 	}
 
 	@Override
-	public void configure() {
+	public void configure(Binder binder) {
 		if (beanFactory == null) {
 			beanFactory = beanFactoryProvider.get();
 		}
 		if (beanFactory.getBeanNamesForType(ProvisionListener.class).length > 0) {
-			binder().bindListener(Matchers.any(),
+			binder.bindListener(Matchers.any(),
 					beanFactory.getBeansOfType(ProvisionListener.class).values()
 							.toArray(new ProvisionListener[0]));
 		}
@@ -116,17 +117,17 @@ public class SpringModule extends AbstractModule {
 			if (beanFactory instanceof DefaultListableBeanFactory) {
 				((DefaultListableBeanFactory) beanFactory)
 						.setAutowireCandidateResolver(new GuiceAutowireCandidateResolver(
-								binder().getProvider(Injector.class)));
+								binder.getProvider(Injector.class)));
 			}
 		}
 		if (beanFactory.getBeanNamesForType(GuiceModuleMetadata.class).length > 0) {
 			this.matcher = new CompositeTypeMatcher(
 					beanFactory.getBeansOfType(GuiceModuleMetadata.class).values());
 		}
-		bind(beanFactory);
+		bind(beanFactory, binder);
 	}
 
-	private void bind(ConfigurableListableBeanFactory beanFactory) {
+	private void bind(ConfigurableListableBeanFactory beanFactory, Binder binder) {
 		for (String name : beanFactory.getBeanDefinitionNames()) {
 			BeanDefinition definition = beanFactory.getBeanDefinition(name);
 
@@ -153,8 +154,7 @@ public class SpringModule extends AbstractModule {
 					else {
 						type = rootBeanDefinition.getResolvableType().getType();
 					}
-					if (type instanceof ParameterizedType) {
-						ParameterizedType parameterizedType = (ParameterizedType) type;
+					if (type instanceof ParameterizedType parameterizedType) {
 						if (parameterizedType.getRawType() instanceof Class &&
 								FactoryBean.class.isAssignableFrom((Class<?>) parameterizedType.getRawType())) {
 							type = Types.newParameterizedTypeWithOwner(parameterizedType.getOwnerType(),
@@ -166,26 +166,23 @@ public class SpringModule extends AbstractModule {
 					type = clazz;
 				}
 
-				if (type == null) {
-					continue;
-				}
 				Provider<?> typeProvider = BeanFactoryProvider.typed(beanFactory, type,
 						bindingAnnotation);
 				Provider<?> namedProvider = BeanFactoryProvider.named(beanFactory,
 						name, type, bindingAnnotation);
 
 				if (!clazz.isInterface() && !ClassUtils.isCglibProxyClass(clazz)) {
-					bindConditionally(binder(), name, clazz, typeProvider, namedProvider,
+					bindConditionally(binder, name, clazz, typeProvider, namedProvider,
 							bindingAnnotation);
 				}
 				for (Type superType : getAllSuperTypes(type, clazz)) {
 					if (!ClassUtils.isCglibProxyClassName(superType.getTypeName())) {
-						bindConditionally(binder(), name, superType, typeProvider,
+						bindConditionally(binder, name, superType, typeProvider,
 								namedProvider, bindingAnnotation);
 					}
 				}
 				for (Type iface : clazz.getGenericInterfaces()) {
-					bindConditionally(binder(), name, iface, typeProvider, namedProvider,
+					bindConditionally(binder, name, iface, typeProvider, namedProvider,
 							bindingAnnotation);
 				}
 			}
@@ -324,8 +321,7 @@ public class SpringModule extends AbstractModule {
 		if (type.getTypeName().startsWith("com.google.inject")) {
 			return;
 		}
-		if (type instanceof ParameterizedType) {
-			ParameterizedType param = (ParameterizedType) type;
+		if (type instanceof ParameterizedType param) {
 			for (Type t : param.getActualTypeArguments()) {
 				if (!ClassUtils.isPresent(t.getTypeName(), null)) {
 					return;
@@ -425,7 +421,7 @@ public class SpringModule extends AbstractModule {
 
 				String[] named = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(
 						this.beanFactory, ResolvableType.forType(type));
-				List<String> names = new ArrayList<String>(named.length);
+				List<String> names = new ArrayList<>(named.length);
 				if (named.length == 1) {
 					names.add(named[0]);
 				}

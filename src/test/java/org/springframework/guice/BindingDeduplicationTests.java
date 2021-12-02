@@ -3,7 +3,6 @@ package org.springframework.guice;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 
-import com.google.inject.multibindings.OptionalBinder;
 import org.junit.AfterClass;
 import org.junit.Test;
 import org.springframework.beans.factory.BeanCreationException;
@@ -68,10 +67,7 @@ class BindingDeduplicationTestsConfig {
 			@Override
 			protected void configure() {
 				bind(SomeDependency.class).asEagerSingleton();
-				OptionalBinder
-						.newOptionalBinder(binder(), SomeOptionalDependency.class)
-						.setDefault()
-						.to(SomeOptionalDependency.class);
+				bind(SomeOptionalDependency.class).toProvider(SomeOptionalDependency::new);
 			}
 		};
 	}
