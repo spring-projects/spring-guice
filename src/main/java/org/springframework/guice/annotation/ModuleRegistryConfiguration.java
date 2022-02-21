@@ -21,10 +21,7 @@ import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.Stage;
 import com.google.inject.name.Named;
-import com.google.inject.spi.Element;
-import com.google.inject.spi.ElementSource;
-import com.google.inject.spi.Elements;
-import com.google.inject.spi.PrivateElements;
+import com.google.inject.spi.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.BeansException;
@@ -242,11 +239,10 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 	protected List<Element> removeDuplicates(List<Element> elements) {
 		List<Element> duplicateElements = elements.stream()
 				.filter(e -> e instanceof Binding).map(e -> (Binding<?>) e)
-				.collect(Collectors.groupingBy(Binding::getKey)).entrySet().stream()
+				.collect(Collectors.groupingBy(ModuleRegistryConfiguration::getLinkedKeyIfRequired)).entrySet().stream()
 				.filter(e -> e.getValue().size() > 1 && e.getValue().stream().anyMatch(
 						binding -> binding.getSource() != null && binding.getSource()
-								.toString().contains(SpringModule.SPRING_GUICE_SOURCE))) // find
-																							// duplicates
+								.toString().contains(SpringModule.SPRING_GUICE_SOURCE))) // find duplicates
 				.flatMap(e -> e.getValue().stream())
 				.filter(e -> e.getSource() != null && !e.getSource().toString()
 						.contains(SpringModule.SPRING_GUICE_SOURCE))
@@ -263,6 +259,19 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 			}
 		}).collect(Collectors.toList());
 		return dedupedElements;
+	}
+
+	private static Key<?> getLinkedKeyIfRequired(Binding<?> binding) {
+		if (binding == null) {
+			return null;
+		}
+
+		if (binding instanceof LinkedKeyBinding) {
+			LinkedKeyBinding<?> linkedBinding = (LinkedKeyBinding<?>) binding;
+			return linkedBinding.getLinkedKey();
+		}
+
+		return binding.getKey();
 	}
 
 	private static class SourceComparableBinding {

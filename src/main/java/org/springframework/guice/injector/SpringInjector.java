@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.inject.spi.Element;
+import com.google.inject.spi.InjectionPoint;
 import org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.RootBeanDefinition;
@@ -187,6 +189,16 @@ public class SpringInjector implements Injector {
 
 	@Override
 	public Set<TypeConverterBinding> getTypeConverterBindings() {
+		return null;
+	}
+
+	@Override
+	public List<Element> getElements() {
+		return null;
+	}
+
+	@Override
+	public Map<TypeLiteral<?>, List<InjectionPoint>> getAllMembersInjectorInjectionPoints() {
 		return null;
 	}
 
