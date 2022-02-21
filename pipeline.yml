@@ -71,7 +71,7 @@ jobs:
       platform: linux
       image_resource:
         type: docker-image
-        source: 
+        source:
           repository: harbor-repo.vmware.com/dockerhub-proxy-cache/springio/spring-ci-base
       inputs:
         - name: source
