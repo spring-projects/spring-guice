@@ -20,7 +20,7 @@ public class InjectorFactoryTests {
 
 	@Before
 	public void init() {
-		Mockito.when(injectorFactory.createInjector(Mockito.anyListOf(Module.class)))
+		Mockito.when(injectorFactory.createInjector(Mockito.anyList()))
 				.thenReturn(Guice.createInjector());
 	}
 
@@ -28,7 +28,7 @@ public class InjectorFactoryTests {
 	public void testCustomInjectorIsCreated() {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(InjectorFactoryConfig.class,
 				ModulesConfig.class);
-		Mockito.verify(injectorFactory, Mockito.times(1)).createInjector(Mockito.anyListOf(Module.class));
+		Mockito.verify(injectorFactory, Mockito.times(1)).createInjector(Mockito.anyList());
 		context.close();
 	}
 
