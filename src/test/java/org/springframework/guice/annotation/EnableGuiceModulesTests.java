@@ -33,7 +33,7 @@ import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Dave Syer
@@ -49,7 +49,7 @@ public class EnableGuiceModulesTests {
 	@Test
 	public void test() {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(TestConfig.class);
-		assertNotNull(context.getBean(Foo.class));
+		assertThat(context.getBean(Foo.class)).isNotNull();
 		context.close();
 	}
 
@@ -57,28 +57,28 @@ public class EnableGuiceModulesTests {
 	public void testWithDedupFeatureEnabled() {
 		System.setProperty("spring.guice.dedup", "true");
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(TestConfig.class);
-		assertNotNull(context.getBean(Foo.class));
+		assertThat(context.getBean(Foo.class)).isNotNull();
 		context.close();
 	}
 
 	@Test
 	public void module() {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ModuleConfig.class);
-		assertNotNull(context.getBean(Foo.class));
+		assertThat(context.getBean(Foo.class)).isNotNull();
 		context.close();
 	}
 
 	@Test
 	public void moduleBean() {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ModuleBeanConfig.class);
-		assertNotNull(context.getBean(Foo.class));
+		assertThat(context.getBean(Foo.class)).isNotNull();
 		context.close();
 	}
 
 	@Test
 	public void testInjectorCreationDoesNotCauseCircularDependencyError() {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(MySpringConfig.class);
-		assertNotNull(context.getBean(SpringProvidedBean.class));
+		assertThat(context.getBean(SpringProvidedBean.class)).isNotNull();
 		context.close();
 	}
 

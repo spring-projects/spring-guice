@@ -29,14 +29,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 import org.springframework.guice.injector.SpringInjector;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class SimpleWiringTests {
 
 	@Test
 	public void guiceyFoo() {
 		Injector app = Guice.createInjector(new TestConfig());
-		assertNotNull(app.getInstance(Foo.class));
+		assertThat(app.getInstance(Foo.class)).isNotNull();
 	}
 
 	@Test
@@ -46,7 +46,7 @@ public class SimpleWiringTests {
 				MyService.class);
 		context.getDefaultListableBeanFactory().registerBeanDefinition(Foo.class.getSimpleName(),
 				new RootBeanDefinition(Foo.class));
-		assertNotNull(context.getBean(Foo.class));
+		assertThat(context.getBean(Foo.class)).isNotNull();
 	}
 
 	@Test
@@ -54,7 +54,7 @@ public class SimpleWiringTests {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(TestConfig.class,
 				ModulesConfig.class);
 		Injector app = new SpringInjector(context);
-		assertNotNull(app.getInstance(Foo.class));
+		assertThat(app.getInstance(Foo.class)).isNotNull();
 	}
 
 	@Configuration

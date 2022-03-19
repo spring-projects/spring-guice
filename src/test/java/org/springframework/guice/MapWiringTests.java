@@ -26,7 +26,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Test injecting Map
@@ -60,7 +60,7 @@ public class MapWiringTests {
 
 		@Bean
 		Bar foo(Map<String, Foo> foos) {
-			assertFalse(foos.isEmpty());
+			assertThat(foos.isEmpty()).isFalse();
 			return new Bar();
 		}
 

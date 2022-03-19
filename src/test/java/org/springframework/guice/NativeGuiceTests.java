@@ -24,7 +24,7 @@ import com.google.inject.Injector;
 import com.google.inject.name.Names;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Dave Syer
@@ -39,7 +39,7 @@ public class NativeGuiceTests {
 	public void test() {
 		Injector app = Guice.createInjector(new TestConfig());
 		NativeGuiceTests instance = app.getInstance(NativeGuiceTests.class);
-		assertNotNull(instance.bar);
+		assertThat(instance.bar).isNotNull();
 	}
 
 	public static class TestConfig extends AbstractModule {

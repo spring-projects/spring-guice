@@ -32,8 +32,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.guice.module.SpringModule;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 /**
  * @author Dave Syer
@@ -44,44 +44,44 @@ public class GuiceModuleAnnotationTests {
 	@Test
 	public void includes() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MetadataIncludesConfig.class);
-		assertNotNull(injector.getBinding(Service.class));
+		assertThat(injector.getBinding(Service.class)).isNotNull();
 	}
 
 	@Test
 	public void includesNames() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MetadataIncludeNamesConfig.class);
-		assertNotNull(injector.getBinding(Service.class));
+		assertThat(injector.getBinding(Service.class)).isNotNull();
 	}
 
 	@Test
 	public void includesPatterns() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MetadataIncludePatternsConfig.class);
-		assertNotNull(injector.getBinding(Service.class));
+		assertThat(injector.getBinding(Service.class)).isNotNull();
 	}
 
 	@Test
 	public void excludes() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MetadataExcludesConfig.class);
-		assertThrows(ConfigurationException.class, () -> injector.getInstance(Service.class));
+		assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> injector.getInstance(Service.class));
 	}
 
 	@Test
 	public void excludesNames() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MetadataExcludeNamesConfig.class);
-		assertThrows(ConfigurationException.class, () -> injector.getBinding(Service.class));
+		assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> injector.getBinding(Service.class));
 	}
 
 	@Test
 	public void excludesPatterns() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MetadataExcludePatternsConfig.class);
-		assertThrows(ConfigurationException.class, () -> injector.getBinding(Service.class));
+		assertThatExceptionOfType(ConfigurationException.class).isThrownBy(() -> injector.getBinding(Service.class));
 	}
 
 	@Test
 	public void twoIncludes() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MetadataIncludesConfig.class,
 				MetadataMoreIncludesConfig.class);
-		assertNotNull(injector.getBinding(Service.class));
+		assertThat(injector.getBinding(Service.class)).isNotNull();
 	}
 
 	private Injector createInjector(Class<?>... config) {

@@ -22,14 +22,14 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class GuiceModuleAnnotationGenericTypeTests {
 
 	@Test
 	public void testBinding() {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(TestConfig.class);
-		assertNotNull(context.getBean(Foo.class));
+		assertThat(context.getBean(Foo.class)).isNotNull();
 		context.close();
 	}
 

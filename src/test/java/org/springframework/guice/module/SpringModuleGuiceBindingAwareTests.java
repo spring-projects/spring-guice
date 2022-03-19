@@ -31,9 +31,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.util.AopTestUtils;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class SpringModuleGuiceBindingAwareTests {
 
@@ -43,26 +41,26 @@ public class SpringModuleGuiceBindingAwareTests {
 				new SpringModule(BeanFactoryProvider.from(GuiceProjectWithSpringLibraryTestSpringConfig.class)));
 
 		// check guice provided bindings
-		assertNotNull(injector.getInstance(GuiceDependency1.class));
-		assertNotNull(injector.getInstance(IGuiceDependency1.class));
+		assertThat(injector.getInstance(GuiceDependency1.class)).isNotNull();
+		assertThat(injector.getInstance(IGuiceDependency1.class)).isNotNull();
 
 		// check spring bindings as interface
 		ISpringBean springBean = injector.getInstance(ISpringBean.class);
-		assertNotNull(springBean);
-		assertNotNull(springBean.getDep1());
-		assertNotNull(springBean.getDep2());
-		assertNotNull(springBean.getDep3());
+		assertThat(springBean).isNotNull();
+		assertThat(springBean.getDep1()).isNotNull();
+		assertThat(springBean.getDep2()).isNotNull();
+		assertThat(springBean.getDep3()).isNotNull();
 
 		// invoke a method to make sure we aren't dealing with a lazy proxy
-		assertEquals("done", springBean.getDep1().doWork());
+		assertThat(springBean.getDep1().doWork()).isEqualTo("done");
 
 		// check binding equality
-		assertSame(injector.getInstance(IGuiceDependency1.class),
-				AopTestUtils.getTargetObject(springBean.getDep1()));
-		assertSame(injector.getInstance(IGuiceDependency2.class),
-				AopTestUtils.getTargetObject(springBean.getDep2()));
-		assertSame(injector.getInstance(IGuiceDependency3.class),
-				AopTestUtils.getTargetObject(springBean.getDep3()));
+		assertThat(injector.getInstance(IGuiceDependency1.class))
+				.isSameAs(AopTestUtils.getTargetObject(springBean.getDep1()));
+		assertThat(injector.getInstance(IGuiceDependency2.class))
+				.isSameAs(AopTestUtils.getTargetObject(springBean.getDep2()));
+		assertThat(injector.getInstance(IGuiceDependency3.class))
+				.isSameAs(AopTestUtils.getTargetObject(springBean.getDep3()));
 	}
 
 	static class SimpleGuiceModule extends AbstractModule {

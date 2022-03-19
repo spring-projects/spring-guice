@@ -30,8 +30,8 @@ import org.springframework.guice.AbstractCompleteWiringTests.Baz;
 import org.springframework.guice.AbstractCompleteWiringTests.MyService;
 import org.springframework.guice.AbstractCompleteWiringTests.Service;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 public class SpringInjectorTests {
 
@@ -48,29 +48,30 @@ public class SpringInjectorTests {
 
 	@Test
 	public void instance() {
-		assertNotNull(this.injector.getInstance(Service.class));
+		assertThat(this.injector.getInstance(Service.class)).isNotNull();
 	}
 
 	@Test
 	public void multiple() {
 		this.injector = new SpringInjector(create(Additional.class));
-		assertThrows(NoUniqueBeanDefinitionException.class, () -> this.injector.getInstance(Service.class));
+		assertThatExceptionOfType(NoUniqueBeanDefinitionException.class)
+				.isThrownBy(() -> this.injector.getInstance(Service.class));
 	}
 
 	@Test
 	public void named() {
 		this.injector = new SpringInjector(create(Additional.class));
-		assertNotNull(this.injector.getInstance(Key.get(Service.class, Names.named("service"))));
+		assertThat(this.injector.getInstance(Key.get(Service.class, Names.named("service")))).isNotNull();
 	}
 
 	@Test
 	public void provider() {
-		assertNotNull(this.injector.getProvider(Service.class).get());
+		assertThat(this.injector.getProvider(Service.class).get()).isNotNull();
 	}
 
 	@Test
 	public void bindNewObject() {
-		assertNotNull(this.injector.getInstance(Baz.class));
+		assertThat(this.injector.getInstance(Baz.class)).isNotNull();
 	}
 
 	private ApplicationContext create(Class<?>... config) {

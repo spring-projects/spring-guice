@@ -31,7 +31,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class DuplicateNamesDifferentTypesTests {
 
@@ -41,16 +41,16 @@ public class DuplicateNamesDifferentTypesTests {
 				DuplicateNamesDifferentTypesTestsConfig.class);
 
 		// Check Guice @Named
-		assertNotNull(context.getBean(SomeNamedDepWithType1.class));
-		assertNotNull(context.getBean(SomeNamedDepWithType2.class));
-		assertNotNull(BeanFactoryAnnotationUtils.qualifiedBeanOfType(context.getBeanFactory(),
-				SomeNamedDepWithType1.class, "sameNameDifferentType"));
+		assertThat(context.getBean(SomeNamedDepWithType1.class)).isNotNull();
+		assertThat(context.getBean(SomeNamedDepWithType2.class)).isNotNull();
+		assertThat(BeanFactoryAnnotationUtils.qualifiedBeanOfType(context.getBeanFactory(), SomeNamedDepWithType1.class,
+				"sameNameDifferentType")).isNotNull();
 
 		// Check javax @Named
-		assertNotNull(context.getBean(SomeJavaxNamedDepWithType1.class));
-		assertNotNull(context.getBean(SomeJavaxNamedDepWithType2.class));
-		assertNotNull(BeanFactoryAnnotationUtils.qualifiedBeanOfType(context.getBeanFactory(),
-				SomeJavaxNamedDepWithType1.class, "sameJavaxName"));
+		assertThat(context.getBean(SomeJavaxNamedDepWithType1.class)).isNotNull();
+		assertThat(context.getBean(SomeJavaxNamedDepWithType2.class)).isNotNull();
+		assertThat(BeanFactoryAnnotationUtils.qualifiedBeanOfType(context.getBeanFactory(),
+				SomeJavaxNamedDepWithType1.class, "sameJavaxName")).isNotNull();
 		context.getBeansOfType(SomeJavaxNamedDepWithType1.class);
 
 		context.close();

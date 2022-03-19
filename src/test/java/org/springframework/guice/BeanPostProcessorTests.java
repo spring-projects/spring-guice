@@ -33,7 +33,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class BeanPostProcessorTests {
 
@@ -46,11 +46,11 @@ public class BeanPostProcessorTests {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
 				BeanPostProcessorTestConfig.class);
 		PostProcessedBean postProcessedBean = context.getBean(PostProcessedBean.class);
-		assertTrue(postProcessedBean.postProcessed);
+		assertThat(postProcessedBean.postProcessed).isTrue();
 		GuiceBeanThatWantsPostProcessedBean guiceBean1 = context.getBean(GuiceBeanThatWantsPostProcessedBean.class);
-		assertTrue(guiceBean1.ppb.postProcessed);
+		assertThat(guiceBean1.ppb.postProcessed).isTrue();
 		GuiceBeanThatWantsSpringBean guiceBean2 = context.getBean(GuiceBeanThatWantsSpringBean.class);
-		assertTrue(guiceBean2.springBean.ppb.postProcessed);
+		assertThat(guiceBean2.springBean.ppb.postProcessed).isTrue();
 		context.close();
 	}
 

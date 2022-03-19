@@ -21,7 +21,6 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Scope;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -29,8 +28,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ScopingTests {
 
@@ -40,25 +38,25 @@ public class ScopingTests {
 		SomeSingletonDependency someSingletonDependency1 = context.getBean(SomeSingletonDependency.class);
 		SomeSingletonDependency someSingletonDependency2 = context.getBean(SomeSingletonDependency.class);
 
-		assertNotNull(someSingletonDependency1);
-		assertNotNull(someSingletonDependency2);
-		assertEquals(someSingletonDependency1, someSingletonDependency2);
+		assertThat(someSingletonDependency1).isNotNull();
+		assertThat(someSingletonDependency2).isNotNull();
+		assertThat(someSingletonDependency2).isEqualTo(someSingletonDependency1);
 
 		SomeNoScopeDependency someNoScopeDependency1 = context.getBean(SomeNoScopeDependency.class);
 		SomeNoScopeDependency someNoScopeDependency2 = context.getBean(SomeNoScopeDependency.class);
 
-		assertNotNull(someNoScopeDependency1);
-		assertNotNull(someNoScopeDependency2);
-		Assertions.assertNotEquals(someNoScopeDependency1, someNoScopeDependency2);
+		assertThat(someNoScopeDependency1).isNotNull();
+		assertThat(someNoScopeDependency2).isNotNull();
+		assertThat(someNoScopeDependency2).isNotEqualTo(someNoScopeDependency1);
 
 		SomeCustomScopeDependency someCustomScopeDependency1 = context.getBean(SomeCustomScopeDependency.class);
 		SomeCustomScopeDependency someCustomScopeDependency2 = context.getBean(SomeCustomScopeDependency.class);
 
-		assertNotNull(someCustomScopeDependency1);
-		assertNotNull(someCustomScopeDependency2);
-		Assertions.assertNotEquals(someCustomScopeDependency1, someCustomScopeDependency2);
-		assertEquals(someCustomScopeDependency1.value, "custom");
-		assertEquals(someCustomScopeDependency2.value, "custom");
+		assertThat(someCustomScopeDependency1).isNotNull();
+		assertThat(someCustomScopeDependency2).isNotNull();
+		assertThat(someCustomScopeDependency2).isNotEqualTo(someCustomScopeDependency1);
+		assertThat("custom").isEqualTo(someCustomScopeDependency1.value);
+		assertThat("custom").isEqualTo(someCustomScopeDependency2.value);
 
 		context.close();
 	}
