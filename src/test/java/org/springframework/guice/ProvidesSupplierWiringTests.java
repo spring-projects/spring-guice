@@ -28,8 +28,8 @@ public class ProvidesSupplierWiringTests {
 	@SuppressWarnings({ "resource", "unused" })
 	@Test
 	public void testProvidesSupplier() {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-				ModulesConfig.class, FooBar.class);
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ModulesConfig.class,
+				FooBar.class);
 		Foo foo = context.getBean(Foo.class);
 		Bar bar = context.getBean(Bar.class);
 	}
@@ -37,14 +37,17 @@ public class ProvidesSupplierWiringTests {
 	@Configuration
 	@EnableGuiceModules
 	static class ModulesConfig {
+
 		@Bean
 		TestConfig testConfig() {
 			return new TestConfig();
 		}
+
 	}
 
 	@Configuration
 	static class FooBar {
+
 		@Bean
 		Foo foo(Supplier<Foo> supplier) {
 			return supplier.get();
@@ -54,9 +57,11 @@ public class ProvidesSupplierWiringTests {
 		Bar bar(Supplier<Bar> supplier) {
 			return supplier.get();
 		}
+
 	}
 
 	static class TestConfig extends AbstractModule {
+
 		@Override
 		protected void configure() {
 		}
@@ -72,9 +77,11 @@ public class ProvidesSupplierWiringTests {
 		Supplier<Bar> getBar() {
 			return () -> new Bar();
 		}
+
 	}
 
 	static class Foo {
+
 	}
 
 	static class Bar {
@@ -88,19 +95,17 @@ public class ProvidesSupplierWiringTests {
 	@Ignore
 	@Test
 	public void testProvidesSupplierSpring() {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-				FooBarSpring.class);
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(FooBarSpring.class);
 		SpringInjector injector = new SpringInjector(context);
-		Foo_Spring fooSpring = injector
-				.getInstance(Key.get(new TypeLiteral<Supplier<Foo_Spring>>() {
-				})).get();
-		Bar_Spring barSpring = injector
-				.getInstance(Key.get(new TypeLiteral<Supplier<Bar_Spring>>() {
-				})).get();
+		Foo_Spring fooSpring = injector.getInstance(Key.get(new TypeLiteral<Supplier<Foo_Spring>>() {
+		})).get();
+		Bar_Spring barSpring = injector.getInstance(Key.get(new TypeLiteral<Supplier<Bar_Spring>>() {
+		})).get();
 	}
 
 	@Configuration
 	static class FooBarSpring {
+
 		@Bean
 		Supplier<Foo_Spring> fooSpring() {
 			return () -> new Foo_Spring();
@@ -110,9 +115,11 @@ public class ProvidesSupplierWiringTests {
 		Bar_Spring barSpring() {
 			return new Bar_Spring();
 		}
+
 	}
 
 	static class Foo_Spring {
+
 	}
 
 	static class Bar_Spring {

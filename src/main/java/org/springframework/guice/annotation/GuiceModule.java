@@ -30,9 +30,9 @@ import org.springframework.guice.module.SpringModule;
  * class (and if added to many then the filters are combined with logical OR). By default
  * all beans in the context will be bound to Guice with all of their implemented
  * interfaces. If you need to filter out which beans are added you can filter by class.
- * 
+ *
  * @author Dave Syer
- * 
+ *
  * @see SpringModule
  * @see GuiceModuleMetadata
  *
@@ -45,42 +45,39 @@ public @interface GuiceModule {
 
 	/**
 	 * Specifies which types are eligible for inclusion in Guice module
-	 * 
 	 * @return filters for inclusion
 	 */
 	Filter[] includeFilters() default {};
 
 	/**
 	 * Specifies which types are not eligible for inclusion in Guice module.
-	 * 
 	 * @return filters for exclusion
 	 */
 	Filter[] excludeFilters() default {};
 
 	/**
 	 * Specifies which names (by regex) are eligible for inclusion in Guice module
-	 * 
 	 * @return regexes
 	 */
 	String[] includePatterns() default {};
 
 	/**
-	 * Specifies which bean names (by regex) are not eligible for inclusion in Guice module.
-	 * 
+	 * Specifies which bean names (by regex) are not eligible for inclusion in Guice
+	 * module.
 	 * @return regexes
 	 */
 	String[] excludePatterns() default {};
 
 	/**
-	 * Specifies which names (by simple wildcard match) are eligible for inclusion in Guice module
-	 * 
+	 * Specifies which names (by simple wildcard match) are eligible for inclusion in
+	 * Guice module
 	 * @return bean names
 	 */
 	String[] includeNames() default {};
 
 	/**
-	 * Specifies which bean names (by simple wildcard match) are not eligible for inclusion in Guice module.
-	 * 
+	 * Specifies which bean names (by simple wildcard match) are not eligible for
+	 * inclusion in Guice module.
 	 * @return bean names
 	 */
 	String[] excludeNames() default {};

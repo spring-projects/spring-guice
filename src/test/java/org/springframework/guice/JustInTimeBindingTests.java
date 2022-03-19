@@ -34,10 +34,9 @@ public class JustInTimeBindingTests {
 
 	@SuppressWarnings("resource")
 	private Foo springGetFoo() {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-				ModulesConfig.class);
-		context.getDefaultListableBeanFactory().registerBeanDefinition(
-				Foo.class.getSimpleName(), new RootBeanDefinition(Foo.class));
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ModulesConfig.class);
+		context.getDefaultListableBeanFactory().registerBeanDefinition(Foo.class.getSimpleName(),
+				new RootBeanDefinition(Foo.class));
 		return context.getBean(Foo.class);
 	}
 
@@ -48,6 +47,7 @@ public class JustInTimeBindingTests {
 	}
 
 	public static class Service {
+
 	}
 
 	public static class Foo {

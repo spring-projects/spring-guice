@@ -47,12 +47,11 @@ import org.springframework.util.Assert;
 
 /**
  * Registers bean definitions for Guice modules.
- * 
+ *
  * @author Dave Syer
  *
  */
-class GuiceModuleRegistrar implements ImportBeanDefinitionRegistrar,
-		ResourceLoaderAware {
+class GuiceModuleRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoaderAware {
 
 	private ResourceLoader resourceLoader = new DefaultResourceLoader();
 
@@ -62,30 +61,20 @@ class GuiceModuleRegistrar implements ImportBeanDefinitionRegistrar,
 	}
 
 	@Override
-	public void registerBeanDefinitions(AnnotationMetadata annotation,
-			BeanDefinitionRegistry registry) {
-		BeanDefinitionBuilder builder = BeanDefinitionBuilder
-				.genericBeanDefinition(GuiceModuleMetadataFactory.class);
-		builder.addPropertyValue("includeFilters",
-				parseFilters(annotation, "includeFilters"));
-		builder.addPropertyValue("excludeFilters",
-				parseFilters(annotation, "excludeFilters"));
-		builder.addPropertyValue("includePatterns",
-				parsePatterns(annotation, "includePatterns"));
-		builder.addPropertyValue("excludePatterns",
-				parsePatterns(annotation, "excludePatterns"));
-		builder.addPropertyValue("includeNames",
-				parseNames(annotation, "includeNames"));
-		builder.addPropertyValue("excludeNames",
-				parseNames(annotation, "excludeNames"));
+	public void registerBeanDefinitions(AnnotationMetadata annotation, BeanDefinitionRegistry registry) {
+		BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(GuiceModuleMetadataFactory.class);
+		builder.addPropertyValue("includeFilters", parseFilters(annotation, "includeFilters"));
+		builder.addPropertyValue("excludeFilters", parseFilters(annotation, "excludeFilters"));
+		builder.addPropertyValue("includePatterns", parsePatterns(annotation, "includePatterns"));
+		builder.addPropertyValue("excludePatterns", parsePatterns(annotation, "excludePatterns"));
+		builder.addPropertyValue("includeNames", parseNames(annotation, "includeNames"));
+		builder.addPropertyValue("excludeNames", parseNames(annotation, "excludeNames"));
 		AbstractBeanDefinition definition = builder.getBeanDefinition();
-		String name = new DefaultBeanNameGenerator().generateBeanName(definition,
-				registry);
+		String name = new DefaultBeanNameGenerator().generateBeanName(definition, registry);
 		registry.registerBeanDefinition(name, definition);
 	}
 
-	protected static class GuiceModuleMetadataFactory implements
-			FactoryBean<GuiceModuleMetadata> {
+	protected static class GuiceModuleMetadataFactory implements FactoryBean<GuiceModuleMetadata> {
 
 		private Collection<? extends TypeFilter> includeFilters;
 
@@ -125,19 +114,12 @@ class GuiceModuleRegistrar implements ImportBeanDefinitionRegistrar,
 
 		@Override
 		public GuiceModuleMetadata getObject() throws Exception {
-			return new GuiceModuleMetadata()
-					.include(
-							includeFilters.toArray(new TypeFilter[includeFilters.size()]))
-					.exclude(
-							excludeFilters.toArray(new TypeFilter[excludeFilters.size()]))
-					.include(
-							includePatterns.toArray(new Pattern[includePatterns.size()]))
-					.exclude(
-							excludePatterns.toArray(new Pattern[excludePatterns.size()]))
-					.include(
-							includeNames.toArray(new String[includeNames.size()]))
-					.exclude(
-							excludeNames.toArray(new String[excludeNames.size()]));
+			return new GuiceModuleMetadata().include(includeFilters.toArray(new TypeFilter[includeFilters.size()]))
+					.exclude(excludeFilters.toArray(new TypeFilter[excludeFilters.size()]))
+					.include(includePatterns.toArray(new Pattern[includePatterns.size()]))
+					.exclude(excludePatterns.toArray(new Pattern[excludePatterns.size()]))
+					.include(includeNames.toArray(new String[includeNames.size()]))
+					.exclude(excludeNames.toArray(new String[excludeNames.size()]));
 		}
 
 		@Override
@@ -178,8 +160,7 @@ class GuiceModuleRegistrar implements ImportBeanDefinitionRegistrar,
 		return result;
 	}
 
-	private Set<TypeFilter> parseFilters(AnnotationMetadata annotation,
-			String attributeName) {
+	private Set<TypeFilter> parseFilters(AnnotationMetadata annotation, String attributeName) {
 
 		Set<TypeFilter> result = new HashSet<TypeFilter>();
 		AnnotationAttributes attributes = new AnnotationAttributes(
@@ -202,8 +183,7 @@ class GuiceModuleRegistrar implements ImportBeanDefinitionRegistrar,
 			switch (filterType) {
 			case ANNOTATION:
 				Assert.isAssignable(Annotation.class, filterClass,
-						"An error occured when processing a @ComponentScan "
-								+ "ANNOTATION type filter: ");
+						"An error occured when processing a @ComponentScan " + "ANNOTATION type filter: ");
 				@SuppressWarnings("unchecked")
 				Class<Annotation> annoClass = (Class<Annotation>) filterClass;
 				typeFilters.add(new AnnotationTypeFilter(annoClass));
@@ -213,10 +193,8 @@ class GuiceModuleRegistrar implements ImportBeanDefinitionRegistrar,
 				break;
 			case CUSTOM:
 				Assert.isAssignable(TypeFilter.class, filterClass,
-						"An error occured when processing a @ComponentScan "
-								+ "CUSTOM type filter: ");
-				typeFilters
-						.add(BeanUtils.instantiateClass(filterClass, TypeFilter.class));
+						"An error occured when processing a @ComponentScan " + "CUSTOM type filter: ");
+				typeFilters.add(BeanUtils.instantiateClass(filterClass, TypeFilter.class));
 				break;
 			default:
 				throw new IllegalArgumentException("Unknown filter type " + filterType);
@@ -229,10 +207,11 @@ class GuiceModuleRegistrar implements ImportBeanDefinitionRegistrar,
 
 			if ("REGEX".equals(rawName)) {
 				typeFilters.add(new RegexPatternTypeFilter(Pattern.compile(expression)));
-			} else if ("ASPECTJ".equals(rawName)) {
-				typeFilters.add(new AspectJTypeFilter(expression, this.resourceLoader
-						.getClassLoader()));
-			} else {
+			}
+			else if ("ASPECTJ".equals(rawName)) {
+				typeFilters.add(new AspectJTypeFilter(expression, this.resourceLoader.getClassLoader()));
+			}
+			else {
 				throw new IllegalArgumentException("Unknown filter type " + filterType);
 			}
 		}
@@ -244,7 +223,8 @@ class GuiceModuleRegistrar implements ImportBeanDefinitionRegistrar,
 
 		try {
 			return filterAttributes.getStringArray("pattern");
-		} catch (IllegalArgumentException o_O) {
+		}
+		catch (IllegalArgumentException o_O) {
 			return new String[0];
 		}
 	}

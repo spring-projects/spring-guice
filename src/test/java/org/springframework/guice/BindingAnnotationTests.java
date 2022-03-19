@@ -39,72 +39,107 @@ public class BindingAnnotationTests {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
 				BindingAnnotationTestsConfig.class);
 		Injector injector = context.getBean(Injector.class);
-		
-		//Check @Qualifier
-		SomeDependencyWithQualifierOnProvider someDependencyWithQualifierOnClass = injector.getInstance(Key.get(SomeDependencyWithQualifierOnProvider.class, SomeQualifierAnnotation.class));
+
+		// Check @Qualifier
+		SomeDependencyWithQualifierOnProvider someDependencyWithQualifierOnClass = injector
+				.getInstance(Key.get(SomeDependencyWithQualifierOnProvider.class, SomeQualifierAnnotation.class));
 		assertNotNull(someDependencyWithQualifierOnClass);
-		
-		//Check @BindingAnnotation on Spring @Bean available in Guice
-		SomeDependencyWithQualifierOnProvider someDependencyWithBindingAnnotationOnProvider = injector.getInstance(Key.get(SomeDependencyWithQualifierOnProvider.class, SomeQualifierAnnotation.class));
+
+		// Check @BindingAnnotation on Spring @Bean available in Guice
+		SomeDependencyWithQualifierOnProvider someDependencyWithBindingAnnotationOnProvider = injector
+				.getInstance(Key.get(SomeDependencyWithQualifierOnProvider.class, SomeQualifierAnnotation.class));
 		assertNotNull(someDependencyWithBindingAnnotationOnProvider);
 
-		//Check @BindingAnnotation on Guice Binding available in Spring
+		// Check @BindingAnnotation on Guice Binding available in Spring
 		SomeStringHolder stringHolder = context.getBean(SomeStringHolder.class);
 		assertEquals("annotated", stringHolder.annotatedString);
 		assertEquals("other", stringHolder.otherAnnotatedString);
 
-		//Check javax @Named
-		SomeDependencyWithNamedAnnotationOnProvider someDependencyWithNamedAnnotationOnProvider = injector.getInstance(Key.get(SomeDependencyWithNamedAnnotationOnProvider.class, Names.named("javaxNamed")));
+		// Check javax @Named
+		SomeDependencyWithNamedAnnotationOnProvider someDependencyWithNamedAnnotationOnProvider = injector
+				.getInstance(Key.get(SomeDependencyWithNamedAnnotationOnProvider.class, Names.named("javaxNamed")));
 		assertNotNull(someDependencyWithNamedAnnotationOnProvider);
 
-		//Check Guice @Named
-		SomeDependencyWithGuiceNamedAnnotationOnProvider someDependencyWithGuiceNamedAnnotationOnProvider = injector.getInstance(Key.get(SomeDependencyWithGuiceNamedAnnotationOnProvider.class, Names.named("guiceNamed")));
+		// Check Guice @Named
+		SomeDependencyWithGuiceNamedAnnotationOnProvider someDependencyWithGuiceNamedAnnotationOnProvider = injector
+				.getInstance(
+						Key.get(SomeDependencyWithGuiceNamedAnnotationOnProvider.class, Names.named("guiceNamed")));
 		assertNotNull(someDependencyWithGuiceNamedAnnotationOnProvider);
-		
-		SomeDependencyWithGuiceNamedAnnotationOnProvider someSecondDependencyWithGuiceNamedAnnotationOnProvider = injector.getInstance(Key.get(SomeDependencyWithGuiceNamedAnnotationOnProvider.class, Names.named("guiceNamed2")));
+
+		SomeDependencyWithGuiceNamedAnnotationOnProvider someSecondDependencyWithGuiceNamedAnnotationOnProvider = injector
+				.getInstance(
+						Key.get(SomeDependencyWithGuiceNamedAnnotationOnProvider.class, Names.named("guiceNamed2")));
 		assertNotNull(someSecondDependencyWithGuiceNamedAnnotationOnProvider);
-		
-		//Check @Qualifier with Interface
+
+		// Check @Qualifier with Interface
 		SomeInterface someInterface = injector.getInstance(Key.get(SomeInterface.class, SomeQualifierAnnotation.class));
 		assertNotNull(someInterface);
-		
-		//Check different types with same @Named
+
+		// Check different types with same @Named
 		assertNotNull(injector.getInstance(SomeNamedDepWithType1.class));
 		assertNotNull(injector.getInstance(SomeNamedDepWithType2.class));
-		
+
 		assertNotNull(injector.getInstance(Key.get(SomeNamedDepWithType1.class, Names.named("sameNameDifferentType"))));
 		assertNotNull(injector.getInstance(Key.get(SomeNamedDepWithType2.class, Names.named("sameNameDifferentType"))));
 		context.close();
 	}
-	
 
-	public static class SomeDependencyWithQualifierOnProvider {}
-	public static class SomeDependencyWithBindingAnnotationOnProvider {}
-	public static class SomeDependencyWithNamedAnnotationOnProvider {}
-	public static class SomeDependencyWithGuiceNamedAnnotationOnProvider {}
-	public interface SomeInterface{}
-	public static class SomeDependencyWithQualifierOnProviderWhichImplementsSomeInterface implements SomeInterface {}
-	public static class SomeNamedDepWithType1 {} 
-	public static class SomeNamedDepWithType2 {}
+	public static class SomeDependencyWithQualifierOnProvider {
+
+	}
+
+	public static class SomeDependencyWithBindingAnnotationOnProvider {
+
+	}
+
+	public static class SomeDependencyWithNamedAnnotationOnProvider {
+
+	}
+
+	public static class SomeDependencyWithGuiceNamedAnnotationOnProvider {
+
+	}
+
+	public interface SomeInterface {
+
+	}
+
+	public static class SomeDependencyWithQualifierOnProviderWhichImplementsSomeInterface implements SomeInterface {
+
+	}
+
+	public static class SomeNamedDepWithType1 {
+
+	}
+
+	public static class SomeNamedDepWithType2 {
+
+	}
+
 }
 
 @Qualifier
-@Target({ElementType.TYPE, ElementType.METHOD})
+@Target({ ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
-@interface SomeQualifierAnnotation {}
+@interface SomeQualifierAnnotation {
+
+}
 
 @BindingAnnotation
-@Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})
+@Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)
-@interface SomeBindingAnnotation {}
+@interface SomeBindingAnnotation {
+
+}
 
 @BindingAnnotation
-@Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})
+@Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)
-@interface SomeOtherBindingAnnotation {}
+@interface SomeOtherBindingAnnotation {
+
+}
 
 class SomeStringHolder {
-
 
 	@Autowired
 	@SomeBindingAnnotation
@@ -119,55 +154,55 @@ class SomeStringHolder {
 @EnableGuiceModules
 @Configuration
 class BindingAnnotationTestsConfig {
-	
+
 	@Bean
 	@SomeQualifierAnnotation
 	public SomeDependencyWithQualifierOnProvider someDependencyWithQualifierOnProvider() {
 		return new SomeDependencyWithQualifierOnProvider();
 	}
-	
+
 	@Bean
 	@SomeBindingAnnotation
 	public SomeDependencyWithBindingAnnotationOnProvider someDependencyWithBindingAnnotationOnProvider() {
 		return new SomeDependencyWithBindingAnnotationOnProvider();
 	}
-	
+
 	@Bean
 	@Named("javaxNamed")
 	public SomeDependencyWithNamedAnnotationOnProvider someDependencyWithNamedAnnotationOnProvider() {
 		return new SomeDependencyWithNamedAnnotationOnProvider();
 	}
-	
-	@Bean(name="javaxNamed2")
+
+	@Bean(name = "javaxNamed2")
 	@Named("javaxNamed2")
 	public SomeDependencyWithNamedAnnotationOnProvider someSecondDependencyWithNamedAnnotationOnProvider() {
 		return new SomeDependencyWithNamedAnnotationOnProvider();
 	}
-	
+
 	@Bean
 	@com.google.inject.name.Named("guiceNamed")
 	public SomeDependencyWithGuiceNamedAnnotationOnProvider someDependencyWithGuiceNamedAnnotationOnProvider() {
 		return new SomeDependencyWithGuiceNamedAnnotationOnProvider();
 	}
-	
+
 	@Bean
 	@com.google.inject.name.Named("guiceNamed2")
 	public SomeDependencyWithGuiceNamedAnnotationOnProvider someSecondDependencyWithGuiceNamedAnnotationOnProvider() {
 		return new SomeDependencyWithGuiceNamedAnnotationOnProvider();
 	}
-	
+
 	@Bean
 	@SomeQualifierAnnotation
 	public SomeInterface someInterface() {
 		return new SomeDependencyWithQualifierOnProviderWhichImplementsSomeInterface();
 	}
-	
+
 	@Bean
 	@Named("sameNameDifferentType")
 	public SomeNamedDepWithType1 someNamedDepWithType1() {
 		return new SomeNamedDepWithType1();
 	}
-	
+
 	@Bean
 	@Named("sameNameDifferentType")
 	public SomeNamedDepWithType2 someNamedDepWithType2() {
@@ -189,4 +224,5 @@ class BindingAnnotationTestsConfig {
 			}
 		};
 	}
+
 }

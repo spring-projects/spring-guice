@@ -35,7 +35,6 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-
 /**
  * @author Dave Syer
  * @author Taylor Wicksell
@@ -44,101 +43,107 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateResolver {
 
-    private Provider<Injector> injectorProvider;
-    private final Log logger = LogFactory.getLog(getClass());
+	private Provider<Injector> injectorProvider;
 
-    public GuiceAutowireCandidateResolver(Provider<Injector> injectorProvider) {
-        this.injectorProvider = injectorProvider;
-        addQualifierType(BindingAnnotation.class);
-    }
+	private final Log logger = LogFactory.getLog(getClass());
 
-    @Override
-    public Object getLazyResolutionProxyIfNecessary(DependencyDescriptor descriptor, String beanName) {
-        return (isLazy(descriptor, beanName) ? buildLazyResolutionProxy(descriptor, beanName) : null);
-    }
+	public GuiceAutowireCandidateResolver(Provider<Injector> injectorProvider) {
+		this.injectorProvider = injectorProvider;
+		addQualifierType(BindingAnnotation.class);
+	}
 
-    protected boolean isLazy(DependencyDescriptor descriptor, String beanName) {
-        Assert.state(getBeanFactory() instanceof DefaultListableBeanFactory,
-                "BeanFactory needs to be a DefaultListableBeanFactory");
-        final DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) getBeanFactory();
+	@Override
+	public Object getLazyResolutionProxyIfNecessary(DependencyDescriptor descriptor, String beanName) {
+		return (isLazy(descriptor, beanName) ? buildLazyResolutionProxy(descriptor, beanName) : null);
+	}
 
-        if (isCollectionType(descriptor.getDependencyType())) {
-            return false;
-        }
+	protected boolean isLazy(DependencyDescriptor descriptor, String beanName) {
+		Assert.state(getBeanFactory() instanceof DefaultListableBeanFactory,
+				"BeanFactory needs to be a DefaultListableBeanFactory");
+		final DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) getBeanFactory();
 
-        if (super.isLazy(descriptor)) {
-            return true;
-        }
+		if (isCollectionType(descriptor.getDependencyType())) {
+			return false;
+		}
 
-        try {
-            beanFactory.doResolveDependency(descriptor, beanName, null, null);
-        } catch (NoSuchBeanDefinitionException e) {
-            if (e.getResolvableType() != null) {
-                logger.info(String.format("Use just in time binding for %s in bean: %s",
-                        e.getResolvableType().getType().getTypeName(), beanName));
-            }
-            return true;
-        }
+		if (super.isLazy(descriptor)) {
+			return true;
+		}
 
-        return false;
-    }
+		try {
+			beanFactory.doResolveDependency(descriptor, beanName, null, null);
+		}
+		catch (NoSuchBeanDefinitionException e) {
+			if (e.getResolvableType() != null) {
+				logger.info(String.format("Use just in time binding for %s in bean: %s",
+						e.getResolvableType().getType().getTypeName(), beanName));
+			}
+			return true;
+		}
 
-    protected Object buildLazyResolutionProxy(final DependencyDescriptor descriptor, final String beanName) {
-        Assert.state(getBeanFactory() instanceof DefaultListableBeanFactory,
-                "BeanFactory needs to be a DefaultListableBeanFactory");
-        final DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) getBeanFactory();
-        TargetSource ts = new TargetSource() {
-            private Optional<Boolean> isGuiceResolvable = Optional.empty();
+		return false;
+	}
 
-            @Override
-            public Class<?> getTargetClass() {
-                return descriptor.getDependencyType();
-            }
+	protected Object buildLazyResolutionProxy(final DependencyDescriptor descriptor, final String beanName) {
+		Assert.state(getBeanFactory() instanceof DefaultListableBeanFactory,
+				"BeanFactory needs to be a DefaultListableBeanFactory");
+		final DefaultListableBeanFactory beanFactory = (DefaultListableBeanFactory) getBeanFactory();
+		TargetSource ts = new TargetSource() {
+			private Optional<Boolean> isGuiceResolvable = Optional.empty();
 
-            @Override
-            public boolean isStatic() {
-                return false;
-            }
+			@Override
+			public Class<?> getTargetClass() {
+				return descriptor.getDependencyType();
+			}
 
-            @Override
-            public Object getTarget() {
-                Object target = null;
-                if (isGuiceResolvable.isPresent() && isGuiceResolvable.get()) {
-                    target = injectorProvider.get().getInstance(Key.get(descriptor.getResolvableType().getType()));
-                } else {
-                    try {
-                        target = beanFactory.doResolveDependency(descriptor, beanName, null, null);
-                    } catch (NoSuchBeanDefinitionException e) {
-                        target = injectorProvider.get().getInstance(Key.get(descriptor.getResolvableType().getType()));
-                        isGuiceResolvable = Optional.of(true);
-                    }
-                }
-                if (target == null) {
-                    throw new NoSuchBeanDefinitionException(descriptor.getDependencyType(),
-                            "Optional dependency not present for lazy injection point");
-                }
-                return target;
-            }
+			@Override
+			public boolean isStatic() {
+				return false;
+			}
 
-            @Override
-            public void releaseTarget(Object target) {
-            }
-        };
-        try {
-            ProxyFactory pf = new ProxyFactory();
-            pf.setTargetSource(ts);
-            Class<?> dependencyType = descriptor.getDependencyType();
-            if (dependencyType.isInterface()) {
-                pf.addInterface(dependencyType);
-            }
-            return pf.getProxy(beanFactory.getBeanClassLoader());
-        } catch(Exception e) {
-            logger.debug("Failed to build lazy resolution proxy to Guice", e);
-        }
-        return null;
-    }
+			@Override
+			public Object getTarget() {
+				Object target = null;
+				if (isGuiceResolvable.isPresent() && isGuiceResolvable.get()) {
+					target = injectorProvider.get().getInstance(Key.get(descriptor.getResolvableType().getType()));
+				}
+				else {
+					try {
+						target = beanFactory.doResolveDependency(descriptor, beanName, null, null);
+					}
+					catch (NoSuchBeanDefinitionException e) {
+						target = injectorProvider.get().getInstance(Key.get(descriptor.getResolvableType().getType()));
+						isGuiceResolvable = Optional.of(true);
+					}
+				}
+				if (target == null) {
+					throw new NoSuchBeanDefinitionException(descriptor.getDependencyType(),
+							"Optional dependency not present for lazy injection point");
+				}
+				return target;
+			}
 
-    private boolean isCollectionType(Class<?> type) {
-        return Collection.class.isAssignableFrom(type) || Map.class == type;
-    }
+			@Override
+			public void releaseTarget(Object target) {
+			}
+		};
+		try {
+			ProxyFactory pf = new ProxyFactory();
+			pf.setTargetSource(ts);
+			Class<?> dependencyType = descriptor.getDependencyType();
+			if (dependencyType.isInterface()) {
+				pf.addInterface(dependencyType);
+			}
+			return pf.getProxy(beanFactory.getBeanClassLoader());
+		}
+		catch (Exception e) {
+			logger.debug("Failed to build lazy resolution proxy to Guice", e);
+		}
+		return null;
+	}
+
+	private boolean isCollectionType(Class<?> type) {
+		return Collection.class.isAssignableFrom(type) || Map.class == type;
+	}
+
 }

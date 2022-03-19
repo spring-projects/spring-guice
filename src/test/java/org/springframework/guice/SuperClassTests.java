@@ -38,8 +38,7 @@ public class SuperClassTests {
 
 	@SuppressWarnings("resource")
 	private void baseTestSpringInterface(Class<?> configClass) {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-				configClass);
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClass);
 		assertTrue(context.getBean(IParent.class) instanceof IGrandChildImpl);
 		assertTrue(context.getBean(IChild.class) instanceof IGrandChildImpl);
 		assertTrue(context.getBean(IGrandChild.class) instanceof IGrandChildImpl);
@@ -62,8 +61,7 @@ public class SuperClassTests {
 
 	@SuppressWarnings("resource")
 	private void baseTestGuiceInterface(Class<?> configClass) {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-				configClass);
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClass);
 		Injector injector = context.getBean(Injector.class);
 		assertTrue(injector.getInstance(IParent.class) instanceof IGrandChildImpl);
 		assertTrue(injector.getInstance(IChild.class) instanceof IGrandChildImpl);
@@ -87,20 +85,19 @@ public class SuperClassTests {
 
 	@SuppressWarnings("resource")
 	private void baseTestSpringInterfaceWithType(Class<?> configClass) {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-				configClass);
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClass);
 
 		String[] allParentBeanNames = context.getBeanNamesForType(IParentWithType.class);
 		assertEquals(2, allParentBeanNames.length);
 
-		String[] stringParentBeanNames = context.getBeanNamesForType(
-				ResolvableType.forClassWithGenerics(IParentWithType.class, String.class));
+		String[] stringParentBeanNames = context
+				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IParentWithType.class, String.class));
 		assertEquals(1, stringParentBeanNames.length);
 		assertTrue(new TypeLiteral<IGrandChildWithType<String>>() {
 		}.getRawType().isInstance(context.getBean(stringParentBeanNames[0])));
 
-		String[] integerParentBeanNames = context.getBeanNamesForType(ResolvableType
-				.forClassWithGenerics(IParentWithType.class, Integer.class));
+		String[] integerParentBeanNames = context
+				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IParentWithType.class, Integer.class));
 		assertEquals(1, integerParentBeanNames.length);
 		assertTrue(new TypeLiteral<IGrandChildWithType<Integer>>() {
 		}.getRawType().isInstance(context.getBean(integerParentBeanNames[0])));
@@ -108,30 +105,29 @@ public class SuperClassTests {
 		String[] allChildBeanNames = context.getBeanNamesForType(IChildWithType.class);
 		assertEquals(2, allChildBeanNames.length);
 
-		String[] stringChildBeanNames = context.getBeanNamesForType(
-				ResolvableType.forClassWithGenerics(IChildWithType.class, String.class));
+		String[] stringChildBeanNames = context
+				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IChildWithType.class, String.class));
 		assertEquals(1, stringChildBeanNames.length);
 		assertTrue(new TypeLiteral<IChildWithType<String>>() {
 		}.getRawType().isInstance(context.getBean(stringChildBeanNames[0])));
 
-		String[] integerChildBeanNames = context.getBeanNamesForType(
-				ResolvableType.forClassWithGenerics(IChildWithType.class, Integer.class));
+		String[] integerChildBeanNames = context
+				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IChildWithType.class, Integer.class));
 		assertEquals(1, integerChildBeanNames.length);
 		assertTrue(new TypeLiteral<IChildWithType<Integer>>() {
 		}.getRawType().isInstance(context.getBean(integerChildBeanNames[0])));
 
-		String[] allGrandChildBeanNames = context
-				.getBeanNamesForType(IGrandChildWithType.class);
+		String[] allGrandChildBeanNames = context.getBeanNamesForType(IGrandChildWithType.class);
 		assertEquals(2, allGrandChildBeanNames.length);
 
-		String[] stringGrandChildBeanNames = context.getBeanNamesForType(ResolvableType
-				.forClassWithGenerics(IGrandChildWithType.class, String.class));
+		String[] stringGrandChildBeanNames = context
+				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IGrandChildWithType.class, String.class));
 		assertEquals(1, stringGrandChildBeanNames.length);
 		assertTrue(new TypeLiteral<IGrandChildWithType<String>>() {
 		}.getRawType().isInstance(context.getBean(stringGrandChildBeanNames[0])));
 
-		String[] integerGrandChildBeanNames = context.getBeanNamesForType(ResolvableType
-				.forClassWithGenerics(IGrandChildWithType.class, Integer.class));
+		String[] integerGrandChildBeanNames = context
+				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IGrandChildWithType.class, Integer.class));
 		assertEquals(1, integerGrandChildBeanNames.length);
 		assertTrue(new TypeLiteral<IGrandChildWithType<Integer>>() {
 		}.getRawType().isInstance(context.getBean(integerGrandChildBeanNames[0])));
@@ -155,8 +151,7 @@ public class SuperClassTests {
 
 	@SuppressWarnings("resource")
 	private void baseTestGuiceInterfaceWithType(Class<?> configClass) {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-				configClass);
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClass);
 		Injector injector = context.getBean(Injector.class);
 		IParentWithType<String> iParentString = injector
 				.getInstance(Key.get(new TypeLiteral<IParentWithType<String>>() {
@@ -167,9 +162,8 @@ public class SuperClassTests {
 				}));
 		assertTrue(iParentInteger instanceof IGrandChildInteger);
 
-		IChildWithType<String> iChildString = injector
-				.getInstance(Key.get(new TypeLiteral<IChildWithType<String>>() {
-				}));
+		IChildWithType<String> iChildString = injector.getInstance(Key.get(new TypeLiteral<IChildWithType<String>>() {
+		}));
 		assertTrue(iChildString instanceof IGrandChildString);
 		IChildWithType<Integer> iChildInteger = injector
 				.getInstance(Key.get(new TypeLiteral<IChildWithType<Integer>>() {
@@ -189,8 +183,7 @@ public class SuperClassTests {
 	@SuppressWarnings("resource")
 	@Test
 	public void testSpringClass() {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-				ModulesConfig.class);
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ModulesConfig.class);
 		IFoo iFoo = context.getBean(IFoo.class);
 		assertTrue(iFoo instanceof Foo);
 		assertTrue(iFoo instanceof SubFoo);
@@ -216,8 +209,7 @@ public class SuperClassTests {
 
 	@SuppressWarnings("resource")
 	private void baseTestGuiceClass(Class<?> configClass) {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-				configClass);
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClass);
 		Injector injector = context.getBean(Injector.class);
 		IFoo iFoo = injector.getInstance(IFoo.class);
 		assertTrue(iFoo instanceof Foo);
@@ -244,10 +236,9 @@ public class SuperClassTests {
 
 	@SuppressWarnings("resource")
 	private void baseTestSpringClassWithType(Class<?> configClass) {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-				configClass);
-		String[] stringBeanNames = context.getBeanNamesForType(
-				ResolvableType.forClassWithGenerics(IFooWithType.class, String.class));
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClass);
+		String[] stringBeanNames = context
+				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IFooWithType.class, String.class));
 		assertEquals(1, stringBeanNames.length);
 		assertTrue(context.getBean(stringBeanNames[0]) instanceof StringFoo);
 		assertTrue(context.getBean(stringBeanNames[0]) instanceof SubStringFoo);
@@ -257,8 +248,8 @@ public class SuperClassTests {
 		assertTrue(context.getBean(stringBeanNames[0]) instanceof StringFoo);
 		assertTrue(context.getBean(stringBeanNames[0]) instanceof SubStringFoo);
 
-		String[] integerBeanNames = context.getBeanNamesForType(
-				ResolvableType.forClassWithGenerics(IFooWithType.class, Integer.class));
+		String[] integerBeanNames = context
+				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IFooWithType.class, Integer.class));
 		assertEquals(1, integerBeanNames.length);
 		assertTrue(context.getBean(integerBeanNames[0]) instanceof IntegerFoo);
 		assertTrue(context.getBean(integerBeanNames[0]) instanceof SubIntegerFoo);
@@ -286,13 +277,11 @@ public class SuperClassTests {
 
 	@SuppressWarnings("resource")
 	private void baseTestGuiceClassWithType(Class<?> configClass) {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-				configClass);
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClass);
 		Injector injector = context.getBean(Injector.class);
 
-		IFooWithType<String> iFooWithTypeString = injector
-				.getInstance(Key.get(new TypeLiteral<IFooWithType<String>>() {
-				}));
+		IFooWithType<String> iFooWithTypeString = injector.getInstance(Key.get(new TypeLiteral<IFooWithType<String>>() {
+		}));
 		assertTrue(iFooWithTypeString instanceof StringFoo);
 		assertTrue(iFooWithTypeString instanceof SubStringFoo);
 
@@ -326,8 +315,7 @@ public class SuperClassTests {
 
 	private void baseTestSpringFactoryBean(Class<?> configClass) {
 		@SuppressWarnings("resource")
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-				configClass);
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClass);
 
 		Bar bar = context.getBean(Bar.class);
 		assertTrue(bar instanceof Bar);
@@ -349,14 +337,14 @@ public class SuperClassTests {
 	}
 
 	private void baseTestGuiceFactoryBean(Class<?> configClass) {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-				configClass);
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClass);
 		Injector injector = context.getBean(Injector.class);
 		Bar bar = injector.getInstance(Bar.class);
 		assertTrue(bar instanceof Bar);
 	}
 
 	static class DisableJITConfig {
+
 		@Bean
 		public AbstractModule disableJITModule() {
 			return new AbstractModule() {
@@ -366,6 +354,7 @@ public class SuperClassTests {
 				}
 			};
 		}
+
 	}
 
 	@Configuration
@@ -411,19 +400,22 @@ public class SuperClassTests {
 
 	@Configuration
 	@EnableGuiceModules
-	@Import({ IGrandChildImpl.class, IGrandChildString.class, IGrandChildInteger.class,
-			SubFoo.class, SubStringFoo.class, SubIntegerFoo.class, BarFactory.class })
+	@Import({ IGrandChildImpl.class, IGrandChildString.class, IGrandChildInteger.class, SubFoo.class,
+			SubStringFoo.class, SubIntegerFoo.class, BarFactory.class })
 	static class ImportConfig extends DisableJITConfig {
+
 	}
 
 	@Configuration
 	@EnableGuiceModules
-	@ComponentScan(basePackageClasses = ComponentScanConfig.class, resourcePattern = "**/SuperClassTests**.class", excludeFilters = {
-			@ComponentScan.Filter(Configuration.class) })
+	@ComponentScan(basePackageClasses = ComponentScanConfig.class, resourcePattern = "**/SuperClassTests**.class",
+			excludeFilters = { @ComponentScan.Filter(Configuration.class) })
 	static class ComponentScanConfig extends DisableJITConfig {
+
 	}
 
 	public interface IParent {
+
 	}
 
 	public interface IChild extends IParent {
@@ -497,6 +489,7 @@ public class SuperClassTests {
 	}
 
 	public static class Bar {
+
 	}
 
 	@Component
@@ -511,5 +504,7 @@ public class SuperClassTests {
 		public Class<?> getObjectType() {
 			return Bar.class;
 		}
+
 	}
+
 }

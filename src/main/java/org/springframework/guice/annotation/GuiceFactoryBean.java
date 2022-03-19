@@ -22,17 +22,19 @@ import com.google.inject.Key;
 
 /**
  * Convenience class used to map a Guice {@link Provider} to a Spring bean.
- * 
+ *
  * @author Dave Syer
  */
 class GuiceFactoryBean<T> implements FactoryBean<T> {
+
 	private final Key<T> key;
+
 	private final Class<T> beanType;
+
 	private final boolean isSingleton;
-	
+
 	@Autowired
 	private Injector injector;
-		
 
 	public GuiceFactoryBean(Class<T> beanType, Key<T> key, boolean isSingleton) {
 		this.beanType = beanType;
@@ -54,4 +56,5 @@ class GuiceFactoryBean<T> implements FactoryBean<T> {
 	public boolean isSingleton() {
 		return this.isSingleton;
 	}
+
 }

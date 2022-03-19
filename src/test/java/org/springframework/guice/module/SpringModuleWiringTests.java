@@ -35,12 +35,12 @@ public class SpringModuleWiringTests extends AbstractCompleteWiringTests {
 
 	@Override
 	protected Injector createInjector() {
-		return Guice.createInjector(new SpringModule(
-				new AnnotationConfigApplicationContext(TestConfig.class)));
+		return Guice.createInjector(new SpringModule(new AnnotationConfigApplicationContext(TestConfig.class)));
 	}
 
 	@Configuration
 	public static class TestConfig {
+
 		@Bean
 		public Service service() {
 			return new MyService();
@@ -66,5 +66,7 @@ public class SpringModuleWiringTests extends AbstractCompleteWiringTests {
 			return new Parameterized<String>() {
 			};
 		}
+
 	}
+
 }

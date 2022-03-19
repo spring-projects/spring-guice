@@ -26,23 +26,24 @@ import com.google.inject.name.Names;
 public class PrivateModuleTests {
 
 	private static AnnotationConfigApplicationContext context;
-	
+
 	@BeforeClass
 	public static void init() {
 		context = new AnnotationConfigApplicationContext(PrivateModuleTestConfig.class);
 	}
-	
+
 	@AfterClass
 	public static void cleanup() {
-		if(context != null) {
+		if (context != null) {
 			context.close();
 		}
 	}
 
 	@Test
-	public void verifyPrivateModulesCanExposeBindings() {	
+	public void verifyPrivateModulesCanExposeBindings() {
 		Injector injector = context.getBean(Injector.class);
-		SomeInterface injectorProvidedPrivateBinding = injector.getInstance(Key.get(SomeInterface.class, Names.named("exposed")));
+		SomeInterface injectorProvidedPrivateBinding = injector
+				.getInstance(Key.get(SomeInterface.class, Names.named("exposed")));
 		assertNotNull(injectorProvidedPrivateBinding);
 		SomeInterface springProvidedPrivateBinding = context.getBean(SomeInterface.class);
 		assertNotNull(springProvidedPrivateBinding);
@@ -55,45 +56,55 @@ public class PrivateModuleTests {
 		assertNotNull(beanDependingOnPrivateBinding);
 		assertEquals("foo", beanDependingOnPrivateBinding);
 	}
-	
-	@Test(expected=ConfigurationException.class)
+
+	@Test(expected = ConfigurationException.class)
 	public void verifyPrivateModulesPrivateBindingsAreNotExposedViaInjector() {
 		Injector injector = context.getBean(Injector.class);
 		injector.getInstance(Key.get(SomeInterface.class, Names.named("notexposed")));
 	}
-	
-	@Test(expected=NoSuchBeanDefinitionException.class)
+
+	@Test(expected = NoSuchBeanDefinitionException.class)
 	public void verifyPrivateModulesPrivateBindingsAreNotExposedViaSpring() {
-		context.getBean("notexposed",SomeInterface.class);
+		context.getBean("notexposed", SomeInterface.class);
 	}
-	
+
 	@Test(expected = NoSuchBeanDefinitionException.class)
 	public void verifyPrivateModulesPrivateBindingsAreNotExposedViaSpringWithQualifier() {
 		BeanFactoryAnnotationUtils.qualifiedBeanOfType(context.getBeanFactory(), SomeInterface.class, "notexposed");
 	}
 
-	public static interface SomeInterface {}
-	public static class SomePrivateBinding implements SomeInterface {}
-	
+	public static interface SomeInterface {
+
+	}
+
+	public static class SomePrivateBinding implements SomeInterface {
+
+	}
+
 	public static class SomePrivateModule extends PrivateModule {
+
 		@Override
 		protected void configure() {
-			bind(SomeInterface.class).annotatedWith(Names.named("exposed")).to(SomePrivateBinding.class).asEagerSingleton();
-			bind(SomeInterface.class).annotatedWith(Names.named("notexposed")).to(SomePrivateBinding.class).asEagerSingleton();
-			expose(SomeInterface.class).annotatedWith(Names.named("exposed"));	
+			bind(SomeInterface.class).annotatedWith(Names.named("exposed")).to(SomePrivateBinding.class)
+					.asEagerSingleton();
+			bind(SomeInterface.class).annotatedWith(Names.named("notexposed")).to(SomePrivateBinding.class)
+					.asEagerSingleton();
+			expose(SomeInterface.class).annotatedWith(Names.named("exposed"));
 		}
+
 	}
+
 }
 
 @EnableGuiceModules
 @Configuration
 class PrivateModuleTestConfig {
-	
+
 	@Bean
 	public String somethingThatWantsAPrivateBinding(SomeInterface privateBinding) {
 		return "foo";
 	}
-	
+
 	@Bean
 	public Module module() {
 		return new AbstractModule() {
@@ -103,4 +114,5 @@ class PrivateModuleTestConfig {
 			}
 		};
 	}
+
 }

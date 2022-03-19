@@ -20,8 +20,7 @@ public class InjectorFactoryTests {
 
 	@Before
 	public void init() {
-		Mockito.when(injectorFactory.createInjector(Mockito.anyList()))
-				.thenReturn(Guice.createInjector());
+		Mockito.when(injectorFactory.createInjector(Mockito.anyList())).thenReturn(Guice.createInjector());
 	}
 
 	@Test
@@ -42,21 +41,27 @@ public class InjectorFactoryTests {
 	@Configuration
 	@EnableGuiceModules
 	static class ModulesConfig {
+
 	}
 
 	@Configuration
 	static class InjectorFactoryConfig {
+
 		@Bean
 		public InjectorFactory injectorFactory() {
 			return injectorFactory;
 		}
+
 	}
 
 	@Configuration
 	static class SecondInjectorFactoryConfig {
+
 		@Bean
 		public InjectorFactory injectorFactory2() {
 			return injectorFactory;
 		}
+
 	}
+
 }

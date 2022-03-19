@@ -43,8 +43,13 @@ public class BindingDeduplicationTests {
 		context.close();
 	}
 
-	public static class SomeDependency {}
-	public static class SomeOptionalDependency {}
+	public static class SomeDependency {
+
+	}
+
+	public static class SomeOptionalDependency {
+
+	}
 
 }
 
@@ -68,11 +73,10 @@ class BindingDeduplicationTestsConfig {
 			@Override
 			protected void configure() {
 				bind(SomeDependency.class).asEagerSingleton();
-				OptionalBinder
-						.newOptionalBinder(binder(), SomeOptionalDependency.class)
-						.setDefault()
+				OptionalBinder.newOptionalBinder(binder(), SomeOptionalDependency.class).setDefault()
 						.to(SomeOptionalDependency.class);
 			}
 		};
 	}
+
 }

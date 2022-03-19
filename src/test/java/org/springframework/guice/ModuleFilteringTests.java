@@ -48,20 +48,26 @@ public class ModuleFilteringTests {
 	}
 
 	public static interface SomeInterface {
+
 	}
 
 	public static class SomeDependency implements SomeInterface {
+
 		public SomeDependency() {
 			throw new RuntimeException("Should never be instantiated");
 		}
+
 	}
 
 	public static class FilterThisModule extends AbstractModule {
+
 		@Override
 		protected void configure() {
 			bind(SomeInterface.class).to(SomeDependency.class).asEagerSingleton();
 		}
+
 	}
+
 }
 
 @EnableGuiceModules
@@ -83,4 +89,5 @@ class ModuleFilteringTestsConfig {
 			}
 		};
 	}
+
 }

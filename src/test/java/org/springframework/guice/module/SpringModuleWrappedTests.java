@@ -31,13 +31,14 @@ public class SpringModuleWrappedTests {
 
 	@Test
 	public void testDependenciesFromWrappedModule() {
-		Injector injector = Guice.createInjector(new SpringModule(
-				BeanFactoryProvider.from(TestConfig.class, ModuleProviderConfig.class)));
+		Injector injector = Guice.createInjector(
+				new SpringModule(BeanFactoryProvider.from(TestConfig.class, ModuleProviderConfig.class)));
 		assertNotNull(injector.getInstance(Baz.class));
 	}
 
 	@Configuration
 	public static class TestConfig {
+
 		@Bean
 		public Baz baz(Service service) {
 			return new Baz(service);
@@ -46,9 +47,11 @@ public class SpringModuleWrappedTests {
 	}
 
 	interface Service {
+
 	}
 
 	protected static class MyService implements Service {
+
 	}
 
 	public static class Foo {
@@ -57,6 +60,7 @@ public class SpringModuleWrappedTests {
 		public Foo(@Named("service") Service service) {
 			service.toString();
 		}
+
 	}
 
 	public static class Baz {

@@ -95,9 +95,11 @@ public class SpringModuleMetadataTests {
 	}
 
 	interface Service {
+
 	}
 
 	protected static class MyService implements Service {
+
 	}
 
 	public static class Foo {
@@ -110,51 +112,62 @@ public class SpringModuleMetadataTests {
 
 	@Configuration
 	protected static class MetadataExcludesConfig {
+
 		@Bean
 		public GuiceModuleMetadata guiceModuleMetadata() {
 			GuiceModuleMetadata metadata = new GuiceModuleMetadata();
 			metadata.exclude(new AssignableTypeFilter(Service.class));
 			return metadata;
 		}
+
 	}
 
 	@Configuration
 	protected static class MetadataIncludesConfig {
+
 		@Bean
 		public GuiceModuleMetadata guiceModuleMetadata() {
 			GuiceModuleMetadata metadata = new GuiceModuleMetadata();
 			metadata.include(new AnnotationTypeFilter(Cacheable.class));
 			return metadata;
 		}
+
 	}
 
 	@Configuration
 	public static class TestConfig {
+
 		@Bean
 		public Service service() {
 			return new MyService();
 		}
+
 	}
 
 	@Configuration
 	public static class PrimaryConfig {
+
 		@Bean
 		@Primary
 		public Service primary() {
 			return new MyService();
 		}
+
 	}
 
 	@Configuration
 	public static class MoreConfig {
+
 		@Bean
 		public Service more() {
 			return new MyService();
 		}
+
 	}
 
 	@Configuration
 	public static class OtherConfig {
+
 	}
 
 }

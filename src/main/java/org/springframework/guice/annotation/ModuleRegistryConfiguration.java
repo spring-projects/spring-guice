@@ -73,12 +73,15 @@ import java.util.stream.Collectors;
 class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor, ApplicationContextAware {
 
 	private static final String SPRING_GUICE_DEDUPE_BINDINGS_PROPERTY_NAME = "spring.guice.dedup";
+
 	private static final String SPRING_GUICE_AUTOWIRE_JIT_PROPERTY_NAME = "spring.guice.autowireJIT";
+
 	private static final String SPRING_GUICE_STAGE_PROPERTY_NAME = "spring.guice.stage";
 
 	private final Log logger = LogFactory.getLog(getClass());
 
 	private ApplicationContext applicationContext;
+
 	private boolean enableJustInTimeBinding = true;
 
 	@Override
@@ -90,13 +93,13 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 
 	@Override
 	public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
-		List<Module> modules = new ArrayList<>(((ConfigurableListableBeanFactory) registry)
-				.getBeansOfType(Module.class).values());
+		List<Module> modules = new ArrayList<>(
+				((ConfigurableListableBeanFactory) registry).getBeansOfType(Module.class).values());
 		modules.add(new SpringModule((ConfigurableListableBeanFactory) registry, enableJustInTimeBinding));
 		Map<Key<?>, Binding<?>> bindings = new HashMap<Key<?>, Binding<?>>();
 		List<Element> elements = Elements.getElements(Stage.TOOL, modules);
-		if (applicationContext.getEnvironment().getProperty(
-				SPRING_GUICE_DEDUPE_BINDINGS_PROPERTY_NAME, Boolean.class, false)) {
+		if (applicationContext.getEnvironment().getProperty(SPRING_GUICE_DEDUPE_BINDINGS_PROPERTY_NAME, Boolean.class,
+				false)) {
 			elements = removeDuplicates(elements);
 			modules = Collections.singletonList(Elements.getModule(elements));
 		}
@@ -132,17 +135,16 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 	}
 
 	private void mapBindings(Map<Key<?>, Binding<?>> bindings, BeanDefinitionRegistry registry) {
-		Stage stage = applicationContext.getEnvironment().getProperty(SPRING_GUICE_STAGE_PROPERTY_NAME, Stage.class, Stage.PRODUCTION);
+		Stage stage = applicationContext.getEnvironment().getProperty(SPRING_GUICE_STAGE_PROPERTY_NAME, Stage.class,
+				Stage.PRODUCTION);
 		boolean ifLazyInit = stage.equals(Stage.DEVELOPMENT);
 		for (Entry<Key<?>, Binding<?>> entry : bindings.entrySet()) {
-			if (entry.getKey().getTypeLiteral().getRawType().equals(Injector.class)
-					|| SpringModule.SPRING_GUICE_SOURCE
+			if (entry.getKey().getTypeLiteral().getRawType().equals(Injector.class) || SpringModule.SPRING_GUICE_SOURCE
 					.equals(Optional.ofNullable(entry.getValue().getSource()).map(Object::toString).orElse(""))) {
 				continue;
 			}
-			if (entry.getKey().getAnnotationType() != null &&
-					entry.getKey().getAnnotationType().getName()
-							.startsWith("com.google.inject.multibindings")) {
+			if (entry.getKey().getAnnotationType() != null
+					&& entry.getKey().getAnnotationType().getName().startsWith("com.google.inject.multibindings")) {
 				continue;
 			}
 
@@ -157,21 +159,20 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 			args.addIndexedArgumentValue(2, Scopes.isSingleton(binding));
 			bean.setConstructorArgumentValues(args);
 			bean.setTargetType(ResolvableType.forType(key.getTypeLiteral().getType()));
-			if(!Scopes.isSingleton(binding)) {
+			if (!Scopes.isSingleton(binding)) {
 				bean.setScope(ConfigurableBeanFactory.SCOPE_PROTOTYPE);
 			}
 			if (source instanceof ElementSource) {
-				bean.setResourceDescription(
-						((ElementSource) source).getDeclaringSource().toString());
+				bean.setResourceDescription(((ElementSource) source).getDeclaringSource().toString());
 			}
 			else {
 				bean.setResourceDescription(SpringModule.SPRING_GUICE_SOURCE);
 			}
 			bean.setAttribute(SpringModule.SPRING_GUICE_SOURCE, true);
 			if (key.getAnnotationType() != null) {
-				bean.addQualifier(new AutowireCandidateQualifier(Qualifier.class,
-						getValueAttributeForNamed(key)));
-				bean.addQualifier(new AutowireCandidateQualifier(key.getAnnotationType(), getValueAttributeForNamed(key)));
+				bean.addQualifier(new AutowireCandidateQualifier(Qualifier.class, getValueAttributeForNamed(key)));
+				bean.addQualifier(
+						new AutowireCandidateQualifier(key.getAnnotationType(), getValueAttributeForNamed(key)));
 			}
 			if (ifLazyInit) {
 				bean.setLazyInit(true);
@@ -199,7 +200,7 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 		else if (key.getAnnotation() instanceof javax.inject.Named) {
 			return ((javax.inject.Named) key.getAnnotation()).value();
 		}
-		else if (key.getAnnotationType() != null){
+		else if (key.getAnnotationType() != null) {
 			return key.getAnnotationType().getName();
 		}
 		else {
@@ -207,22 +208,22 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 		}
 	}
 
-	private boolean elementFilter(String[] modulesToFilter, Element element){
+	private boolean elementFilter(String[] modulesToFilter, Element element) {
 		try {
-			return Arrays.stream(modulesToFilter)
-					.noneMatch(ex -> Optional.of(element).map(Element::getSource).map(Object::toString).orElse("").contains(ex));
-		} catch (Exception e){
-			logger.error(String.format("Unable fo filter element[%s] with filter [%s]", element, Arrays.toString(modulesToFilter)), e);
+			return Arrays.stream(modulesToFilter).noneMatch(
+					ex -> Optional.of(element).map(Element::getSource).map(Object::toString).orElse("").contains(ex));
+		}
+		catch (Exception e) {
+			logger.error(String.format("Unable fo filter element[%s] with filter [%s]", element,
+					Arrays.toString(modulesToFilter)), e);
 			return false;
 		}
 	}
 
-	private void extractPrivateElements(Map<Key<?>, Binding<?>> bindings,
-			PrivateElements privateElements) {
+	private void extractPrivateElements(Map<Key<?>, Binding<?>> bindings, PrivateElements privateElements) {
 		List<Element> elements = privateElements.getElements();
 		for (Element e : elements) {
-			if (e instanceof Binding && privateElements.getExposedKeys()
-					.contains(((Binding<?>) e).getKey())) {
+			if (e instanceof Binding && privateElements.getExposedKeys().contains(((Binding<?>) e).getKey())) {
 				Binding<?> binding = (Binding<?>) e;
 				bindings.put(binding.getKey(), binding);
 			}
@@ -237,22 +238,21 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 	 * for a given binding key
 	 */
 	protected List<Element> removeDuplicates(List<Element> elements) {
-		List<Element> duplicateElements = elements.stream()
-				.filter(e -> e instanceof Binding).map(e -> (Binding<?>) e)
+		List<Element> duplicateElements = elements.stream().filter(e -> e instanceof Binding).map(e -> (Binding<?>) e)
 				.collect(Collectors.groupingBy(ModuleRegistryConfiguration::getLinkedKeyIfRequired)).entrySet().stream()
-				.filter(e -> e.getValue().size() > 1 && e.getValue().stream().anyMatch(
-						binding -> binding.getSource() != null && binding.getSource()
-								.toString().contains(SpringModule.SPRING_GUICE_SOURCE))) // find duplicates
+				.filter(e -> e.getValue().size() > 1 && e.getValue().stream()
+						.anyMatch(binding -> binding.getSource() != null
+								&& binding.getSource().toString().contains(SpringModule.SPRING_GUICE_SOURCE))) // find
+																												// duplicates
 				.flatMap(e -> e.getValue().stream())
-				.filter(e -> e.getSource() != null && !e.getSource().toString()
-						.contains(SpringModule.SPRING_GUICE_SOURCE))
+				.filter(e -> e.getSource() != null
+						&& !e.getSource().toString().contains(SpringModule.SPRING_GUICE_SOURCE))
 				.collect(Collectors.toList());
 
 		@SuppressWarnings("unlikely-arg-type")
 		List<Element> dedupedElements = elements.stream().filter(e -> {
 			if (e instanceof Binding) {
-				return !duplicateElements
-						.contains(new SourceComparableBinding((Binding<?>) e));
+				return !duplicateElements.contains(new SourceComparableBinding((Binding<?>) e));
 			}
 			else {
 				return true;
@@ -275,6 +275,7 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 	}
 
 	private static class SourceComparableBinding {
+
 		private Binding<?> binding;
 
 		public SourceComparableBinding(Binding<?> binding) {
@@ -286,8 +287,7 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 			if (obj instanceof Binding) {
 				Binding<?> compareTo = (Binding<?>) obj;
 				if (compareTo.getSource() != null && this.binding != null) {
-					return binding.equals(compareTo)
-							&& Objects.equals(binding.getSource(), compareTo.getSource());
+					return binding.equals(compareTo) && Objects.equals(binding.getSource(), compareTo.getSource());
 				}
 				else {
 					return Objects.equals(binding, compareTo);
@@ -297,29 +297,37 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 				return false;
 			}
 		}
+
 	}
+
 }
 
 /**
  * Creates the Guice injector and registers it.
  *
- * The correct time to create the injector is after all Bean Post Processors were registered (after the
- * registerBeanPostProcessors() phase), but before other beans get resolved. To achieve this, we create the injector
- * when the first bean gets resolved - in its post-processing phase. However, this creates a possibility for a circular
- * initialization error (i.e. if the first bean is also being dependant on by a Guice provided binding). To resolve
- * this we publish an event that will be triggered in the registerListeners() phase, and create the injector then.
- * Combining both initialization mechanisms (post-processor and the event publishing) ensures the injector will be
- * created no later then the registerListeners() phase, but after the registerBeanPostProcessors() phase.
- * For application contexts that override onRefresh() and create beans then (i.e. WebServer based application contexts)
- * the post-processor initialization will kick-in and create the injector before.
+ * The correct time to create the injector is after all Bean Post Processors were
+ * registered (after the registerBeanPostProcessors() phase), but before other beans get
+ * resolved. To achieve this, we create the injector when the first bean gets resolved -
+ * in its post-processing phase. However, this creates a possibility for a circular
+ * initialization error (i.e. if the first bean is also being dependant on by a Guice
+ * provided binding). To resolve this we publish an event that will be triggered in the
+ * registerListeners() phase, and create the injector then. Combining both initialization
+ * mechanisms (post-processor and the event publishing) ensures the injector will be
+ * created no later then the registerListeners() phase, but after the
+ * registerBeanPostProcessors() phase. For application contexts that override onRefresh()
+ * and create beans then (i.e. WebServer based application contexts) the post-processor
+ * initialization will kick-in and create the injector before.
  */
-class GuiceInjectorInitializer implements BeanPostProcessor, ApplicationListener<GuiceInjectorInitializer.CreateInjectorEvent> {
+class GuiceInjectorInitializer
+		implements BeanPostProcessor, ApplicationListener<GuiceInjectorInitializer.CreateInjectorEvent> {
+
 	private final AtomicBoolean injectorCreated = new AtomicBoolean(false);
+
 	private final List<Module> modules;
+
 	private final ConfigurableApplicationContext applicationContext;
 
-	public GuiceInjectorInitializer(List<Module> modules,
-									ConfigurableApplicationContext applicationContext) {
+	public GuiceInjectorInitializer(List<Module> modules, ConfigurableApplicationContext applicationContext) {
 		this.modules = modules;
 		this.applicationContext = applicationContext;
 
@@ -346,8 +354,7 @@ class GuiceInjectorInitializer implements BeanPostProcessor, ApplicationListener
 		try {
 			Map<String, InjectorFactory> beansOfType = applicationContext.getBeansOfType(InjectorFactory.class);
 			if (beansOfType.size() > 1) {
-				throw new ApplicationContextException("Found multiple beans of type "
-						+ InjectorFactory.class.getName()
+				throw new ApplicationContextException("Found multiple beans of type " + InjectorFactory.class.getName()
 						+ "  Please ensure that only one InjectorFactory bean is defined. InjectorFactory beans found: "
 						+ beansOfType.keySet());
 			}
@@ -367,12 +374,13 @@ class GuiceInjectorInitializer implements BeanPostProcessor, ApplicationListener
 	}
 
 	static class CreateInjectorEvent extends ApplicationEvent {
+
 		private static final long serialVersionUID = -6546970378679850504L;
 
 		public CreateInjectorEvent() {
 			super(serialVersionUID);
 		}
+
 	}
+
 }
-
-

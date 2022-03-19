@@ -15,61 +15,70 @@ import static org.junit.Assert.assertEquals;
 
 public class SpringAutowiredCollectionTests {
 
-    @Test
-    public void getAutowiredCollection() {
-        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
-        context.register(TestConfig.class);
-        context.refresh();
-        Injector injector = new SpringInjector(context);
+	@Test
+	public void getAutowiredCollection() {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+		context.register(TestConfig.class);
+		context.refresh();
+		Injector injector = new SpringInjector(context);
 
-        ServicesHolder servicesHolder = injector.getInstance(ServicesHolder.class);
+		ServicesHolder servicesHolder = injector.getInstance(ServicesHolder.class);
 
-        assertEquals(2, servicesHolder.existingServices.size());
-        assertEquals(0, servicesHolder.nonExistingServices.size());
-    }
+		assertEquals(2, servicesHolder.existingServices.size());
+		assertEquals(0, servicesHolder.nonExistingServices.size());
+	}
 
-    @Configuration
-    @EnableGuiceModules
-    static class TestConfig {
-        @Bean
-        public ServicesHolder serviceHolder(Map<String, Service> existingServices,
-                                            Map<String, NonExistingService> nonExistingServices) {
-            return new ServicesHolder(existingServices, nonExistingServices);
-        }
+	@Configuration
+	@EnableGuiceModules
+	static class TestConfig {
 
-        @Bean
-        public Service service() {
-            return new Service();
-        }
+		@Bean
+		public ServicesHolder serviceHolder(Map<String, Service> existingServices,
+				Map<String, NonExistingService> nonExistingServices) {
+			return new ServicesHolder(existingServices, nonExistingServices);
+		}
 
-        @Bean
-        public GuiceModule guiceServiceModule() {
-            return new GuiceModule();
-        }
-    }
+		@Bean
+		public Service service() {
+			return new Service();
+		}
 
-    static class Service {
-    }
+		@Bean
+		public GuiceModule guiceServiceModule() {
+			return new GuiceModule();
+		}
 
-    static class NonExistingService {
-    }
+	}
 
-    static class GuiceModule extends AbstractModule {
+	static class Service {
 
-        @Override
-        protected void configure() {
-            bind(Service.class).asEagerSingleton();
-        }
-    }
+	}
 
-    static class ServicesHolder {
-        final Map<String, Service> existingServices;
-        final Map<String, NonExistingService> nonExistingServices;
+	static class NonExistingService {
 
-        public ServicesHolder(Map<String, Service> existingServices,
-                              Map<String, NonExistingService> nonExistingServices) {
-            this.existingServices = existingServices;
-            this.nonExistingServices = nonExistingServices;
-        }
-    }
+	}
+
+	static class GuiceModule extends AbstractModule {
+
+		@Override
+		protected void configure() {
+			bind(Service.class).asEagerSingleton();
+		}
+
+	}
+
+	static class ServicesHolder {
+
+		final Map<String, Service> existingServices;
+
+		final Map<String, NonExistingService> nonExistingServices;
+
+		public ServicesHolder(Map<String, Service> existingServices,
+				Map<String, NonExistingService> nonExistingServices) {
+			this.existingServices = existingServices;
+			this.nonExistingServices = nonExistingServices;
+		}
+
+	}
+
 }

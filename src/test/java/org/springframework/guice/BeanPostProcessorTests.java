@@ -32,7 +32,8 @@ public class BeanPostProcessorTests {
 	 */
 	@Test
 	public void testBeanPostProcessorsApplied() {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(BeanPostProcessorTestConfig.class);
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+				BeanPostProcessorTestConfig.class);
 		PostProcessedBean postProcessedBean = context.getBean(PostProcessedBean.class);
 		assertTrue(postProcessedBean.postProcessed);
 		GuiceBeanThatWantsPostProcessedBean guiceBean1 = context.getBean(GuiceBeanThatWantsPostProcessedBean.class);
@@ -41,41 +42,53 @@ public class BeanPostProcessorTests {
 		assertTrue(guiceBean2.springBean.ppb.postProcessed);
 		context.close();
 	}
-	
+
 	public static class PostProcessedBean {
+
 		Boolean postProcessed = false;
+
 	}
 
 	public static class SpringBeanThatWantsPostProcessedBean {
+
 		PostProcessedBean ppb;
+
 		public SpringBeanThatWantsPostProcessedBean(PostProcessedBean ppb) {
 			this.ppb = ppb;
 		}
+
 	}
 
 	public static class GuiceBeanThatWantsPostProcessedBean {
+
 		PostProcessedBean ppb;
+
 		@Inject
 		public GuiceBeanThatWantsPostProcessedBean(PostProcessedBean ppb) {
 			this.ppb = ppb;
 		}
+
 	}
 
 	public static class GuiceBeanThatWantsSpringBean {
+
 		SpringBeanThatWantsPostProcessedBean springBean;
+
 		@Inject
 		public GuiceBeanThatWantsSpringBean(SpringBeanThatWantsPostProcessedBean springBean) {
 			this.springBean = springBean;
 		}
-	}
-}
 
+	}
+
+}
 
 @EnableGuiceModules
 @Configuration
 class BeanPostProcessorTestConfig {
-	
+
 	public static class PostProcessorRegistrar implements BeanDefinitionRegistryPostProcessor {
+
 		@Override
 		public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
 			BeanDefinitionBuilder bean = BeanDefinitionBuilder.genericBeanDefinition(TestBeanPostProcessor.class);
@@ -83,15 +96,17 @@ class BeanPostProcessorTestConfig {
 		}
 
 		@Override
-		public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {}
-		
+		public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+		}
+
 	}
-	
+
 	public static class TestBeanPostProcessor implements BeanPostProcessor {
+
 		@Override
 		public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
-			if(bean instanceof PostProcessedBean) {
-				((PostProcessedBean)bean).postProcessed = true;
+			if (bean instanceof PostProcessedBean) {
+				((PostProcessedBean) bean).postProcessed = true;
 			}
 			return bean;
 		}
@@ -100,27 +115,28 @@ class BeanPostProcessorTestConfig {
 		public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
 			return bean;
 		}
+
 	}
 
 	@Bean
 	public PostProcessorRegistrar postProcessorRegistrar() {
 		return new PostProcessorRegistrar();
 	}
-	
+
 	@Bean
 	public PostProcessedBean postProcessedBean() {
 		return new PostProcessedBean();
 	}
-	
+
 	@Bean
 	public SpringBeanThatWantsPostProcessedBean springBean(PostProcessedBean ppb) {
 		return new SpringBeanThatWantsPostProcessedBean(ppb);
 	}
-	
+
 	@Bean
 	public Module someGuiceModule() {
 		return new AbstractModule() {
-			
+
 			@Override
 			protected void configure() {
 				binder().requireExplicitBindings();
@@ -129,4 +145,5 @@ class BeanPostProcessorTestConfig {
 			}
 		};
 	}
+
 }

@@ -23,22 +23,25 @@ public class MapWiringTests {
 	@SuppressWarnings({ "resource", "unused" })
 	@Test
 	public void testProvidesMap() {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-				ModulesConfig.class, FooBar.class);
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ModulesConfig.class,
+				FooBar.class);
 		Bar bar = context.getBean(Bar.class);
 	}
 
 	@Configuration
 	@EnableGuiceModules
 	static class ModulesConfig {
+
 		@Bean
 		TestConfig testConfig() {
 			return new TestConfig();
 		}
+
 	}
 
 	@Configuration
 	static class FooBar {
+
 		@Bean
 		Bar foo(Map<String, Foo> foos) {
 			assertTrue(!foos.isEmpty());
@@ -48,16 +51,20 @@ public class MapWiringTests {
 	}
 
 	static class TestConfig extends AbstractModule {
+
 		@Override
 		protected void configure() {
 			bind(Foo.class);
 		}
+
 	}
 
 	static class Foo {
+
 	}
 
 	static class Bar {
+
 	}
 
 }
