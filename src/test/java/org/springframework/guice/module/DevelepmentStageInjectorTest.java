@@ -25,9 +25,9 @@ import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
 import com.google.inject.Stage;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -35,17 +35,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 import org.springframework.guice.annotation.InjectorFactory;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DevelepmentStageInjectorTest {
 
-	@BeforeClass
+	@BeforeAll
 	public static void init() {
 		System.setProperty("spring.guice.stage", "DEVELOPMENT");
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void cleanup() {
 		System.clearProperty("spring.guice.stage");
 	}

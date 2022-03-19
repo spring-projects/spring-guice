@@ -23,7 +23,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import com.google.inject.util.Providers;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
@@ -31,9 +31,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.util.AopTestUtils;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 public class SpringModuleGuiceBindingAwareTests {
 
@@ -57,9 +57,12 @@ public class SpringModuleGuiceBindingAwareTests {
 		assertEquals("done", springBean.getDep1().doWork());
 
 		// check binding equality
-		assertSame(injector.getInstance(IGuiceDependency1.class), AopTestUtils.getTargetObject(springBean.getDep1()));
-		assertSame(injector.getInstance(IGuiceDependency2.class), AopTestUtils.getTargetObject(springBean.getDep2()));
-		assertSame(injector.getInstance(IGuiceDependency3.class), AopTestUtils.getTargetObject(springBean.getDep3()));
+		assertSame(injector.getInstance(IGuiceDependency1.class),
+				AopTestUtils.getTargetObject(springBean.getDep1()));
+		assertSame(injector.getInstance(IGuiceDependency2.class),
+				AopTestUtils.getTargetObject(springBean.getDep2()));
+		assertSame(injector.getInstance(IGuiceDependency3.class),
+				AopTestUtils.getTargetObject(springBean.getDep3()));
 	}
 
 	static class SimpleGuiceModule extends AbstractModule {

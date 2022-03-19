@@ -27,9 +27,9 @@ import com.google.inject.Module;
 import com.google.inject.Stage;
 import com.google.inject.spi.Element;
 import com.google.inject.spi.Elements;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -37,19 +37,19 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 import org.springframework.guice.annotation.InjectorFactory;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class ElementVisitorTests {
 
 	private static AnnotationConfigApplicationContext context;
 
-	@BeforeClass
+	@BeforeAll
 	public static void init() {
 		System.setProperty("spring.guice.dedup", "true");
 		context = new AnnotationConfigApplicationContext(ElementVisitorTestConfig.class);
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void cleanup() {
 		System.clearProperty("spring.guice.dedup");
 		if (context != null) {

@@ -24,8 +24,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Key;
 import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -55,7 +55,7 @@ public class ProvidesSupplierWiringTests {
 	// ToDo -- Today this direction doesn't work without further work. Ignore the test for
 	// now.
 	@SuppressWarnings("unused")
-	@Ignore
+	@Disabled
 	@Test
 	public void testProvidesSupplierSpring() {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(FooBarSpring.class);

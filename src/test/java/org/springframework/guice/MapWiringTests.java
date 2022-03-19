@@ -19,14 +19,14 @@ package org.springframework.guice;
 import java.util.Map;
 
 import com.google.inject.AbstractModule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * Test injecting Map
@@ -60,7 +60,7 @@ public class MapWiringTests {
 
 		@Bean
 		Bar foo(Map<String, Foo> foos) {
-			assertTrue(!foos.isEmpty());
+			assertFalse(foos.isEmpty());
 			return new Bar();
 		}
 

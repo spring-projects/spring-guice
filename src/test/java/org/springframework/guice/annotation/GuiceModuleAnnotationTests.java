@@ -22,9 +22,7 @@ import java.util.Map;
 import com.google.inject.ConfigurationException;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -34,17 +32,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.guice.module.SpringModule;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Dave Syer
  *
  */
 public class GuiceModuleAnnotationTests {
-
-	@Rule
-	public ExpectedException expected = ExpectedException.none();
 
 	@Test
 	public void includes() throws Exception {
@@ -67,20 +62,19 @@ public class GuiceModuleAnnotationTests {
 	@Test
 	public void excludes() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MetadataExcludesConfig.class);
-		this.expected.expect(ConfigurationException.class);
-		assertNull(injector.getInstance(Service.class));
+		assertThrows(ConfigurationException.class, () -> injector.getInstance(Service.class));
 	}
 
-	@Test(expected = ConfigurationException.class)
+	@Test
 	public void excludesNames() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MetadataExcludeNamesConfig.class);
-		injector.getBinding(Service.class);
+		assertThrows(ConfigurationException.class, () -> injector.getBinding(Service.class));
 	}
 
-	@Test(expected = ConfigurationException.class)
+	@Test
 	public void excludesPatterns() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MetadataExcludePatternsConfig.class);
-		injector.getBinding(Service.class);
+		assertThrows(ConfigurationException.class, () -> injector.getBinding(Service.class));
 	}
 
 	@Test

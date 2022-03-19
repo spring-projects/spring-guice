@@ -20,7 +20,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -32,8 +33,7 @@ import org.springframework.core.ResolvableType;
 import org.springframework.guice.annotation.EnableGuiceModules;
 import org.springframework.stereotype.Component;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SuperClassTests {
 
@@ -104,47 +104,47 @@ public class SuperClassTests {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClass);
 
 		String[] allParentBeanNames = context.getBeanNamesForType(IParentWithType.class);
-		assertEquals(2, allParentBeanNames.length);
+		Assertions.assertEquals(2, allParentBeanNames.length);
 
 		String[] stringParentBeanNames = context
 				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IParentWithType.class, String.class));
-		assertEquals(1, stringParentBeanNames.length);
+		Assertions.assertEquals(1, stringParentBeanNames.length);
 		assertTrue(new TypeLiteral<IGrandChildWithType<String>>() {
 		}.getRawType().isInstance(context.getBean(stringParentBeanNames[0])));
 
 		String[] integerParentBeanNames = context
 				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IParentWithType.class, Integer.class));
-		assertEquals(1, integerParentBeanNames.length);
+		Assertions.assertEquals(1, integerParentBeanNames.length);
 		assertTrue(new TypeLiteral<IGrandChildWithType<Integer>>() {
 		}.getRawType().isInstance(context.getBean(integerParentBeanNames[0])));
 
 		String[] allChildBeanNames = context.getBeanNamesForType(IChildWithType.class);
-		assertEquals(2, allChildBeanNames.length);
+		Assertions.assertEquals(2, allChildBeanNames.length);
 
 		String[] stringChildBeanNames = context
 				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IChildWithType.class, String.class));
-		assertEquals(1, stringChildBeanNames.length);
+		Assertions.assertEquals(1, stringChildBeanNames.length);
 		assertTrue(new TypeLiteral<IChildWithType<String>>() {
 		}.getRawType().isInstance(context.getBean(stringChildBeanNames[0])));
 
 		String[] integerChildBeanNames = context
 				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IChildWithType.class, Integer.class));
-		assertEquals(1, integerChildBeanNames.length);
+		Assertions.assertEquals(1, integerChildBeanNames.length);
 		assertTrue(new TypeLiteral<IChildWithType<Integer>>() {
 		}.getRawType().isInstance(context.getBean(integerChildBeanNames[0])));
 
 		String[] allGrandChildBeanNames = context.getBeanNamesForType(IGrandChildWithType.class);
-		assertEquals(2, allGrandChildBeanNames.length);
+		Assertions.assertEquals(2, allGrandChildBeanNames.length);
 
 		String[] stringGrandChildBeanNames = context
 				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IGrandChildWithType.class, String.class));
-		assertEquals(1, stringGrandChildBeanNames.length);
+		Assertions.assertEquals(1, stringGrandChildBeanNames.length);
 		assertTrue(new TypeLiteral<IGrandChildWithType<String>>() {
 		}.getRawType().isInstance(context.getBean(stringGrandChildBeanNames[0])));
 
 		String[] integerGrandChildBeanNames = context
 				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IGrandChildWithType.class, Integer.class));
-		assertEquals(1, integerGrandChildBeanNames.length);
+		Assertions.assertEquals(1, integerGrandChildBeanNames.length);
 		assertTrue(new TypeLiteral<IGrandChildWithType<Integer>>() {
 		}.getRawType().isInstance(context.getBean(integerGrandChildBeanNames[0])));
 
@@ -255,23 +255,23 @@ public class SuperClassTests {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClass);
 		String[] stringBeanNames = context
 				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IFooWithType.class, String.class));
-		assertEquals(1, stringBeanNames.length);
+		Assertions.assertEquals(1, stringBeanNames.length);
 		assertTrue(context.getBean(stringBeanNames[0]) instanceof StringFoo);
 		assertTrue(context.getBean(stringBeanNames[0]) instanceof SubStringFoo);
 
 		stringBeanNames = context.getBeanNamesForType(StringFoo.class);
-		assertEquals(1, stringBeanNames.length);
+		Assertions.assertEquals(1, stringBeanNames.length);
 		assertTrue(context.getBean(stringBeanNames[0]) instanceof StringFoo);
 		assertTrue(context.getBean(stringBeanNames[0]) instanceof SubStringFoo);
 
 		String[] integerBeanNames = context
 				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IFooWithType.class, Integer.class));
-		assertEquals(1, integerBeanNames.length);
+		Assertions.assertEquals(1, integerBeanNames.length);
 		assertTrue(context.getBean(integerBeanNames[0]) instanceof IntegerFoo);
 		assertTrue(context.getBean(integerBeanNames[0]) instanceof SubIntegerFoo);
 
 		integerBeanNames = context.getBeanNamesForType(IntegerFoo.class);
-		assertEquals(1, integerBeanNames.length);
+		Assertions.assertEquals(1, integerBeanNames.length);
 		assertTrue(context.getBean(integerBeanNames[0]) instanceof IntegerFoo);
 		assertTrue(context.getBean(integerBeanNames[0]) instanceof SubIntegerFoo);
 	}

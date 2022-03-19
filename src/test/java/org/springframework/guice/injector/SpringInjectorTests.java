@@ -18,10 +18,8 @@ package org.springframework.guice.injector;
 
 import com.google.inject.Key;
 import com.google.inject.name.Names;
-import org.junit.After;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
@@ -32,18 +30,16 @@ import org.springframework.guice.AbstractCompleteWiringTests.Baz;
 import org.springframework.guice.AbstractCompleteWiringTests.MyService;
 import org.springframework.guice.AbstractCompleteWiringTests.Service;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class SpringInjectorTests {
-
-	@Rule
-	public ExpectedException expected = ExpectedException.none();
 
 	private SpringInjector injector = new SpringInjector(create());
 
 	private AnnotationConfigApplicationContext context;
 
-	@After
+	@AfterEach
 	public void close() {
 		if (this.context != null) {
 			this.context.close();
@@ -58,8 +54,7 @@ public class SpringInjectorTests {
 	@Test
 	public void multiple() {
 		this.injector = new SpringInjector(create(Additional.class));
-		this.expected.expect(NoUniqueBeanDefinitionException.class);
-		assertNotNull(this.injector.getInstance(Service.class));
+		assertThrows(NoUniqueBeanDefinitionException.class, () -> this.injector.getInstance(Service.class));
 	}
 
 	@Test

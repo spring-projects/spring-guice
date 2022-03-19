@@ -20,7 +20,7 @@ import java.util.Map;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 import org.springframework.guice.injector.SpringInjector;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SpringAutowiredCollectionTests {
 

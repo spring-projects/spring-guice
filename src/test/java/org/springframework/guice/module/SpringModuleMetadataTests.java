@@ -24,9 +24,8 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.ProvisionException;
 import com.google.inject.name.Names;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -36,17 +35,14 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Dave Syer
  *
  */
 public class SpringModuleMetadataTests {
-
-	@Rule
-	public ExpectedException expected = ExpectedException.none();
 
 	@Test
 	public void twoConfigClasses() throws Exception {
@@ -57,8 +53,7 @@ public class SpringModuleMetadataTests {
 	@Test
 	public void twoServices() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MoreConfig.class);
-		this.expected.expect(ProvisionException.class);
-		assertNotNull(injector.getInstance(Service.class));
+		assertThrows(ProvisionException.class, () -> assertNotNull(injector.getInstance(Service.class)));
 	}
 
 	@Test
@@ -76,15 +71,13 @@ public class SpringModuleMetadataTests {
 	@Test
 	public void includes() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MetadataIncludesConfig.class);
-		this.expected.expect(ConfigurationException.class);
-		assertNull(injector.getBinding(Service.class));
+		assertThrows(ConfigurationException.class, () -> Assertions.assertNull(injector.getBinding(Service.class)));
 	}
 
 	@Test
 	public void excludes() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MetadataExcludesConfig.class);
-		this.expected.expect(ConfigurationException.class);
-		assertNull(injector.getInstance(Service.class));
+		assertThrows(ConfigurationException.class, () -> Assertions.assertNull(injector.getBinding(Service.class)));
 	}
 
 	private Injector createInjector(Class<?>... config) {

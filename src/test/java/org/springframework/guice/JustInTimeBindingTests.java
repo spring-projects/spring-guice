@@ -18,8 +18,8 @@ package org.springframework.guice;
 
 import javax.inject.Inject;
 
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.UnsatisfiedDependencyException;
 import org.springframework.beans.factory.support.RootBeanDefinition;
@@ -27,11 +27,12 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class JustInTimeBindingTests {
 
-	@After
+	@AfterEach
 	public void tearDown() {
 		System.clearProperty("spring.guice.autowireJIT");
 	}
@@ -42,10 +43,10 @@ public class JustInTimeBindingTests {
 		assertNotNull(springGetFoo());
 	}
 
-	@Test(expected = UnsatisfiedDependencyException.class)
+	@Test
 	public void springWithoutJustInTimeBinding() {
 		System.setProperty("spring.guice.autowireJIT", "false");
-		springGetFoo();
+		assertThrows(UnsatisfiedDependencyException.class, this::springGetFoo);
 	}
 
 	@SuppressWarnings("resource")
