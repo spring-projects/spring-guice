@@ -74,66 +74,6 @@ class GuiceModuleRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoa
 		registry.registerBeanDefinition(name, definition);
 	}
 
-	protected static class GuiceModuleMetadataFactory implements FactoryBean<GuiceModuleMetadata> {
-
-		private Collection<? extends TypeFilter> includeFilters;
-
-		private Collection<? extends TypeFilter> excludeFilters;
-
-		private Collection<Pattern> includePatterns;
-
-		private Collection<Pattern> excludePatterns;
-
-		private Collection<String> includeNames;
-
-		private Collection<String> excludeNames;
-
-		public void setIncludeFilters(Collection<? extends TypeFilter> includeFilters) {
-			this.includeFilters = includeFilters;
-		}
-
-		public void setExcludeFilters(Collection<? extends TypeFilter> excludeFilters) {
-			this.excludeFilters = excludeFilters;
-		}
-
-		public void setIncludePatterns(Collection<Pattern> includePatterns) {
-			this.includePatterns = includePatterns;
-		}
-
-		public void setExcludePatterns(Collection<Pattern> excludePatterns) {
-			this.excludePatterns = excludePatterns;
-		}
-
-		public void setIncludeNames(Collection<String> includeNames) {
-			this.includeNames = includeNames;
-		}
-
-		public void setExcludeNames(Collection<String> excludeNames) {
-			this.excludeNames = excludeNames;
-		}
-
-		@Override
-		public GuiceModuleMetadata getObject() throws Exception {
-			return new GuiceModuleMetadata().include(includeFilters.toArray(new TypeFilter[includeFilters.size()]))
-					.exclude(excludeFilters.toArray(new TypeFilter[excludeFilters.size()]))
-					.include(includePatterns.toArray(new Pattern[includePatterns.size()]))
-					.exclude(excludePatterns.toArray(new Pattern[excludePatterns.size()]))
-					.include(includeNames.toArray(new String[includeNames.size()]))
-					.exclude(excludeNames.toArray(new String[excludeNames.size()]));
-		}
-
-		@Override
-		public Class<?> getObjectType() {
-			return GuiceModuleMetadata.class;
-		}
-
-		@Override
-		public boolean isSingleton() {
-			return false;
-		}
-
-	}
-
 	private Set<Pattern> parsePatterns(AnnotationMetadata annotation, String attributeName) {
 		Set<Pattern> result = new HashSet<Pattern>();
 		AnnotationAttributes attributes = new AnnotationAttributes(
@@ -224,9 +164,70 @@ class GuiceModuleRegistrar implements ImportBeanDefinitionRegistrar, ResourceLoa
 		try {
 			return filterAttributes.getStringArray("pattern");
 		}
-		catch (IllegalArgumentException o_O) {
+		catch (IllegalArgumentException ex) {
 			return new String[0];
 		}
+	}
+
+	protected static class GuiceModuleMetadataFactory implements FactoryBean<GuiceModuleMetadata> {
+
+		private Collection<? extends TypeFilter> includeFilters;
+
+		private Collection<? extends TypeFilter> excludeFilters;
+
+		private Collection<Pattern> includePatterns;
+
+		private Collection<Pattern> excludePatterns;
+
+		private Collection<String> includeNames;
+
+		private Collection<String> excludeNames;
+
+		public void setIncludeFilters(Collection<? extends TypeFilter> includeFilters) {
+			this.includeFilters = includeFilters;
+		}
+
+		public void setExcludeFilters(Collection<? extends TypeFilter> excludeFilters) {
+			this.excludeFilters = excludeFilters;
+		}
+
+		public void setIncludePatterns(Collection<Pattern> includePatterns) {
+			this.includePatterns = includePatterns;
+		}
+
+		public void setExcludePatterns(Collection<Pattern> excludePatterns) {
+			this.excludePatterns = excludePatterns;
+		}
+
+		public void setIncludeNames(Collection<String> includeNames) {
+			this.includeNames = includeNames;
+		}
+
+		public void setExcludeNames(Collection<String> excludeNames) {
+			this.excludeNames = excludeNames;
+		}
+
+		@Override
+		public GuiceModuleMetadata getObject() throws Exception {
+			return new GuiceModuleMetadata()
+					.include(this.includeFilters.toArray(new TypeFilter[this.includeFilters.size()]))
+					.exclude(this.excludeFilters.toArray(new TypeFilter[this.excludeFilters.size()]))
+					.include(this.includePatterns.toArray(new Pattern[this.includePatterns.size()]))
+					.exclude(this.excludePatterns.toArray(new Pattern[this.excludePatterns.size()]))
+					.include(this.includeNames.toArray(new String[this.includeNames.size()]))
+					.exclude(this.excludeNames.toArray(new String[this.excludeNames.size()]));
+		}
+
+		@Override
+		public Class<?> getObjectType() {
+			return GuiceModuleMetadata.class;
+		}
+
+		@Override
+		public boolean isSingleton() {
+			return false;
+		}
+
 	}
 
 }

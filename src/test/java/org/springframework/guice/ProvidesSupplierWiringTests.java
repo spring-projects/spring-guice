@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018-2022 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.springframework.guice;
 
 import java.util.function.Supplier;
@@ -18,7 +34,8 @@ import org.springframework.guice.annotation.EnableGuiceModules;
 import org.springframework.guice.injector.SpringInjector;
 
 /**
- * Test Generics (e.g., Supplier<T>) not losing type info across bridge in both directions
+ * Test Generics (e.g., {@literal Supplier<T>}) not losing type info across bridge in both
+ * directions
  *
  * @author Howard Yuan
  */
@@ -32,6 +49,21 @@ public class ProvidesSupplierWiringTests {
 				FooBar.class);
 		Foo foo = context.getBean(Foo.class);
 		Bar bar = context.getBean(Bar.class);
+	}
+
+	// Test Spring -> Guice direction
+	// ToDo -- Today this direction doesn't work without further work. Ignore the test for
+	// now.
+	@SuppressWarnings("unused")
+	@Ignore
+	@Test
+	public void testProvidesSupplierSpring() {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(FooBarSpring.class);
+		SpringInjector injector = new SpringInjector(context);
+		Foo_Spring fooSpring = injector.getInstance(Key.get(new TypeLiteral<Supplier<Foo_Spring>>() {
+		})).get();
+		Bar_Spring barSpring = injector.getInstance(Key.get(new TypeLiteral<Supplier<Bar_Spring>>() {
+		})).get();
 	}
 
 	@Configuration
@@ -86,21 +118,6 @@ public class ProvidesSupplierWiringTests {
 
 	static class Bar {
 
-	}
-
-	// Test Spring -> Guice direction
-	// ToDo -- Today this direction doesn't work without further work. Ignore the test for
-	// now.
-	@SuppressWarnings("unused")
-	@Ignore
-	@Test
-	public void testProvidesSupplierSpring() {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(FooBarSpring.class);
-		SpringInjector injector = new SpringInjector(context);
-		Foo_Spring fooSpring = injector.getInstance(Key.get(new TypeLiteral<Supplier<Foo_Spring>>() {
-		})).get();
-		Bar_Spring barSpring = injector.getInstance(Key.get(new TypeLiteral<Supplier<Bar_Spring>>() {
-		})).get();
 	}
 
 	@Configuration

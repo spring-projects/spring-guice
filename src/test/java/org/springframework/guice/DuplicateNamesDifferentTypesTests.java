@@ -1,25 +1,37 @@
+/*
+ * Copyright 2018-2022 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.springframework.guice;
-
-import static org.junit.Assert.assertNotNull;
-
-import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.guice.DuplicateNamesDifferentTypesTests.SomeJavaxNamedDepWithType1;
-import org.springframework.guice.DuplicateNamesDifferentTypesTests.SomeJavaxNamedDepWithType2;
-import org.springframework.guice.DuplicateNamesDifferentTypesTests.SomeNamedDepWithType1;
-import org.springframework.guice.DuplicateNamesDifferentTypesTests.SomeNamedDepWithType2;
-import org.springframework.guice.annotation.EnableGuiceModules;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import org.junit.Test;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.guice.annotation.EnableGuiceModules;
+
+import static org.junit.Assert.assertNotNull;
 
 public class DuplicateNamesDifferentTypesTests {
 
@@ -76,35 +88,35 @@ public class DuplicateNamesDifferentTypesTests {
 
 	}
 
-}
+	@EnableGuiceModules
+	@Configuration
+	static class DuplicateNamesDifferentTypesTestsConfig {
 
-@EnableGuiceModules
-@Configuration
-class DuplicateNamesDifferentTypesTestsConfig {
+		@Bean
+		Module module() {
+			return new AbstractModule() {
+				@Override
+				protected void configure() {
+					bind(SomeNamedDepWithType1.class).annotatedWith(Names.named("sameNameDifferentType"))
+							.to(SomeNamedDepWithType1.class);
+					bind(SomeNamedDepWithType2.class).annotatedWith(Names.named("sameNameDifferentType"))
+							.to(SomeNamedDepWithType2.class);
+				}
 
-	@Bean
-	public Module module() {
-		return new AbstractModule() {
-			@Override
-			protected void configure() {
-				bind(SomeNamedDepWithType1.class).annotatedWith(Names.named("sameNameDifferentType"))
-						.to(SomeNamedDepWithType1.class);
-				bind(SomeNamedDepWithType2.class).annotatedWith(Names.named("sameNameDifferentType"))
-						.to(SomeNamedDepWithType2.class);
-			}
+				@Provides
+				@Named("sameJavaxName")
+				SomeJavaxNamedDepWithType1 someJavaxNamedDepWithType1() {
+					return new SomeJavaxNamedDepWithType1();
+				}
 
-			@Provides
-			@Named("sameJavaxName")
-			public SomeJavaxNamedDepWithType1 someJavaxNamedDepWithType1() {
-				return new SomeJavaxNamedDepWithType1();
-			}
+				@Provides
+				@Named("sameJavaxName")
+				SomeJavaxNamedDepWithType2 someJavaxNamedDepWithType2() {
+					return new SomeJavaxNamedDepWithType2();
+				}
+			};
+		}
 
-			@Provides
-			@Named("sameJavaxName")
-			public SomeJavaxNamedDepWithType2 someJavaxNamedDepWithType2() {
-				return new SomeJavaxNamedDepWithType2();
-			}
-		};
 	}
 
 }

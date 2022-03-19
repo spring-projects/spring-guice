@@ -1,24 +1,36 @@
+/*
+ * Copyright 2019-2022 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.springframework.guice;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-
-import org.junit.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.guice.ScopingTests.CustomScope;
-import org.springframework.guice.ScopingTests.SomeCustomScopeDependency;
-import org.springframework.guice.ScopingTests.SomeNoScopeDependency;
-import org.springframework.guice.ScopingTests.SomeSingletonDependency;
-import org.springframework.guice.annotation.EnableGuiceModules;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Scope;
+import org.junit.Test;
+
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.guice.annotation.EnableGuiceModules;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class ScopingTests {
 
@@ -76,30 +88,30 @@ public class ScopingTests {
 
 	}
 
-}
+	@EnableGuiceModules
+	@Configuration
+	static class ScopingTestsConfig {
 
-@EnableGuiceModules
-@Configuration
-class ScopingTestsConfig {
+		@Bean
+		Module module() {
+			return new AbstractModule() {
+				@Override
+				protected void configure() {
+					CustomScope customScope = new CustomScope() {
+						@SuppressWarnings("unchecked")
+						@Override
+						public <T> Provider<T> scope(Key<T> key, Provider<T> unscoped) {
+							Provider<?> provider = () -> new SomeCustomScopeDependency("custom");
+							return (Provider<T>) provider;
+						}
+					};
+					bind(SomeSingletonDependency.class).asEagerSingleton();
+					bind(SomeNoScopeDependency.class);
+					bind(SomeCustomScopeDependency.class).in(customScope);
+				}
+			};
+		}
 
-	@Bean
-	public Module module() {
-		return new AbstractModule() {
-			@Override
-			protected void configure() {
-				CustomScope customScope = new CustomScope() {
-					@SuppressWarnings("unchecked")
-					@Override
-					public <T> Provider<T> scope(Key<T> key, Provider<T> unscoped) {
-						Provider<?> provider = () -> new SomeCustomScopeDependency("custom");
-						return (Provider<T>) provider;
-					}
-				};
-				bind(SomeSingletonDependency.class).asEagerSingleton();
-				bind(SomeNoScopeDependency.class);
-				bind(SomeCustomScopeDependency.class).in(customScope);
-			}
-		};
 	}
 
 }

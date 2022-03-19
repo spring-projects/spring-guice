@@ -54,6 +54,7 @@ import org.springframework.core.OrderComparator;
  * @author Dave Syer
  *
  */
+@SuppressWarnings("checkstyle:FinalClass")
 public class BeanFactoryProvider implements Provider<ConfigurableListableBeanFactory>, Closeable {
 
 	private Class<?>[] config;
@@ -112,16 +113,16 @@ public class BeanFactoryProvider implements Provider<ConfigurableListableBeanFac
 			synchronized (this) {
 				if (this.context == null) {
 					PartiallyRefreshableApplicationContext context = new PartiallyRefreshableApplicationContext();
-					if (config != null && config.length > 0) {
-						context.register(config);
+					if (this.config != null && this.config.length > 0) {
+						context.register(this.config);
 					}
-					if (basePackages != null && basePackages.length > 0) {
-						context.scan(basePackages);
+					if (this.basePackages != null && this.basePackages.length > 0) {
+						context.scan(this.basePackages);
 					}
 					context.partialRefresh();
-					if (initializers != null && !initializers.isEmpty()) {
-						OrderComparator.sort(initializers);
-						for (ApplicationContextInitializer<ConfigurableApplicationContext> initializer : initializers) {
+					if (this.initializers != null && !this.initializers.isEmpty()) {
+						OrderComparator.sort(this.initializers);
+						for (ApplicationContextInitializer<ConfigurableApplicationContext> initializer : this.initializers) {
 							initializer.initialize(context);
 						}
 					}
@@ -129,7 +130,7 @@ public class BeanFactoryProvider implements Provider<ConfigurableListableBeanFac
 				}
 			}
 		}
-		return context.getBeanFactory();
+		return this.context.getBeanFactory();
 	}
 
 	private static final class PartiallyRefreshableApplicationContext extends AnnotationConfigApplicationContext {
@@ -157,7 +158,7 @@ public class BeanFactoryProvider implements Provider<ConfigurableListableBeanFac
 
 		@Override
 		protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory) {
-			if (partiallyRefreshed.compareAndSet(false, true)) {
+			if (this.partiallyRefreshed.compareAndSet(false, true)) {
 				super.invokeBeanFactoryPostProcessors(beanFactory);
 			}
 		}
@@ -176,8 +177,8 @@ public class BeanFactoryProvider implements Provider<ConfigurableListableBeanFac
 
 		@Override
 		public <T> void onProvision(ProvisionInvocation<T> provision) {
-			if (!initialized.getAndSet(true) && !context.isActive()) {
-				context.delayedRefresh();
+			if (!this.initialized.getAndSet(true) && !this.context.isActive()) {
+				this.context.delayedRefresh();
 			}
 			provision.provision();
 		}

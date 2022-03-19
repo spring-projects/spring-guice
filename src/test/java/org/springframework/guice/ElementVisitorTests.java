@@ -1,3 +1,19 @@
+/*
+ * Copyright 2018-2022 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.springframework.guice;
 
 import java.util.List;
@@ -11,7 +27,6 @@ import com.google.inject.Module;
 import com.google.inject.Stage;
 import com.google.inject.spi.Element;
 import com.google.inject.spi.Elements;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -19,9 +34,6 @@ import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.guice.ElementVisitorTests.DuplicateBean;
-import org.springframework.guice.ElementVisitorTests.ElementVisitorTestGuiceBean;
-import org.springframework.guice.ElementVisitorTests.ElementVisitorTestSpringBean;
 import org.springframework.guice.annotation.EnableGuiceModules;
 import org.springframework.guice.annotation.InjectorFactory;
 
@@ -69,7 +81,7 @@ public class ElementVisitorTests {
 
 		@Override
 		public String toString() {
-			return springBean.toString();
+			return this.springBean.toString();
 		}
 
 	}
@@ -78,52 +90,52 @@ public class ElementVisitorTests {
 
 	}
 
-}
+	@EnableGuiceModules
+	@Configuration
+	static class ElementVisitorTestConfig {
 
-@EnableGuiceModules
-@Configuration
-class ElementVisitorTestConfig {
+		@Bean
+		ElementVisitorTestSpringBean testBean() {
+			return new ElementVisitorTestSpringBean() {
+				@Override
+				public String toString() {
+					return "spring created";
+				}
+			};
+		}
 
-	@Bean
-	public ElementVisitorTestSpringBean testBean() {
-		return new ElementVisitorTestSpringBean() {
-			@Override
-			public String toString() {
-				return "spring created";
-			}
-		};
-	}
+		@Bean
+		Module module() {
+			return new AbstractModule() {
+				@Override
+				protected void configure() {
+					binder().requireExplicitBindings();
+					bind(ElementVisitorTestGuiceBean.class).asEagerSingleton();
+				}
+			};
+		}
 
-	@Bean
-	public Module module() {
-		return new AbstractModule() {
-			@Override
-			protected void configure() {
-				binder().requireExplicitBindings();
-				bind(ElementVisitorTestGuiceBean.class).asEagerSingleton();
-			}
-		};
-	}
+		@Bean
+		InjectorFactory injectorFactory() {
+			return new InjectorFactory() {
+				@Override
+				public Injector createInjector(List<Module> modules) {
+					List<Element> elements = Elements.getElements(Stage.TOOL, modules);
+					return Guice.createInjector(Stage.PRODUCTION, Elements.getModule(elements));
+				}
+			};
+		}
 
-	@Bean
-	public InjectorFactory injectorFactory() {
-		return new InjectorFactory() {
-			@Override
-			public Injector createInjector(List<Module> modules) {
-				List<Element> elements = Elements.getElements(Stage.TOOL, modules);
-				return Guice.createInjector(Stage.PRODUCTION, Elements.getModule(elements));
-			}
-		};
-	}
+		@Bean
+		DuplicateBean dupeBean1() {
+			return new DuplicateBean();
+		}
 
-	@Bean
-	public DuplicateBean dupeBean1() {
-		return new DuplicateBean();
-	}
+		@Bean
+		DuplicateBean dupeBean2() {
+			return new DuplicateBean();
+		}
 
-	@Bean
-	public DuplicateBean dupeBean2() {
-		return new DuplicateBean();
 	}
 
 }

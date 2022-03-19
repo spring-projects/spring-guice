@@ -59,45 +59,45 @@ public class GuiceModuleMetadata implements BindingTypeMatcher {
 	private Set<Class<?>> infrastructureTypes = new HashSet<Class<?>>();
 
 	{
-		infrastructureTypes.add(InitializingBean.class);
-		infrastructureTypes.add(DisposableBean.class);
+		this.infrastructureTypes.add(InitializingBean.class);
+		this.infrastructureTypes.add(DisposableBean.class);
 	}
 
 	private MetadataReaderFactory metadataReaderFactory = new CachingMetadataReaderFactory();
 
 	public GuiceModuleMetadata include(String... filters) {
-		includeNames = filters;
+		this.includeNames = filters;
 		return this;
 	}
 
 	public GuiceModuleMetadata exclude(String... filters) {
-		excludeNames = filters;
+		this.excludeNames = filters;
 		return this;
 	}
 
 	public GuiceModuleMetadata include(Pattern... filters) {
-		includePatterns = filters;
+		this.includePatterns = filters;
 		return this;
 	}
 
 	public GuiceModuleMetadata exclude(Pattern... filters) {
-		excludePatterns = filters;
+		this.excludePatterns = filters;
 		return this;
 	}
 
 	public GuiceModuleMetadata include(TypeFilter... filters) {
-		includeFilters = filters;
+		this.includeFilters = filters;
 		return this;
 	}
 
 	public GuiceModuleMetadata exclude(TypeFilter... filters) {
-		excludeFilters = filters;
+		this.excludeFilters = filters;
 		return this;
 	}
 
 	@Override
 	public boolean matches(String name, Type type) {
-		Type rawType = type instanceof ParameterizedType ? ((ParameterizedType) type).getRawType() : type;
+		Type rawType = (type instanceof ParameterizedType) ? ((ParameterizedType) type).getRawType() : type;
 		if (!matches(name) || !matches(rawType)) {
 			return false;
 		}
@@ -105,27 +105,27 @@ public class GuiceModuleMetadata implements BindingTypeMatcher {
 	}
 
 	private boolean matches(String name) {
-		if (includePatterns != null) {
-			for (Pattern filter : includePatterns) {
+		if (this.includePatterns != null) {
+			for (Pattern filter : this.includePatterns) {
 				if (!filter.matcher(name).matches()) {
 					return false;
 				}
 			}
 		}
-		if (excludePatterns != null) {
-			for (Pattern filter : excludePatterns) {
+		if (this.excludePatterns != null) {
+			for (Pattern filter : this.excludePatterns) {
 				if (filter.matcher(name).matches()) {
 					return false;
 				}
 			}
 		}
-		if (includeNames != null && includeNames.length > 0) {
-			if (!PatternMatchUtils.simpleMatch(includeNames, name)) {
+		if (this.includeNames != null && this.includeNames.length > 0) {
+			if (!PatternMatchUtils.simpleMatch(this.includeNames, name)) {
 				return false;
 			}
 		}
-		if (excludeNames != null && excludeNames.length > 0) {
-			if (PatternMatchUtils.simpleMatch(excludeNames, name)) {
+		if (this.excludeNames != null && this.excludeNames.length > 0) {
+			if (PatternMatchUtils.simpleMatch(this.excludeNames, name)) {
 				return false;
 			}
 		}
@@ -133,7 +133,7 @@ public class GuiceModuleMetadata implements BindingTypeMatcher {
 	}
 
 	private boolean matches(Type type) {
-		if (infrastructureTypes.contains(type)) {
+		if (this.infrastructureTypes.contains(type)) {
 			return false;
 		}
 
@@ -141,30 +141,30 @@ public class GuiceModuleMetadata implements BindingTypeMatcher {
 			return false;
 		}
 
-		if (includeFilters != null) {
+		if (this.includeFilters != null) {
 			try {
-				MetadataReader reader = metadataReaderFactory.getMetadataReader(type.getTypeName());
-				for (TypeFilter filter : includeFilters) {
-					if (!filter.match(reader, metadataReaderFactory)) {
+				MetadataReader reader = this.metadataReaderFactory.getMetadataReader(type.getTypeName());
+				for (TypeFilter filter : this.includeFilters) {
+					if (!filter.match(reader, this.metadataReaderFactory)) {
 						return false;
 					}
 				}
 			}
-			catch (IOException e) {
-				throw new IllegalStateException("Cannot read metadata for class " + type, e);
+			catch (IOException ex) {
+				throw new IllegalStateException("Cannot read metadata for class " + type, ex);
 			}
 		}
-		if (excludeFilters != null) {
+		if (this.excludeFilters != null) {
 			try {
-				MetadataReader reader = metadataReaderFactory.getMetadataReader(type.getTypeName());
-				for (TypeFilter filter : excludeFilters) {
-					if (filter.match(reader, metadataReaderFactory)) {
+				MetadataReader reader = this.metadataReaderFactory.getMetadataReader(type.getTypeName());
+				for (TypeFilter filter : this.excludeFilters) {
+					if (filter.match(reader, this.metadataReaderFactory)) {
 						return false;
 					}
 				}
 			}
-			catch (IOException e) {
-				throw new IllegalStateException("Cannot read metadata for class " + type, e);
+			catch (IOException ex) {
+				throw new IllegalStateException("Cannot read metadata for class " + type, ex);
 			}
 		}
 		return true;

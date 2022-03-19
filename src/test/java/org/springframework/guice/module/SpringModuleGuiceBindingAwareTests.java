@@ -1,15 +1,19 @@
 /*
  * Copyright 2016-2017 the original author or authors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * https://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package org.springframework.guice.module;
 
 import javax.inject.Inject;
@@ -19,7 +23,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import com.google.inject.util.Providers;
-
 import org.junit.Test;
 
 import org.springframework.context.ApplicationEvent;
@@ -79,12 +82,12 @@ public class SpringModuleGuiceBindingAwareTests {
 	static class GuiceProjectWithSpringLibraryTestSpringConfig {
 
 		@Bean
-		public ISpringBean springDefinedSomething(IGuiceDependency1 dependency) {
+		ISpringBean springDefinedSomething(IGuiceDependency1 dependency) {
 			return new SpringBean(dependency);
 		}
 
 		@Bean
-		public ApplicationListener<ApplicationEvent> eventListener(final IGuiceDependency1 dependency) {
+		ApplicationListener<ApplicationEvent> eventListener(final IGuiceDependency1 dependency) {
 			return new ApplicationListener<ApplicationEvent>() {
 				@Override
 				public void onApplicationEvent(ApplicationEvent event) {
@@ -95,17 +98,17 @@ public class SpringModuleGuiceBindingAwareTests {
 
 	}
 
-	static interface IGuiceDependency1 {
+	interface IGuiceDependency1 {
 
 		String doWork();
 
 	}
 
-	static interface IGuiceDependency2 {
+	interface IGuiceDependency2 {
 
 	}
 
-	static interface IGuiceDependency3 {
+	interface IGuiceDependency3 {
 
 	}
 
@@ -118,7 +121,7 @@ public class SpringModuleGuiceBindingAwareTests {
 
 	}
 
-	static interface ISpringBean {
+	interface ISpringBean {
 
 		IGuiceDependency1 getDep1();
 
@@ -139,23 +142,23 @@ public class SpringModuleGuiceBindingAwareTests {
 		private IGuiceDependency3 dep3;
 
 		@Inject
-		public SpringBean(IGuiceDependency1 dependency) {
+		SpringBean(IGuiceDependency1 dependency) {
 			this.dep1 = dependency;
 		}
 
 		@Override
 		public IGuiceDependency1 getDep1() {
-			return dep1;
+			return this.dep1;
 		}
 
 		@Override
 		public IGuiceDependency2 getDep2() {
-			return dep2;
+			return this.dep2;
 		}
 
 		@Override
 		public IGuiceDependency3 getDep3() {
-			return dep3;
+			return this.dep3;
 		}
 
 	}
