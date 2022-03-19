@@ -34,13 +34,17 @@ public class GuiceWiringTests extends AbstractCompleteWiringTests {
 	}
 
 	public static class TestConfig extends AbstractModule {
+
 		@Override
 		protected void configure() {
 			bind(Service.class).to(MyService.class);
 			bind(Baz.class).in(Singleton.class);
 			bind(Thang.class).annotatedWith(Names.named("thing")).to(Thang.class);
-			bind(new TypeLiteral<Parameterized<String>>(){}).toInstance(new Parameterized<String>(){});
+			bind(new TypeLiteral<Parameterized<String>>() {
+			}).toInstance(new Parameterized<String>() {
+			});
 		}
+
 	}
 
 }

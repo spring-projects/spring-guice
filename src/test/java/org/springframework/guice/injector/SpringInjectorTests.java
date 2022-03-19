@@ -31,17 +31,17 @@ import com.google.inject.Key;
 import com.google.inject.name.Names;
 
 public class SpringInjectorTests {
-	
+
 	@Rule
 	public ExpectedException expected = ExpectedException.none();
 
 	private SpringInjector injector = new SpringInjector(create());
 
 	private AnnotationConfigApplicationContext context;
-	
+
 	@After
 	public void close() {
-		if (context!=null) {
+		if (context != null) {
 			context.close();
 		}
 	}
@@ -87,16 +87,22 @@ public class SpringInjectorTests {
 
 	@Configuration
 	public static class Additional {
+
 		@Bean
 		public Service another() {
 			return new MyService();
 		}
+
 	}
+
 	@Configuration
 	public static class TestConfig {
+
 		@Bean
 		public Service service() {
 			return new MyService();
 		}
+
 	}
+
 }

@@ -26,14 +26,17 @@ public class SimpleWiringTests {
 	@Test
 	public void springyFoo() {
 		@SuppressWarnings("resource")
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(TestConfig.class, MyService.class);
-		context.getDefaultListableBeanFactory().registerBeanDefinition(Foo.class.getSimpleName(), new RootBeanDefinition(Foo.class));
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(TestConfig.class,
+				MyService.class);
+		context.getDefaultListableBeanFactory().registerBeanDefinition(Foo.class.getSimpleName(),
+				new RootBeanDefinition(Foo.class));
 		assertNotNull(context.getBean(Foo.class));
 	}
 
 	@Test
 	public void hybridFoo() {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(TestConfig.class, ModulesConfig.class);
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(TestConfig.class,
+				ModulesConfig.class);
 		Injector app = new SpringInjector(context);
 		assertNotNull(app.getInstance(Foo.class));
 	}
@@ -41,23 +44,28 @@ public class SimpleWiringTests {
 	@Configuration
 	@EnableGuiceModules
 	static class ModulesConfig {
+
 	}
 
 	public static class TestConfig extends AbstractModule {
+
 		@Override
 		protected void configure() {
 			bind(Service.class).to(MyService.class);
 		}
+
 	}
-	
-	interface Service {	
+
+	interface Service {
+
 	}
-	
+
 	public static class MyService implements Service {
+
 	}
 
 	public static class Foo {
-		
+
 		@Inject
 		public Foo(Service service) {
 		}

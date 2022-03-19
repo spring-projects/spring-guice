@@ -50,21 +50,22 @@ import org.springframework.core.OrderComparator;
  * register an {@link ApplicationContextInitializer} that sets a shutdown hook, so that
  * the context is closed automatically when the JVM ends.
  * </p>
- * 
+ *
  * @author Dave Syer
  *
  */
-public class BeanFactoryProvider
-		implements Provider<ConfigurableListableBeanFactory>, Closeable {
+public class BeanFactoryProvider implements Provider<ConfigurableListableBeanFactory>, Closeable {
 
 	private Class<?>[] config;
+
 	private String[] basePackages;
+
 	private List<ApplicationContextInitializer<ConfigurableApplicationContext>> initializers = new ArrayList<ApplicationContextInitializer<ConfigurableApplicationContext>>();
+
 	private PartiallyRefreshableApplicationContext context;
 
 	/**
 	 * Create an application context by scanning these base packages.
-	 * 
 	 * @param basePackages base packages to scan
 	 * @return a provider
 	 */
@@ -74,7 +75,6 @@ public class BeanFactoryProvider
 
 	/**
 	 * Create an application context using these configuration classes.
-	 * 
 	 * @param config classes to build an application
 	 * @return a provider
 	 */
@@ -132,8 +132,7 @@ public class BeanFactoryProvider
 		return context.getBeanFactory();
 	}
 
-	private static final class PartiallyRefreshableApplicationContext
-			extends AnnotationConfigApplicationContext {
+	private static final class PartiallyRefreshableApplicationContext extends AnnotationConfigApplicationContext {
 
 		private final AtomicBoolean partiallyRefreshed = new AtomicBoolean(false);
 
@@ -143,8 +142,7 @@ public class BeanFactoryProvider
 		 */
 		private void partialRefresh() {
 			ConfigurableListableBeanFactory beanFactory = getBeanFactory();
-			beanFactory.registerSingleton("refreshListener",
-					new ContextRefreshingProvisionListener(this));
+			beanFactory.registerSingleton("refreshListener", new ContextRefreshingProvisionListener(this));
 			prepareBeanFactory(beanFactory);
 			invokeBeanFactoryPostProcessors(beanFactory);
 		}
@@ -158,21 +156,21 @@ public class BeanFactoryProvider
 		}
 
 		@Override
-		protected void invokeBeanFactoryPostProcessors(
-				ConfigurableListableBeanFactory beanFactory) {
+		protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory) {
 			if (partiallyRefreshed.compareAndSet(false, true)) {
 				super.invokeBeanFactoryPostProcessors(beanFactory);
 			}
 		}
+
 	}
 
-	private static final class ContextRefreshingProvisionListener
-			implements ProvisionListener {
+	private static final class ContextRefreshingProvisionListener implements ProvisionListener {
+
 		private final PartiallyRefreshableApplicationContext context;
+
 		private final AtomicBoolean initialized = new AtomicBoolean(false);
 
-		private ContextRefreshingProvisionListener(
-				PartiallyRefreshableApplicationContext context) {
+		private ContextRefreshingProvisionListener(PartiallyRefreshableApplicationContext context) {
 			this.context = context;
 		}
 
@@ -183,6 +181,7 @@ public class BeanFactoryProvider
 			}
 			provision.provision();
 		}
+
 	}
 
 }

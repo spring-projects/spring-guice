@@ -43,36 +43,32 @@ public class EnableGuiceModulesTests {
 	public void cleanUp() {
 		System.clearProperty("spring.guice.dedup");
 	}
-	
+
 	@Test
 	public void test() {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-				TestConfig.class);
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(TestConfig.class);
 		assertNotNull(context.getBean(Foo.class));
 		context.close();
 	}
-	
+
 	@Test
 	public void testWithDedupFeatureEnabled() {
 		System.setProperty("spring.guice.dedup", "true");
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-				TestConfig.class);
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(TestConfig.class);
 		assertNotNull(context.getBean(Foo.class));
 		context.close();
 	}
 
 	@Test
 	public void module() {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-				ModuleConfig.class);
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ModuleConfig.class);
 		assertNotNull(context.getBean(Foo.class));
 		context.close();
 	}
 
 	@Test
 	public void moduleBean() {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-				ModuleBeanConfig.class);
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ModuleBeanConfig.class);
 		assertNotNull(context.getBean(Foo.class));
 		context.close();
 	}
@@ -85,9 +81,11 @@ public class EnableGuiceModulesTests {
 	}
 
 	interface Service {
+
 	}
 
 	protected static class MyService implements Service {
+
 	}
 
 	public static class Foo {
@@ -96,6 +94,7 @@ public class EnableGuiceModulesTests {
 		public Foo(@Named("service") Service service) {
 			service.toString();
 		}
+
 	}
 
 	@Configuration
@@ -160,11 +159,14 @@ public class EnableGuiceModulesTests {
 	}
 
 	public static class SpringProvidedBean {
+
 		public SpringProvidedBean(GuiceProvidedBean guiceProvidedBean) {
 		}
+
 	}
 
 	public static class GuiceProvidedBean {
+
 	}
 
 	public static class GuiceService {
@@ -172,6 +174,7 @@ public class EnableGuiceModulesTests {
 		@Inject
 		public GuiceService(SpringProvidedBean springProvidedBean) {
 		}
+
 	}
 
 	public static class MyGuiceModule extends AbstractModule {

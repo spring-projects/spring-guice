@@ -44,11 +44,16 @@ public class NativeGuiceTests {
 	}
 
 	public static class TestConfig extends AbstractModule {
+
 		@Override
 		protected void configure() {
 			bind(Foo.class).annotatedWith(Names.named("bar")).to(Foo.class);
 		}
+
 	}
 
-	public static class Foo {}
+	public static class Foo {
+
+	}
+
 }

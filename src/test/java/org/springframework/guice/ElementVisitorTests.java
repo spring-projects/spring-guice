@@ -47,22 +47,23 @@ public class ElementVisitorTests {
 
 	@Test
 	public void verifySpringModuleDoesNotBreakWhenUsingElementVisitors() {
-		ElementVisitorTestSpringBean testSpringBean = context
-				.getBean(ElementVisitorTestSpringBean.class);
+		ElementVisitorTestSpringBean testSpringBean = context.getBean(ElementVisitorTestSpringBean.class);
 		assertEquals("spring created", testSpringBean.toString());
-		ElementVisitorTestGuiceBean testGuiceBean = context
-				.getBean(ElementVisitorTestGuiceBean.class);
+		ElementVisitorTestGuiceBean testGuiceBean = context.getBean(ElementVisitorTestGuiceBean.class);
 		assertEquals("spring created", testGuiceBean.toString());
 	}
 
 	public static class ElementVisitorTestSpringBean {
+
 		@Override
 		public String toString() {
 			return "default";
 		}
+
 	}
 
 	public static class ElementVisitorTestGuiceBean {
+
 		@Inject
 		ElementVisitorTestSpringBean springBean;
 
@@ -70,10 +71,13 @@ public class ElementVisitorTests {
 		public String toString() {
 			return springBean.toString();
 		}
+
 	}
 
 	public static class DuplicateBean {
+
 	}
+
 }
 
 @EnableGuiceModules
@@ -107,8 +111,7 @@ class ElementVisitorTestConfig {
 			@Override
 			public Injector createInjector(List<Module> modules) {
 				List<Element> elements = Elements.getElements(Stage.TOOL, modules);
-				return Guice.createInjector(Stage.PRODUCTION,
-						Elements.getModule(elements));
+				return Guice.createInjector(Stage.PRODUCTION, Elements.getModule(elements));
 			}
 		};
 	}
@@ -122,4 +125,5 @@ class ElementVisitorTestConfig {
 	public DuplicateBean dupeBean2() {
 		return new DuplicateBean();
 	}
+
 }

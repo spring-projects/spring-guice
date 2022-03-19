@@ -38,7 +38,7 @@ import org.springframework.util.PatternMatchUtils;
  * Encapsulates some metadata about a Guice module that is to be created from a Spring
  * application context. Can be used directly as a <code>@Bean</code>, but it is easier to
  * just add <code>@</code> {@link GuiceModule} to your <code>@Configuration</code>.
- * 
+ *
  * @author Dave Syer
  *
  */
@@ -97,7 +97,7 @@ public class GuiceModuleMetadata implements BindingTypeMatcher {
 
 	@Override
 	public boolean matches(String name, Type type) {
-		Type rawType = type instanceof ParameterizedType ? ((ParameterizedType)type).getRawType() : type;
+		Type rawType = type instanceof ParameterizedType ? ((ParameterizedType) type).getRawType() : type;
 		if (!matches(name) || !matches(rawType)) {
 			return false;
 		}
@@ -143,30 +143,28 @@ public class GuiceModuleMetadata implements BindingTypeMatcher {
 
 		if (includeFilters != null) {
 			try {
-				MetadataReader reader = metadataReaderFactory.getMetadataReader(type
-						.getTypeName());
+				MetadataReader reader = metadataReaderFactory.getMetadataReader(type.getTypeName());
 				for (TypeFilter filter : includeFilters) {
 					if (!filter.match(reader, metadataReaderFactory)) {
 						return false;
 					}
 				}
-			} catch (IOException e) {
-				throw new IllegalStateException("Cannot read metadata for class " + type,
-						e);
+			}
+			catch (IOException e) {
+				throw new IllegalStateException("Cannot read metadata for class " + type, e);
 			}
 		}
 		if (excludeFilters != null) {
 			try {
-				MetadataReader reader = metadataReaderFactory.getMetadataReader(type
-						.getTypeName());
+				MetadataReader reader = metadataReaderFactory.getMetadataReader(type.getTypeName());
 				for (TypeFilter filter : excludeFilters) {
 					if (filter.match(reader, metadataReaderFactory)) {
 						return false;
 					}
 				}
-			} catch (IOException e) {
-				throw new IllegalStateException("Cannot read metadata for class " + type,
-						e);
+			}
+			catch (IOException e) {
+				throw new IllegalStateException("Cannot read metadata for class " + type, e);
 			}
 		}
 		return true;
@@ -175,8 +173,7 @@ public class GuiceModuleMetadata implements BindingTypeMatcher {
 	private boolean visible(Type type) {
 		Class<?> cls = ResolvableType.forType(type).resolve();
 		while (cls != null && cls != Object.class) {
-			if (!Modifier.isInterface(cls.getModifiers())
-					&& !Modifier.isPublic(cls.getModifiers())
+			if (!Modifier.isInterface(cls.getModifiers()) && !Modifier.isPublic(cls.getModifiers())
 					&& !Modifier.isProtected(cls.getModifiers())) {
 				return false;
 			}

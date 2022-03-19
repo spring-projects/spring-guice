@@ -37,8 +37,7 @@ public class SpringModuleGuiceBindingAwareTests {
 	@Test
 	public void testAllDependenciesInjectedAndLifeycleMethodsCalledOnce() {
 		Injector injector = Guice.createInjector(new SimpleGuiceModule(),
-				new SpringModule(BeanFactoryProvider
-						.from(GuiceProjectWithSpringLibraryTestSpringConfig.class)));
+				new SpringModule(BeanFactoryProvider.from(GuiceProjectWithSpringLibraryTestSpringConfig.class)));
 
 		// check guice provided bindings
 		assertNotNull(injector.getInstance(GuiceDependency1.class));
@@ -55,12 +54,9 @@ public class SpringModuleGuiceBindingAwareTests {
 		assertEquals("done", springBean.getDep1().doWork());
 
 		// check binding equality
-		assertSame(injector.getInstance(IGuiceDependency1.class),
-				AopTestUtils.getTargetObject(springBean.getDep1()));
-		assertSame(injector.getInstance(IGuiceDependency2.class),
-				AopTestUtils.getTargetObject(springBean.getDep2()));
-		assertSame(injector.getInstance(IGuiceDependency3.class),
-				AopTestUtils.getTargetObject(springBean.getDep3()));
+		assertSame(injector.getInstance(IGuiceDependency1.class), AopTestUtils.getTargetObject(springBean.getDep1()));
+		assertSame(injector.getInstance(IGuiceDependency2.class), AopTestUtils.getTargetObject(springBean.getDep2()));
+		assertSame(injector.getInstance(IGuiceDependency3.class), AopTestUtils.getTargetObject(springBean.getDep3()));
 	}
 
 	static class SimpleGuiceModule extends AbstractModule {
@@ -73,10 +69,10 @@ public class SpringModuleGuiceBindingAwareTests {
 			bind(IGuiceDependency2.class).toInstance(new IGuiceDependency2() {
 			});
 			// test provider binding
-			bind(IGuiceDependency3.class)
-					.toProvider(Providers.of(new IGuiceDependency3() {
-					}));
+			bind(IGuiceDependency3.class).toProvider(Providers.of(new IGuiceDependency3() {
+			}));
 		}
+
 	}
 
 	@Configuration
@@ -88,8 +84,7 @@ public class SpringModuleGuiceBindingAwareTests {
 		}
 
 		@Bean
-		public ApplicationListener<ApplicationEvent> eventListener(
-				final IGuiceDependency1 dependency) {
+		public ApplicationListener<ApplicationEvent> eventListener(final IGuiceDependency1 dependency) {
 			return new ApplicationListener<ApplicationEvent>() {
 				@Override
 				public void onApplicationEvent(ApplicationEvent event) {
@@ -97,38 +92,49 @@ public class SpringModuleGuiceBindingAwareTests {
 				}
 			};
 		}
+
 	}
 
 	static interface IGuiceDependency1 {
+
 		String doWork();
+
 	}
 
 	static interface IGuiceDependency2 {
+
 	}
 
 	static interface IGuiceDependency3 {
+
 	}
 
 	static class GuiceDependency1 implements IGuiceDependency1 {
+
 		@Override
 		public String doWork() {
 			return "done";
 		}
+
 	}
 
 	static interface ISpringBean {
+
 		IGuiceDependency1 getDep1();
 
 		IGuiceDependency2 getDep2();
 
 		IGuiceDependency3 getDep3();
+
 	}
 
 	static class SpringBean implements ISpringBean {
 
 		private final IGuiceDependency1 dep1;
+
 		@Inject
 		private IGuiceDependency2 dep2;
+
 		@Inject
 		private IGuiceDependency3 dep3;
 
@@ -151,6 +157,7 @@ public class SpringModuleGuiceBindingAwareTests {
 		public IGuiceDependency3 getDep3() {
 			return dep3;
 		}
+
 	}
 
 }

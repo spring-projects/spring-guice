@@ -37,16 +37,17 @@ import com.google.inject.name.Named;
 import com.google.inject.spi.TypeConverterBinding;
 
 /**
- * An {@link Injector} that wraps an {@link ApplicationContext}, and can be used
- * to expose the Guice APIs over a Spring application. Does not use Guice at all
- * internally: just adapts the Spring API to the Guice one.
- * 
+ * An {@link Injector} that wraps an {@link ApplicationContext}, and can be used to expose
+ * the Guice APIs over a Spring application. Does not use Guice at all internally: just
+ * adapts the Spring API to the Guice one.
+ *
  * @author Dave Syer
  *
  */
 public class SpringInjector implements Injector {
 
 	private Injector injector;
+
 	private DefaultListableBeanFactory beanFactory;
 
 	public SpringInjector(ApplicationContext context) {
@@ -134,8 +135,9 @@ public class SpringInjector implements Injector {
 			@SuppressWarnings("unchecked")
 			@Override
 			public T get() {
-				if(key.getAnnotation() != null) {
-					return (T) BeanFactoryAnnotationUtils.qualifiedBeanOfType(SpringInjector.this.beanFactory, type, name);
+				if (key.getAnnotation() != null) {
+					return (T) BeanFactoryAnnotationUtils.qualifiedBeanOfType(SpringInjector.this.beanFactory, type,
+							name);
 				}
 				return SpringInjector.this.beanFactory.getBean(cls);
 			}
@@ -146,7 +148,8 @@ public class SpringInjector implements Injector {
 		final Annotation annotation = key.getAnnotation();
 		if (annotation instanceof Named) {
 			return ((Named) annotation).value();
-		} else if (annotation instanceof javax.inject.Named) {
+		}
+		else if (annotation instanceof javax.inject.Named) {
 			return ((javax.inject.Named) annotation).value();
 		}
 		return key.getTypeLiteral().getRawType().getSimpleName();

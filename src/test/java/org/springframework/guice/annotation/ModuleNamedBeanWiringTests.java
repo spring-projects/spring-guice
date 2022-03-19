@@ -56,7 +56,8 @@ public class ModuleNamedBeanWiringTests extends AbstractCompleteWiringTests {
 	@Configuration
 	public static class TestConfig extends AbstractModule {
 
-		@Autowired Service service;
+		@Autowired
+		Service service;
 
 		@Override
 		protected void configure() {
@@ -86,16 +87,20 @@ public class ModuleNamedBeanWiringTests extends AbstractCompleteWiringTests {
 		public Baz baz(Service service) {
 			return new Baz(service);
 		}
-		
-        @Bean
-        public Parameterized<String> parameterizedBean() {
-            return new Parameterized<String>() {};
-        }
-}
+
+		@Bean
+		public Parameterized<String> parameterizedBean() {
+			return new Parameterized<String>() {
+			};
+		}
+
+	}
 
 	protected static class Spam {
+
 		public Spam(Service service) {
 		}
+
 	}
 
 }

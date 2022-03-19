@@ -22,37 +22,44 @@ import org.springframework.context.annotation.Configuration;
 
 public class GuiceModuleAnnotationGenericTypeTests {
 
-    public interface Foo<T> {
-        T getValue();
-    }
+	public interface Foo<T> {
 
-    public static class FooImpl<T> implements Foo<T> {
-        private final T payload;
+		T getValue();
 
-        FooImpl(T payload) {
-            this.payload = payload;
-        }
+	}
 
-        @Override
-        public T getValue() {
-            return payload;
-        }
-    }
+	public static class FooImpl<T> implements Foo<T> {
 
-    @Configuration
-    @EnableGuiceModules
-    @GuiceModule
-    static class TestConfig {
-        @Bean
-        public FooImpl<String> fooBean() {
-            return new FooImpl<String>("foo.foo.foo");
-        }
-    }
+		private final T payload;
 
-    @Test
-    public void testBinding() {
+		FooImpl(T payload) {
+			this.payload = payload;
+		}
+
+		@Override
+		public T getValue() {
+			return payload;
+		}
+
+	}
+
+	@Configuration
+	@EnableGuiceModules
+	@GuiceModule
+	static class TestConfig {
+
+		@Bean
+		public FooImpl<String> fooBean() {
+			return new FooImpl<String>("foo.foo.foo");
+		}
+
+	}
+
+	@Test
+	public void testBinding() {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(TestConfig.class);
 		assertNotNull(context.getBean(Foo.class));
 		context.close();
-    }
+	}
+
 }

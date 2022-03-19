@@ -82,7 +82,8 @@ public class GuiceModuleAnnotationTests {
 
 	@Test
 	public void twoIncludes() throws Exception {
-		Injector injector = createInjector(TestConfig.class, MetadataIncludesConfig.class, MetadataMoreIncludesConfig.class);
+		Injector injector = createInjector(TestConfig.class, MetadataIncludesConfig.class,
+				MetadataMoreIncludesConfig.class);
 		assertNotNull(injector.getBinding(Service.class));
 	}
 
@@ -92,9 +93,11 @@ public class GuiceModuleAnnotationTests {
 	}
 
 	interface Service {
+
 	}
 
 	protected static class MyService implements Service {
+
 	}
 
 	public static class Foo {
@@ -106,50 +109,60 @@ public class GuiceModuleAnnotationTests {
 	}
 
 	@Configuration
-	@GuiceModule(excludeFilters=@Filter(type=FilterType.REGEX, pattern=".*"))
+	@GuiceModule(excludeFilters = @Filter(type = FilterType.REGEX, pattern = ".*"))
 	protected static class MetadataExcludesConfig {
+
 	}
 
 	@Configuration
-	@GuiceModule(excludeNames="*")
+	@GuiceModule(excludeNames = "*")
 	protected static class MetadataExcludeNamesConfig {
+
 	}
 
 	@Configuration
-	@GuiceModule(excludePatterns=".*")
+	@GuiceModule(excludePatterns = ".*")
 	protected static class MetadataExcludePatternsConfig {
+
 	}
 
 	@Configuration
-	@GuiceModule(includeFilters=@Filter(type=FilterType.ASSIGNABLE_TYPE, value=Service.class))
+	@GuiceModule(includeFilters = @Filter(type = FilterType.ASSIGNABLE_TYPE, value = Service.class))
 	protected static class MetadataIncludesConfig {
+
 	}
-	
+
 	@Configuration
-	@GuiceModule(includeNames="*service") // Bean name filter
+	@GuiceModule(includeNames = "*service") // Bean name filter
 	protected static class MetadataIncludeNamesConfig {
+
 	}
-	
+
 	@Configuration
-	@GuiceModule(includePatterns=".*service") // Bean name filter
+	@GuiceModule(includePatterns = ".*service") // Bean name filter
 	protected static class MetadataIncludePatternsConfig {
+
 	}
-	
+
 	@Configuration
-	@GuiceModule(includeFilters=@Filter(type=FilterType.ASSIGNABLE_TYPE, value=Foo.class))
+	@GuiceModule(includeFilters = @Filter(type = FilterType.ASSIGNABLE_TYPE, value = Foo.class))
 	protected static class MetadataMoreIncludesConfig {
+
 	}
-	
+
 	@Configuration
 	public static class TestConfig {
+
 		@Bean
 		public Service service() {
 			return new MyService();
 		}
-		
+
 		@Bean
-		public Map<String,String> someParameterizedType() {
-			return new HashMap<String,String>();
+		public Map<String, String> someParameterizedType() {
+			return new HashMap<String, String>();
 		}
+
 	}
+
 }

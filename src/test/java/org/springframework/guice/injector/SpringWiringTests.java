@@ -36,22 +36,28 @@ public class SpringWiringTests extends AbstractCompleteWiringTests {
 
 	@Configuration
 	public static class TestConfig {
+
 		@Bean
 		public Service service() {
 			return new MyService();
 		}
+
 		@Bean
 		public Thang thing() {
 			return new Thang();
 		}
+
 		@Bean
 		public Thang other() {
 			return new Thang();
 		}
-        @Bean
-        public Parameterized<String> parameterizedBean() {
-            return new Parameterized<String>() {};
-        }
+
+		@Bean
+		public Parameterized<String> parameterizedBean() {
+			return new Parameterized<String>() {
+			};
+		}
+
 	}
 
 }
