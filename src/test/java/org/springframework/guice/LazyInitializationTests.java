@@ -26,8 +26,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class LazyInitializationTests {
 
@@ -40,8 +39,8 @@ public class LazyInitializationTests {
 
 		Service service = context.getBean(Service.class);
 
-		assertTrue(AopUtils.isAopProxy(service.getBean()));
-		assertNotNull(context.getBean(TestBean.class));
+		assertThat(AopUtils.isAopProxy(service.getBean())).isTrue();
+		assertThat(context.getBean(TestBean.class)).isNotNull();
 	}
 
 	@Test
@@ -53,8 +52,8 @@ public class LazyInitializationTests {
 
 		Service service = context.getBean(Service.class);
 
-		assertTrue(AopUtils.isAopProxy(service.getBean()));
-		assertNotNull(context.getBean(TestBean.class));
+		assertThat(AopUtils.isAopProxy(service.getBean())).isTrue();
+		assertThat(context.getBean(TestBean.class)).isNotNull();
 	}
 
 	@Configuration

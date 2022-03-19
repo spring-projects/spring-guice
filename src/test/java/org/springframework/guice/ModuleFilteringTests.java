@@ -30,8 +30,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 import org.springframework.guice.annotation.InjectorFactory;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 public class ModuleFilteringTests {
 
@@ -43,11 +43,11 @@ public class ModuleFilteringTests {
 	@Test
 	public void verifyAllIsWellWhenNoModulesFiltered() {
 		System.setProperty("spring.guice.modules.exclude", "FilterSomeNonExistentModule");
-		assertThrows(RuntimeException.class, () -> {
+		assertThatExceptionOfType(RuntimeException.class).isThrownBy(() -> {
 			AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
 					ModuleFilteringTestsConfig.class);
 			SomeInterface someDependency = context.getBean(SomeInterface.class);
-			assertNotNull(someDependency);
+			assertThat(someDependency).isNotNull();
 			context.close();
 		});
 	}
@@ -57,7 +57,8 @@ public class ModuleFilteringTests {
 		System.setProperty("spring.guice.modules.exclude", "FilterThisModule");
 		try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
 				ModuleFilteringTestsConfig.class)) {
-			assertThrows(NoSuchBeanDefinitionException.class, () -> context.getBean(SomeInterface.class));
+			assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
+					.isThrownBy(() -> context.getBean(SomeInterface.class));
 		}
 	}
 

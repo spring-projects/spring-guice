@@ -26,8 +26,7 @@ import com.google.inject.name.Names;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractCompleteWiringTests {
 
@@ -44,58 +43,58 @@ public abstract class AbstractCompleteWiringTests {
 	public void injectInstance() {
 		Bar bar = new Bar();
 		this.injector.injectMembers(bar);
-		assertNotNull(bar.service);
+		assertThat(bar.service).isNotNull();
 	}
 
 	@Test
 	public void memberInjector() {
 		Bar bar = new Bar();
 		this.injector.getMembersInjector(Bar.class).injectMembers(bar);
-		assertNotNull(bar.service);
+		assertThat(bar.service).isNotNull();
 	}
 
 	@Test
 	public void getInstanceUnbound() {
-		assertNotNull(this.injector.getInstance(Foo.class));
+		assertThat(this.injector.getInstance(Foo.class)).isNotNull();
 	}
 
 	@Test
 	public void getInstanceBound() {
-		assertNotNull(this.injector.getInstance(Service.class));
+		assertThat(this.injector.getInstance(Service.class)).isNotNull();
 	}
 
 	@Test
 	public void getInstanceBoundWithNoInterface() {
 		Baz instance = this.injector.getInstance(Baz.class);
-		assertNotNull(instance);
-		assertEquals(instance, this.injector.getInstance(Baz.class));
+		assertThat(instance).isNotNull();
+		assertThat(this.injector.getInstance(Baz.class)).isEqualTo(instance);
 	}
 
 	@Test
 	public void getProviderUnbound() {
-		assertNotNull(this.injector.getProvider(Foo.class).get());
+		assertThat(this.injector.getProvider(Foo.class).get()).isNotNull();
 	}
 
 	@Test
 	public void getProviderBound() {
-		assertNotNull(this.injector.getProvider(Service.class).get());
+		assertThat(this.injector.getProvider(Service.class).get()).isNotNull();
 	}
 
 	@Test
 	public void getNamedInstance() {
-		assertNotNull(this.injector.getInstance(Key.get(Thang.class, Names.named("thing"))));
+		assertThat(this.injector.getInstance(Key.get(Thang.class, Names.named("thing")))).isNotNull();
 	}
 
 	@Test
 	public void getNamedInjectedInstance() {
-		assertNotNull(this.injector.getInstance(Thing.class).thang);
+		assertThat(this.injector.getInstance(Thing.class).thang).isNotNull();
 	}
 
 	@Test
 	public void getParameterizedType() {
 		Parameterized<String> instance = this.injector.getInstance(Key.get(new TypeLiteral<Parameterized<String>>() {
 		}));
-		assertNotNull(instance);
+		assertThat(instance).isNotNull();
 	}
 
 	public interface Service {

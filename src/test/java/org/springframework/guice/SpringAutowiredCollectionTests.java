@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 import org.springframework.guice.injector.SpringInjector;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class SpringAutowiredCollectionTests {
 
@@ -41,8 +41,8 @@ public class SpringAutowiredCollectionTests {
 
 		ServicesHolder servicesHolder = injector.getInstance(ServicesHolder.class);
 
-		assertEquals(2, servicesHolder.existingServices.size());
-		assertEquals(0, servicesHolder.nonExistingServices.size());
+		assertThat(servicesHolder.existingServices).hasSize(2);
+		assertThat(servicesHolder.nonExistingServices).isEmpty();
 	}
 
 	@Configuration

@@ -29,8 +29,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class PrototypeScopedBeanTests {
 
@@ -40,9 +39,9 @@ public class PrototypeScopedBeanTests {
 		Injector injector = context.getBean(Injector.class);
 		GuiceService1 gs1 = injector.getInstance(GuiceService1.class);
 		GuiceService2 gs2 = injector.getInstance((GuiceService2.class));
-		assertNotNull(gs1);
-		assertNotNull(gs2);
-		assertNotEquals(gs1.bean, gs2.bean);
+		assertThat(gs1).isNotNull();
+		assertThat(gs2).isNotNull();
+		assertThat(gs2.bean).isNotEqualTo(gs1.bean);
 	}
 
 	@Configuration

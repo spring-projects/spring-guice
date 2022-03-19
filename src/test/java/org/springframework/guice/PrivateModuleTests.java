@@ -34,9 +34,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 public class PrivateModuleTests {
 
@@ -59,34 +58,35 @@ public class PrivateModuleTests {
 		Injector injector = context.getBean(Injector.class);
 		SomeInterface injectorProvidedPrivateBinding = injector
 				.getInstance(Key.get(SomeInterface.class, Names.named("exposed")));
-		assertNotNull(injectorProvidedPrivateBinding);
+		assertThat(injectorProvidedPrivateBinding).isNotNull();
 		SomeInterface springProvidedPrivateBinding = context.getBean(SomeInterface.class);
-		assertNotNull(springProvidedPrivateBinding);
+		assertThat(springProvidedPrivateBinding).isNotNull();
 		SomeInterface namedPrivateBinding = BeanFactoryAnnotationUtils.qualifiedBeanOfType(context.getBeanFactory(),
 				SomeInterface.class, "exposed");
-		assertNotNull(namedPrivateBinding);
-		assertEquals(injectorProvidedPrivateBinding, springProvidedPrivateBinding);
-		assertEquals(injectorProvidedPrivateBinding, namedPrivateBinding);
+		assertThat(namedPrivateBinding).isNotNull();
+		assertThat(springProvidedPrivateBinding).isEqualTo(injectorProvidedPrivateBinding);
+		assertThat(namedPrivateBinding).isEqualTo(injectorProvidedPrivateBinding);
 		String beanDependingOnPrivateBinding = context.getBean("somethingThatWantsAPrivateBinding", String.class);
-		assertNotNull(beanDependingOnPrivateBinding);
-		assertEquals("foo", beanDependingOnPrivateBinding);
+		assertThat(beanDependingOnPrivateBinding).isNotNull();
+		assertThat(beanDependingOnPrivateBinding).isEqualTo("foo");
 	}
 
 	@Test
 	public void verifyPrivateModulesPrivateBindingsAreNotExposedViaInjector() {
 		Injector injector = context.getBean(Injector.class);
-		assertThrows(ConfigurationException.class,
-				() -> injector.getInstance(Key.get(SomeInterface.class, Names.named("notexposed"))));
+		assertThatExceptionOfType(ConfigurationException.class)
+				.isThrownBy(() -> injector.getInstance(Key.get(SomeInterface.class, Names.named("notexposed"))));
 	}
 
 	@Test
 	public void verifyPrivateModulesPrivateBindingsAreNotExposedViaSpring() {
-		assertThrows(NoSuchBeanDefinitionException.class, () -> context.getBean("notexposed", SomeInterface.class));
+		assertThatExceptionOfType(NoSuchBeanDefinitionException.class)
+				.isThrownBy(() -> context.getBean("notexposed", SomeInterface.class));
 	}
 
 	@Test
 	public void verifyPrivateModulesPrivateBindingsAreNotExposedViaSpringWithQualifier() {
-		assertThrows(NoSuchBeanDefinitionException.class, () -> BeanFactoryAnnotationUtils
+		assertThatExceptionOfType(NoSuchBeanDefinitionException.class).isThrownBy(() -> BeanFactoryAnnotationUtils
 				.qualifiedBeanOfType(context.getBeanFactory(), SomeInterface.class, "notexposed"));
 	}
 

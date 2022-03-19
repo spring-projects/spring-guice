@@ -24,7 +24,6 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.ProvisionException;
 import com.google.inject.name.Names;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.cache.annotation.Cacheable;
@@ -35,8 +34,8 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 /**
  * @author Dave Syer
@@ -47,37 +46,40 @@ public class SpringModuleMetadataTests {
 	@Test
 	public void twoConfigClasses() throws Exception {
 		Injector injector = createInjector(TestConfig.class, OtherConfig.class);
-		assertNotNull(injector.getInstance(Service.class));
+		assertThat(injector.getInstance(Service.class)).isNotNull();
 	}
 
 	@Test
 	public void twoServices() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MoreConfig.class);
-		assertThrows(ProvisionException.class, () -> assertNotNull(injector.getInstance(Service.class)));
+		assertThatExceptionOfType(ProvisionException.class)
+				.isThrownBy(() -> assertThat(injector.getInstance(Service.class)).isNotNull());
 	}
 
 	@Test
 	public void twoServicesOnePrimary() throws Exception {
 		Injector injector = createInjector(TestConfig.class, PrimaryConfig.class);
-		assertNotNull(injector.getInstance(Service.class));
+		assertThat(injector.getInstance(Service.class)).isNotNull();
 	}
 
 	@Test
 	public void twoServicesByName() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MoreConfig.class);
-		assertNotNull(injector.getInstance(Key.get(Service.class, Names.named("service"))));
+		assertThat(injector.getInstance(Key.get(Service.class, Names.named("service")))).isNotNull();
 	}
 
 	@Test
 	public void includes() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MetadataIncludesConfig.class);
-		assertThrows(ConfigurationException.class, () -> Assertions.assertNull(injector.getBinding(Service.class)));
+		assertThatExceptionOfType(ConfigurationException.class)
+				.isThrownBy(() -> assertThat(injector.getBinding(Service.class)).isNull());
 	}
 
 	@Test
 	public void excludes() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MetadataExcludesConfig.class);
-		assertThrows(ConfigurationException.class, () -> Assertions.assertNull(injector.getBinding(Service.class)));
+		assertThatExceptionOfType(ConfigurationException.class)
+				.isThrownBy(() -> assertThat(injector.getBinding(Service.class)).isNull());
 	}
 
 	private Injector createInjector(Class<?>... config) {

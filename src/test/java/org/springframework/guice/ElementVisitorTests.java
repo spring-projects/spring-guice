@@ -37,7 +37,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 import org.springframework.guice.annotation.InjectorFactory;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ElementVisitorTests {
 
@@ -60,9 +60,9 @@ public class ElementVisitorTests {
 	@Test
 	public void verifySpringModuleDoesNotBreakWhenUsingElementVisitors() {
 		ElementVisitorTestSpringBean testSpringBean = context.getBean(ElementVisitorTestSpringBean.class);
-		assertEquals("spring created", testSpringBean.toString());
+		assertThat(testSpringBean.toString()).isEqualTo("spring created");
 		ElementVisitorTestGuiceBean testGuiceBean = context.getBean(ElementVisitorTestGuiceBean.class);
-		assertEquals("spring created", testGuiceBean.toString());
+		assertThat(testGuiceBean.toString()).isEqualTo("spring created");
 	}
 
 	public static class ElementVisitorTestSpringBean {

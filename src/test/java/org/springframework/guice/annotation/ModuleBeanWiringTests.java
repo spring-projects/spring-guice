@@ -32,7 +32,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.AbstractCompleteWiringTests;
 import org.springframework.guice.injector.SpringInjector;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Dave Syer
@@ -52,7 +52,7 @@ public class ModuleBeanWiringTests extends AbstractCompleteWiringTests {
 
 	@Test
 	public void bindToSpringBeanFromGuiceModule() throws Exception {
-		assertNotNull(this.context.getBean(Spam.class));
+		assertThat(this.context.getBean(Spam.class)).isNotNull();
 	}
 
 	@EnableGuiceModules

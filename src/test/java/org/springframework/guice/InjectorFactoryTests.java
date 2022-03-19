@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 import org.springframework.guice.annotation.InjectorFactory;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 public class InjectorFactoryTests {
 
@@ -49,7 +49,7 @@ public class InjectorFactoryTests {
 
 	@Test
 	public void testMultipleInjectorFactoriesThrowsApplicationContextException() {
-		assertThrows(ApplicationContextException.class, () -> {
+		assertThatExceptionOfType(ApplicationContextException.class).isThrownBy(() -> {
 			AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
 					InjectorFactoryConfig.class, SecondInjectorFactoryConfig.class, ModulesConfig.class);
 			context.close();

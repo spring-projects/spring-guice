@@ -28,7 +28,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class SpringModuleWrappedTests {
 
@@ -36,7 +36,7 @@ public class SpringModuleWrappedTests {
 	public void testDependenciesFromWrappedModule() {
 		Injector injector = Guice.createInjector(
 				new SpringModule(BeanFactoryProvider.from(TestConfig.class, ModuleProviderConfig.class)));
-		assertNotNull(injector.getInstance(Baz.class));
+		assertThat(injector.getInstance(Baz.class)).isNotNull();
 	}
 
 	@Configuration

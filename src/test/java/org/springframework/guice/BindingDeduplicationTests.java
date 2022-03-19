@@ -28,8 +28,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 public class BindingDeduplicationTests {
 
@@ -44,16 +44,16 @@ public class BindingDeduplicationTests {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
 				BindingDeduplicationTestsConfig.class);
 		SomeDependency someDependency = context.getBean(SomeDependency.class);
-		assertNotNull(someDependency);
+		assertThat(someDependency).isNotNull();
 		SomeOptionalDependency someOptionalDependency = context.getBean(SomeOptionalDependency.class);
-		assertNotNull(someOptionalDependency);
+		assertThat(someOptionalDependency).isNotNull();
 		context.close();
 	}
 
 	@Test
 	public void verifyDuplicateBindingErrorWhenDedupeNotEnabled() {
 		System.setProperty("spring.guice.dedup", "false");
-		assertThrows(CreationException.class, () -> {
+		assertThatExceptionOfType(CreationException.class).isThrownBy(() -> {
 			AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
 					BindingDeduplicationTestsConfig.class);
 			context.close();

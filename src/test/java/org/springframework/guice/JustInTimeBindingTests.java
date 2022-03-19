@@ -27,8 +27,8 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 public class JustInTimeBindingTests {
 
@@ -40,13 +40,13 @@ public class JustInTimeBindingTests {
 	@Test
 	public void springWithJustInTimeBinding() {
 		System.setProperty("spring.guice.autowireJIT", "true");
-		assertNotNull(springGetFoo());
+		assertThat(springGetFoo()).isNotNull();
 	}
 
 	@Test
 	public void springWithoutJustInTimeBinding() {
 		System.setProperty("spring.guice.autowireJIT", "false");
-		assertThrows(UnsatisfiedDependencyException.class, this::springGetFoo);
+		assertThatExceptionOfType(UnsatisfiedDependencyException.class).isThrownBy(this::springGetFoo);
 	}
 
 	@SuppressWarnings("resource")

@@ -20,7 +20,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.TypeLiteral;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.FactoryBean;
@@ -33,7 +32,7 @@ import org.springframework.core.ResolvableType;
 import org.springframework.guice.annotation.EnableGuiceModules;
 import org.springframework.stereotype.Component;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class SuperClassTests {
 
@@ -55,9 +54,9 @@ public class SuperClassTests {
 	@SuppressWarnings("resource")
 	private void baseTestSpringInterface(Class<?> configClass) {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClass);
-		assertTrue(context.getBean(IParent.class) instanceof IGrandChildImpl);
-		assertTrue(context.getBean(IChild.class) instanceof IGrandChildImpl);
-		assertTrue(context.getBean(IGrandChild.class) instanceof IGrandChildImpl);
+		assertThat(context.getBean(IParent.class) instanceof IGrandChildImpl).isTrue();
+		assertThat(context.getBean(IChild.class) instanceof IGrandChildImpl).isTrue();
+		assertThat(context.getBean(IGrandChild.class) instanceof IGrandChildImpl).isTrue();
 	}
 
 	@Test
@@ -79,9 +78,9 @@ public class SuperClassTests {
 	private void baseTestGuiceInterface(Class<?> configClass) {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClass);
 		Injector injector = context.getBean(Injector.class);
-		assertTrue(injector.getInstance(IParent.class) instanceof IGrandChildImpl);
-		assertTrue(injector.getInstance(IChild.class) instanceof IGrandChildImpl);
-		assertTrue(injector.getInstance(IGrandChild.class) instanceof IGrandChildImpl);
+		assertThat(injector.getInstance(IParent.class) instanceof IGrandChildImpl).isTrue();
+		assertThat(injector.getInstance(IChild.class) instanceof IGrandChildImpl).isTrue();
+		assertThat(injector.getInstance(IGrandChild.class) instanceof IGrandChildImpl).isTrue();
 	}
 
 	@Test
@@ -104,49 +103,49 @@ public class SuperClassTests {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClass);
 
 		String[] allParentBeanNames = context.getBeanNamesForType(IParentWithType.class);
-		Assertions.assertEquals(2, allParentBeanNames.length);
+		assertThat(allParentBeanNames.length).isEqualTo(2);
 
 		String[] stringParentBeanNames = context
 				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IParentWithType.class, String.class));
-		Assertions.assertEquals(1, stringParentBeanNames.length);
-		assertTrue(new TypeLiteral<IGrandChildWithType<String>>() {
-		}.getRawType().isInstance(context.getBean(stringParentBeanNames[0])));
+		assertThat(stringParentBeanNames.length).isEqualTo(1);
+		assertThat(new TypeLiteral<IGrandChildWithType<String>>() {
+		}.getRawType().isInstance(context.getBean(stringParentBeanNames[0]))).isTrue();
 
 		String[] integerParentBeanNames = context
 				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IParentWithType.class, Integer.class));
-		Assertions.assertEquals(1, integerParentBeanNames.length);
-		assertTrue(new TypeLiteral<IGrandChildWithType<Integer>>() {
-		}.getRawType().isInstance(context.getBean(integerParentBeanNames[0])));
+		assertThat(integerParentBeanNames.length).isEqualTo(1);
+		assertThat(new TypeLiteral<IGrandChildWithType<Integer>>() {
+		}.getRawType().isInstance(context.getBean(integerParentBeanNames[0]))).isTrue();
 
 		String[] allChildBeanNames = context.getBeanNamesForType(IChildWithType.class);
-		Assertions.assertEquals(2, allChildBeanNames.length);
+		assertThat(allChildBeanNames.length).isEqualTo(2);
 
 		String[] stringChildBeanNames = context
 				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IChildWithType.class, String.class));
-		Assertions.assertEquals(1, stringChildBeanNames.length);
-		assertTrue(new TypeLiteral<IChildWithType<String>>() {
-		}.getRawType().isInstance(context.getBean(stringChildBeanNames[0])));
+		assertThat(stringChildBeanNames.length).isEqualTo(1);
+		assertThat(new TypeLiteral<IChildWithType<String>>() {
+		}.getRawType().isInstance(context.getBean(stringChildBeanNames[0]))).isTrue();
 
 		String[] integerChildBeanNames = context
 				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IChildWithType.class, Integer.class));
-		Assertions.assertEquals(1, integerChildBeanNames.length);
-		assertTrue(new TypeLiteral<IChildWithType<Integer>>() {
-		}.getRawType().isInstance(context.getBean(integerChildBeanNames[0])));
+		assertThat(integerChildBeanNames.length).isEqualTo(1);
+		assertThat(new TypeLiteral<IChildWithType<Integer>>() {
+		}.getRawType().isInstance(context.getBean(integerChildBeanNames[0]))).isTrue();
 
 		String[] allGrandChildBeanNames = context.getBeanNamesForType(IGrandChildWithType.class);
-		Assertions.assertEquals(2, allGrandChildBeanNames.length);
+		assertThat(allGrandChildBeanNames.length).isEqualTo(2);
 
 		String[] stringGrandChildBeanNames = context
 				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IGrandChildWithType.class, String.class));
-		Assertions.assertEquals(1, stringGrandChildBeanNames.length);
-		assertTrue(new TypeLiteral<IGrandChildWithType<String>>() {
-		}.getRawType().isInstance(context.getBean(stringGrandChildBeanNames[0])));
+		assertThat(stringGrandChildBeanNames.length).isEqualTo(1);
+		assertThat(new TypeLiteral<IGrandChildWithType<String>>() {
+		}.getRawType().isInstance(context.getBean(stringGrandChildBeanNames[0]))).isTrue();
 
 		String[] integerGrandChildBeanNames = context
 				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IGrandChildWithType.class, Integer.class));
-		Assertions.assertEquals(1, integerGrandChildBeanNames.length);
-		assertTrue(new TypeLiteral<IGrandChildWithType<Integer>>() {
-		}.getRawType().isInstance(context.getBean(integerGrandChildBeanNames[0])));
+		assertThat(integerGrandChildBeanNames.length).isEqualTo(1);
+		assertThat(new TypeLiteral<IGrandChildWithType<Integer>>() {
+		}.getRawType().isInstance(context.getBean(integerGrandChildBeanNames[0]))).isTrue();
 
 	}
 
@@ -172,28 +171,28 @@ public class SuperClassTests {
 		IParentWithType<String> iParentString = injector
 				.getInstance(Key.get(new TypeLiteral<IParentWithType<String>>() {
 				}));
-		assertTrue(iParentString instanceof IGrandChildString);
+		assertThat(iParentString instanceof IGrandChildString).isTrue();
 		IParentWithType<Integer> iParentInteger = injector
 				.getInstance(Key.get(new TypeLiteral<IParentWithType<Integer>>() {
 				}));
-		assertTrue(iParentInteger instanceof IGrandChildInteger);
+		assertThat(iParentInteger instanceof IGrandChildInteger).isTrue();
 
 		IChildWithType<String> iChildString = injector.getInstance(Key.get(new TypeLiteral<IChildWithType<String>>() {
 		}));
-		assertTrue(iChildString instanceof IGrandChildString);
+		assertThat(iChildString instanceof IGrandChildString).isTrue();
 		IChildWithType<Integer> iChildInteger = injector
 				.getInstance(Key.get(new TypeLiteral<IChildWithType<Integer>>() {
 				}));
-		assertTrue(iChildInteger instanceof IGrandChildInteger);
+		assertThat(iChildInteger instanceof IGrandChildInteger).isTrue();
 
 		IGrandChildWithType<String> iGrandChildString = injector
 				.getInstance(Key.get(new TypeLiteral<IGrandChildWithType<String>>() {
 				}));
-		assertTrue(iGrandChildString instanceof IGrandChildString);
+		assertThat(iGrandChildString instanceof IGrandChildString).isTrue();
 		IGrandChildWithType<Integer> iGrandChildInteger = injector
 				.getInstance(Key.get(new TypeLiteral<IGrandChildWithType<Integer>>() {
 				}));
-		assertTrue(iGrandChildInteger instanceof IGrandChildInteger);
+		assertThat(iGrandChildInteger instanceof IGrandChildInteger).isTrue();
 	}
 
 	@SuppressWarnings("resource")
@@ -201,11 +200,11 @@ public class SuperClassTests {
 	public void testSpringClass() {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ModulesConfig.class);
 		IFoo iFoo = context.getBean(IFoo.class);
-		assertTrue(iFoo instanceof Foo);
-		assertTrue(iFoo instanceof SubFoo);
+		assertThat(iFoo instanceof Foo).isTrue();
+		assertThat(iFoo instanceof SubFoo).isTrue();
 
 		Foo foo = context.getBean(Foo.class);
-		assertTrue(foo instanceof SubFoo);
+		assertThat(foo instanceof SubFoo).isTrue();
 	}
 
 	@Test
@@ -228,11 +227,11 @@ public class SuperClassTests {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClass);
 		Injector injector = context.getBean(Injector.class);
 		IFoo iFoo = injector.getInstance(IFoo.class);
-		assertTrue(iFoo instanceof Foo);
-		assertTrue(iFoo instanceof SubFoo);
+		assertThat(iFoo instanceof Foo).isTrue();
+		assertThat(iFoo instanceof SubFoo).isTrue();
 
 		Foo foo = injector.getInstance(Foo.class);
-		assertTrue(foo instanceof SubFoo);
+		assertThat(foo instanceof SubFoo).isTrue();
 	}
 
 	@Test
@@ -255,25 +254,25 @@ public class SuperClassTests {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClass);
 		String[] stringBeanNames = context
 				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IFooWithType.class, String.class));
-		Assertions.assertEquals(1, stringBeanNames.length);
-		assertTrue(context.getBean(stringBeanNames[0]) instanceof StringFoo);
-		assertTrue(context.getBean(stringBeanNames[0]) instanceof SubStringFoo);
+		assertThat(stringBeanNames.length).isEqualTo(1);
+		assertThat(context.getBean(stringBeanNames[0]) instanceof StringFoo).isTrue();
+		assertThat(context.getBean(stringBeanNames[0]) instanceof SubStringFoo).isTrue();
 
 		stringBeanNames = context.getBeanNamesForType(StringFoo.class);
-		Assertions.assertEquals(1, stringBeanNames.length);
-		assertTrue(context.getBean(stringBeanNames[0]) instanceof StringFoo);
-		assertTrue(context.getBean(stringBeanNames[0]) instanceof SubStringFoo);
+		assertThat(stringBeanNames.length).isEqualTo(1);
+		assertThat(context.getBean(stringBeanNames[0]) instanceof StringFoo).isTrue();
+		assertThat(context.getBean(stringBeanNames[0]) instanceof SubStringFoo).isTrue();
 
 		String[] integerBeanNames = context
 				.getBeanNamesForType(ResolvableType.forClassWithGenerics(IFooWithType.class, Integer.class));
-		Assertions.assertEquals(1, integerBeanNames.length);
-		assertTrue(context.getBean(integerBeanNames[0]) instanceof IntegerFoo);
-		assertTrue(context.getBean(integerBeanNames[0]) instanceof SubIntegerFoo);
+		assertThat(integerBeanNames.length).isEqualTo(1);
+		assertThat(context.getBean(integerBeanNames[0]) instanceof IntegerFoo).isTrue();
+		assertThat(context.getBean(integerBeanNames[0]) instanceof SubIntegerFoo).isTrue();
 
 		integerBeanNames = context.getBeanNamesForType(IntegerFoo.class);
-		Assertions.assertEquals(1, integerBeanNames.length);
-		assertTrue(context.getBean(integerBeanNames[0]) instanceof IntegerFoo);
-		assertTrue(context.getBean(integerBeanNames[0]) instanceof SubIntegerFoo);
+		assertThat(integerBeanNames.length).isEqualTo(1);
+		assertThat(context.getBean(integerBeanNames[0]) instanceof IntegerFoo).isTrue();
+		assertThat(context.getBean(integerBeanNames[0]) instanceof SubIntegerFoo).isTrue();
 	}
 
 	@Test
@@ -298,20 +297,20 @@ public class SuperClassTests {
 
 		IFooWithType<String> iFooWithTypeString = injector.getInstance(Key.get(new TypeLiteral<IFooWithType<String>>() {
 		}));
-		assertTrue(iFooWithTypeString instanceof StringFoo);
-		assertTrue(iFooWithTypeString instanceof SubStringFoo);
+		assertThat(iFooWithTypeString instanceof StringFoo).isTrue();
+		assertThat(iFooWithTypeString instanceof SubStringFoo).isTrue();
 
 		StringFoo stringFoo = injector.getInstance(StringFoo.class);
-		assertTrue(stringFoo instanceof SubStringFoo);
+		assertThat(stringFoo instanceof SubStringFoo).isTrue();
 
 		IFooWithType<Integer> iFooWithTypeInteger = injector
 				.getInstance(Key.get(new TypeLiteral<IFooWithType<Integer>>() {
 				}));
-		assertTrue(iFooWithTypeInteger instanceof IntegerFoo);
-		assertTrue(iFooWithTypeInteger instanceof SubIntegerFoo);
+		assertThat(iFooWithTypeInteger instanceof IntegerFoo).isTrue();
+		assertThat(iFooWithTypeInteger instanceof SubIntegerFoo).isTrue();
 
 		IntegerFoo integerFoo = injector.getInstance(IntegerFoo.class);
-		assertTrue(integerFoo instanceof SubIntegerFoo);
+		assertThat(integerFoo instanceof SubIntegerFoo).isTrue();
 	}
 
 	@Test
@@ -334,7 +333,7 @@ public class SuperClassTests {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClass);
 
 		Bar bar = context.getBean(Bar.class);
-		assertTrue(bar instanceof Bar);
+		assertThat(bar instanceof Bar).isTrue();
 	}
 
 	@Test
@@ -356,7 +355,7 @@ public class SuperClassTests {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(configClass);
 		Injector injector = context.getBean(Injector.class);
 		Bar bar = injector.getInstance(Bar.class);
-		assertTrue(bar instanceof Bar);
+		assertThat(bar instanceof Bar).isTrue();
 	}
 
 	static class DisableJITConfig {

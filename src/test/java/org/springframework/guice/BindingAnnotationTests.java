@@ -37,8 +37,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class BindingAnnotationTests {
 
@@ -51,46 +50,46 @@ public class BindingAnnotationTests {
 		// Check @Qualifier
 		SomeDependencyWithQualifierOnProvider someDependencyWithQualifierOnClass = injector
 				.getInstance(Key.get(SomeDependencyWithQualifierOnProvider.class, SomeQualifierAnnotation.class));
-		assertNotNull(someDependencyWithQualifierOnClass);
+		assertThat(someDependencyWithQualifierOnClass).isNotNull();
 
 		// Check @BindingAnnotation on Spring @Bean available in Guice
 		SomeDependencyWithQualifierOnProvider someDependencyWithBindingAnnotationOnProvider = injector
 				.getInstance(Key.get(SomeDependencyWithQualifierOnProvider.class, SomeQualifierAnnotation.class));
-		assertNotNull(someDependencyWithBindingAnnotationOnProvider);
+		assertThat(someDependencyWithBindingAnnotationOnProvider).isNotNull();
 
 		// Check @BindingAnnotation on Guice Binding available in Spring
 		SomeStringHolder stringHolder = context.getBean(SomeStringHolder.class);
-		assertEquals("annotated", stringHolder.annotatedString);
-		assertEquals("other", stringHolder.otherAnnotatedString);
+		assertThat(stringHolder.annotatedString).isEqualTo("annotated");
+		assertThat(stringHolder.otherAnnotatedString).isEqualTo("other");
 
 		// Check javax @Named
 		SomeDependencyWithNamedAnnotationOnProvider someDependencyWithNamedAnnotationOnProvider = injector
 				.getInstance(Key.get(SomeDependencyWithNamedAnnotationOnProvider.class, Names.named("javaxNamed")));
-		assertNotNull(someDependencyWithNamedAnnotationOnProvider);
+		assertThat(someDependencyWithNamedAnnotationOnProvider).isNotNull();
 
 		// Check Guice @Named
 		SomeDependencyWithGuiceNamedAnnotationOnProvider someDependencyWithGuiceNamedAnnotationOnProvider = injector
 				.getInstance(
 						Key.get(SomeDependencyWithGuiceNamedAnnotationOnProvider.class, Names.named("guiceNamed")));
-		assertNotNull(someDependencyWithGuiceNamedAnnotationOnProvider);
+		assertThat(someDependencyWithGuiceNamedAnnotationOnProvider).isNotNull();
 
 		SomeDependencyWithGuiceNamedAnnotationOnProvider someSecondDependencyWithGuiceNamedAnnotationOnProvider = injector
 				.getInstance(
 						Key.get(SomeDependencyWithGuiceNamedAnnotationOnProvider.class, Names.named("guiceNamed2")));
-		assertNotNull(someSecondDependencyWithGuiceNamedAnnotationOnProvider);
+		assertThat(someSecondDependencyWithGuiceNamedAnnotationOnProvider).isNotNull();
 
 		// Check @Qualifier with Interface
 		SomeInterface someInterface = injector.getInstance(Key.get(SomeInterface.class, SomeQualifierAnnotation.class));
-		assertNotNull(someInterface);
+		assertThat(someInterface).isNotNull();
 
 		// Check different types with same @Named
-		assertNotNull(injector.getInstance(SomeNamedDepWithType1.class));
-		assertNotNull(injector.getInstance(SomeNamedDepWithType2.class));
+		assertThat(injector.getInstance(SomeNamedDepWithType1.class)).isNotNull();
+		assertThat(injector.getInstance(SomeNamedDepWithType2.class)).isNotNull();
 
-		assertNotNull(
-				injector.getInstance(Key.get(SomeNamedDepWithType1.class, Names.named("sameNameDifferentType"))));
-		assertNotNull(
-				injector.getInstance(Key.get(SomeNamedDepWithType2.class, Names.named("sameNameDifferentType"))));
+		assertThat(injector.getInstance(Key.get(SomeNamedDepWithType1.class, Names.named("sameNameDifferentType"))))
+				.isNotNull();
+		assertThat(injector.getInstance(Key.get(SomeNamedDepWithType2.class, Names.named("sameNameDifferentType"))))
+				.isNotNull();
 		context.close();
 	}
 
