@@ -1,14 +1,17 @@
 /*
  * Copyright 2013-2014 the original author or authors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * https://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.springframework.guice.module;
@@ -43,8 +46,8 @@ import com.google.inject.matcher.Matchers;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.spi.ProvisionListener;
-
 import com.google.inject.util.Types;
+
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
@@ -62,11 +65,16 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
 
 /**
+ * A Guice module that wraps a Spring {@link ApplicationContext}.
+ *
  * @author Dave Syer
  *
  */
 public class SpringModule extends AbstractModule {
 
+	/**
+	 * Identifier for bindings provided by this module.
+	 */
 	public static final String SPRING_GUICE_SOURCE = "spring-guice";
 
 	private BindingTypeMatcher matcher = new GuiceModuleMetadata();
@@ -102,23 +110,24 @@ public class SpringModule extends AbstractModule {
 
 	@Override
 	public void configure() {
-		if (beanFactory == null) {
-			beanFactory = beanFactoryProvider.get();
+		if (this.beanFactory == null) {
+			this.beanFactory = this.beanFactoryProvider.get();
 		}
-		if (beanFactory.getBeanNamesForType(ProvisionListener.class).length > 0) {
-			binder().bindListener(Matchers.any(),
-					beanFactory.getBeansOfType(ProvisionListener.class).values().toArray(new ProvisionListener[0]));
+		if (this.beanFactory.getBeanNamesForType(ProvisionListener.class).length > 0) {
+			binder().bindListener(Matchers.any(), this.beanFactory.getBeansOfType(ProvisionListener.class).values()
+					.toArray(new ProvisionListener[0]));
 		}
-		if (enableJustInTimeBinding) {
-			if (beanFactory instanceof DefaultListableBeanFactory) {
-				((DefaultListableBeanFactory) beanFactory).setAutowireCandidateResolver(
+		if (this.enableJustInTimeBinding) {
+			if (this.beanFactory instanceof DefaultListableBeanFactory) {
+				((DefaultListableBeanFactory) this.beanFactory).setAutowireCandidateResolver(
 						new GuiceAutowireCandidateResolver(binder().getProvider(Injector.class)));
 			}
 		}
-		if (beanFactory.getBeanNamesForType(GuiceModuleMetadata.class).length > 0) {
-			this.matcher = new CompositeTypeMatcher(beanFactory.getBeansOfType(GuiceModuleMetadata.class).values());
+		if (this.beanFactory.getBeanNamesForType(GuiceModuleMetadata.class).length > 0) {
+			this.matcher = new CompositeTypeMatcher(
+					this.beanFactory.getBeansOfType(GuiceModuleMetadata.class).values());
 		}
-		bind(beanFactory);
+		bind(this.beanFactory);
 	}
 
 	private void bind(ConfigurableListableBeanFactory beanFactory) {
@@ -205,9 +214,9 @@ public class SpringModule extends AbstractModule {
 			try {
 				Method factoryMethod = getFactoryMethod(beanFactory, definition);
 				return Arrays.stream(AnnotationUtils.getAnnotations(factoryMethod))
-						.filter(a -> Annotations.isBindingAnnotation(a.annotationType())).findFirst();
+						.filter((a) -> Annotations.isBindingAnnotation(a.annotationType())).findFirst();
 			}
-			catch (Exception e) {
+			catch (Exception ex) {
 				return Optional.empty();
 			}
 		}
@@ -307,7 +316,7 @@ public class SpringModule extends AbstractModule {
 				}
 			}
 		}
-		Key<?> key = bindingAnnotation.map(a -> (Key<Object>) Key.get(type, a)).orElse((Key<Object>) Key.get(type));
+		Key<?> key = bindingAnnotation.map((a) -> (Key<Object>) Key.get(type, a)).orElse((Key<Object>) Key.get(type));
 		StageTypeKey stageTypeKey = new StageTypeKey(binder.currentStage(), key);
 		if (this.bound.get(stageTypeKey) == null) {
 			// Only bind one provider for each type
@@ -328,43 +337,49 @@ public class SpringModule extends AbstractModule {
 
 		private Key<?> key;
 
-		public StageTypeKey(Stage stage, Key<?> key) {
+		StageTypeKey(Stage stage, Key<?> key) {
 			this.stage = stage;
 			this.key = key;
+		}
 
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			StageTypeKey other = (StageTypeKey) obj;
+			if (this.key == null) {
+				if (other.key != null) {
+					return false;
+				}
+			}
+			else if (!this.key.equals(other.key)) {
+				return false;
+			}
+			if (this.stage != other.stage) {
+				return false;
+			}
+			return true;
 		}
 
 		@Override
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + ((key == null) ? 0 : key.hashCode());
-			result = prime * result + ((stage == null) ? 0 : stage.hashCode());
+			result = prime * result + ((this.key == null) ? 0 : this.key.hashCode());
+			result = prime * result + ((this.stage == null) ? 0 : this.stage.hashCode());
 			return result;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			StageTypeKey other = (StageTypeKey) obj;
-			if (key == null) {
-				if (other.key != null)
-					return false;
-			}
-			else if (!key.equals(other.key))
-				return false;
-			if (stage != other.stage)
-				return false;
-			return true;
 		}
 
 	}
 
+	@SuppressWarnings("checkstyle:FinalClass")
 	private static class BeanFactoryProvider implements Provider<Object> {
 
 		private ConfigurableListableBeanFactory beanFactory;
@@ -385,42 +400,46 @@ public class SpringModule extends AbstractModule {
 			this.type = type;
 		}
 
+		@SuppressWarnings("checkstyle:SpringMethodVisibility")
 		public static Provider<?> named(ConfigurableListableBeanFactory beanFactory, String name, Type type,
 				Optional<Annotation> bindingAnnotation) {
 			return new BeanFactoryProvider(beanFactory, name, type, bindingAnnotation);
 		}
 
+		@SuppressWarnings("checkstyle:SpringMethodVisibility")
 		public static Provider<?> typed(ConfigurableListableBeanFactory beanFactory, Type type,
 				Optional<Annotation> bindingAnnotation) {
 			return new BeanFactoryProvider(beanFactory, null, type, bindingAnnotation);
 		}
 
 		@Override
+		@SuppressWarnings("checkstyle:NestedIfDepth")
 		public Object get() {
 			if (this.resultProvider == null) {
 
 				String[] named = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(this.beanFactory,
-						ResolvableType.forType(type));
+						ResolvableType.forType(this.type));
 				List<String> names = new ArrayList<String>(named.length);
 				if (named.length == 1) {
 					names.add(named[0]);
 				}
 				else {
 					for (String name : named) {
-						if (bindingAnnotation.isPresent()) {
-							if (bindingAnnotation.get() instanceof Named
-									|| bindingAnnotation.get() instanceof javax.inject.Named) {
+						if (this.bindingAnnotation.isPresent()) {
+							if (this.bindingAnnotation.get() instanceof Named
+									|| this.bindingAnnotation.get() instanceof javax.inject.Named) {
 								Optional<Annotation> annotation = SpringModule.getAnnotationForBeanDefinition(
-										beanFactory.getMergedBeanDefinition(name), beanFactory);
-								String boundName = getNameFromBindingAnnotation(bindingAnnotation);
-								if (annotation.isPresent() && bindingAnnotation.get().equals(annotation.get())
+										this.beanFactory.getMergedBeanDefinition(name), this.beanFactory);
+								String boundName = getNameFromBindingAnnotation(this.bindingAnnotation);
+								if (annotation.isPresent() && this.bindingAnnotation.get().equals(annotation.get())
 										|| name.equals(boundName)) {
 									names.add(name);
 								}
 							}
 						}
-						if (name.equals(this.name))
+						if (name.equals(this.name)) {
 							names.add(name);
+						}
 					}
 				}
 				if (names.size() == 1) {
@@ -447,7 +466,7 @@ public class SpringModule extends AbstractModule {
 
 		private Collection<? extends BindingTypeMatcher> matchers;
 
-		public CompositeTypeMatcher(Collection<? extends BindingTypeMatcher> matchers) {
+		CompositeTypeMatcher(Collection<? extends BindingTypeMatcher> matchers) {
 			this.matchers = matchers;
 		}
 

@@ -19,6 +19,8 @@ package org.springframework.guice.module;
 import java.lang.reflect.Type;
 
 /**
+ * Utility to check whether a binding matches the given name and type.
+ *
  * @author Dave Syer
  *
  */

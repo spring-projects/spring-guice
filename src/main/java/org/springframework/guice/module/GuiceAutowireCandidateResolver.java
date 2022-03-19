@@ -13,13 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.springframework.guice.module;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.Optional;
+
+import javax.inject.Provider;
 
 import com.google.inject.BindingAnnotation;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.springframework.aop.TargetSource;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -28,14 +36,10 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.annotation.ContextAnnotationAutowireCandidateResolver;
 import org.springframework.util.Assert;
 
-import javax.inject.Provider;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-
 /**
+ * Extension of {@link ContextAnnotationAutowireCandidateResolver} providing support for
+ * exposing beans as just in time bindings.
+ *
  * @author Dave Syer
  * @author Taylor Wicksell
  * @author Howard Yuan
@@ -47,7 +51,7 @@ class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateR
 
 	private final Log logger = LogFactory.getLog(getClass());
 
-	public GuiceAutowireCandidateResolver(Provider<Injector> injectorProvider) {
+	GuiceAutowireCandidateResolver(Provider<Injector> injectorProvider) {
 		this.injectorProvider = injectorProvider;
 		addQualifierType(BindingAnnotation.class);
 	}
@@ -73,10 +77,10 @@ class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateR
 		try {
 			beanFactory.doResolveDependency(descriptor, beanName, null, null);
 		}
-		catch (NoSuchBeanDefinitionException e) {
-			if (e.getResolvableType() != null) {
-				logger.info(String.format("Use just in time binding for %s in bean: %s",
-						e.getResolvableType().getType().getTypeName(), beanName));
+		catch (NoSuchBeanDefinitionException ex) {
+			if (ex.getResolvableType() != null) {
+				this.logger.info(String.format("Use just in time binding for %s in bean: %s",
+						ex.getResolvableType().getType().getTypeName(), beanName));
 			}
 			return true;
 		}
@@ -104,16 +108,18 @@ class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateR
 			@Override
 			public Object getTarget() {
 				Object target = null;
-				if (isGuiceResolvable.isPresent() && isGuiceResolvable.get()) {
-					target = injectorProvider.get().getInstance(Key.get(descriptor.getResolvableType().getType()));
+				if (this.isGuiceResolvable.isPresent() && this.isGuiceResolvable.get()) {
+					target = GuiceAutowireCandidateResolver.this.injectorProvider.get()
+							.getInstance(Key.get(descriptor.getResolvableType().getType()));
 				}
 				else {
 					try {
 						target = beanFactory.doResolveDependency(descriptor, beanName, null, null);
 					}
-					catch (NoSuchBeanDefinitionException e) {
-						target = injectorProvider.get().getInstance(Key.get(descriptor.getResolvableType().getType()));
-						isGuiceResolvable = Optional.of(true);
+					catch (NoSuchBeanDefinitionException ex) {
+						target = GuiceAutowireCandidateResolver.this.injectorProvider.get()
+								.getInstance(Key.get(descriptor.getResolvableType().getType()));
+						this.isGuiceResolvable = Optional.of(true);
 					}
 				}
 				if (target == null) {
@@ -136,8 +142,8 @@ class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateR
 			}
 			return pf.getProxy(beanFactory.getBeanClassLoader());
 		}
-		catch (Exception e) {
-			logger.debug("Failed to build lazy resolution proxy to Guice", e);
+		catch (Exception ex) {
+			this.logger.debug("Failed to build lazy resolution proxy to Guice", ex);
 		}
 		return null;
 	}

@@ -1,7 +1,20 @@
-package org.springframework.guice;
+/*
+ * Copyright 2018-2022 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+package org.springframework.guice;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -12,25 +25,20 @@ import javax.inject.Named;
 import javax.inject.Qualifier;
 
 import com.google.inject.AbstractModule;
-import org.junit.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.guice.BindingAnnotationTests.SomeDependencyWithBindingAnnotationOnProvider;
-import org.springframework.guice.BindingAnnotationTests.SomeDependencyWithGuiceNamedAnnotationOnProvider;
-import org.springframework.guice.BindingAnnotationTests.SomeDependencyWithNamedAnnotationOnProvider;
-import org.springframework.guice.BindingAnnotationTests.SomeDependencyWithQualifierOnProvider;
-import org.springframework.guice.BindingAnnotationTests.SomeDependencyWithQualifierOnProviderWhichImplementsSomeInterface;
-import org.springframework.guice.BindingAnnotationTests.SomeInterface;
-import org.springframework.guice.BindingAnnotationTests.SomeNamedDepWithType1;
-import org.springframework.guice.BindingAnnotationTests.SomeNamedDepWithType2;
-import org.springframework.guice.annotation.EnableGuiceModules;
-
 import com.google.inject.BindingAnnotation;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
+import org.junit.Test;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.guice.annotation.EnableGuiceModules;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class BindingAnnotationTests {
 
@@ -116,113 +124,113 @@ public class BindingAnnotationTests {
 
 	}
 
-}
+	@Qualifier
+	@Target({ ElementType.TYPE, ElementType.METHOD })
+	@Retention(RetentionPolicy.RUNTIME)
+	@interface SomeQualifierAnnotation {
 
-@Qualifier
-@Target({ ElementType.TYPE, ElementType.METHOD })
-@Retention(RetentionPolicy.RUNTIME)
-@interface SomeQualifierAnnotation {
-
-}
-
-@BindingAnnotation
-@Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD })
-@Retention(RetentionPolicy.RUNTIME)
-@interface SomeBindingAnnotation {
-
-}
-
-@BindingAnnotation
-@Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD })
-@Retention(RetentionPolicy.RUNTIME)
-@interface SomeOtherBindingAnnotation {
-
-}
-
-class SomeStringHolder {
-
-	@Autowired
-	@SomeBindingAnnotation
-	public String annotatedString;
-
-	@Autowired
-	@SomeOtherBindingAnnotation
-	String otherAnnotatedString;
-
-}
-
-@EnableGuiceModules
-@Configuration
-class BindingAnnotationTestsConfig {
-
-	@Bean
-	@SomeQualifierAnnotation
-	public SomeDependencyWithQualifierOnProvider someDependencyWithQualifierOnProvider() {
-		return new SomeDependencyWithQualifierOnProvider();
 	}
 
-	@Bean
-	@SomeBindingAnnotation
-	public SomeDependencyWithBindingAnnotationOnProvider someDependencyWithBindingAnnotationOnProvider() {
-		return new SomeDependencyWithBindingAnnotationOnProvider();
+	@BindingAnnotation
+	@Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD })
+	@Retention(RetentionPolicy.RUNTIME)
+	@interface SomeBindingAnnotation {
+
 	}
 
-	@Bean
-	@Named("javaxNamed")
-	public SomeDependencyWithNamedAnnotationOnProvider someDependencyWithNamedAnnotationOnProvider() {
-		return new SomeDependencyWithNamedAnnotationOnProvider();
+	@BindingAnnotation
+	@Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD })
+	@Retention(RetentionPolicy.RUNTIME)
+	@interface SomeOtherBindingAnnotation {
+
 	}
 
-	@Bean(name = "javaxNamed2")
-	@Named("javaxNamed2")
-	public SomeDependencyWithNamedAnnotationOnProvider someSecondDependencyWithNamedAnnotationOnProvider() {
-		return new SomeDependencyWithNamedAnnotationOnProvider();
+	static class SomeStringHolder {
+
+		@Autowired
+		@SomeBindingAnnotation
+		public String annotatedString;
+
+		@Autowired
+		@SomeOtherBindingAnnotation
+		String otherAnnotatedString;
+
 	}
 
-	@Bean
-	@com.google.inject.name.Named("guiceNamed")
-	public SomeDependencyWithGuiceNamedAnnotationOnProvider someDependencyWithGuiceNamedAnnotationOnProvider() {
-		return new SomeDependencyWithGuiceNamedAnnotationOnProvider();
-	}
+	@EnableGuiceModules
+	@Configuration
+	static class BindingAnnotationTestsConfig {
 
-	@Bean
-	@com.google.inject.name.Named("guiceNamed2")
-	public SomeDependencyWithGuiceNamedAnnotationOnProvider someSecondDependencyWithGuiceNamedAnnotationOnProvider() {
-		return new SomeDependencyWithGuiceNamedAnnotationOnProvider();
-	}
+		@Bean
+		@SomeQualifierAnnotation
+		SomeDependencyWithQualifierOnProvider someDependencyWithQualifierOnProvider() {
+			return new SomeDependencyWithQualifierOnProvider();
+		}
 
-	@Bean
-	@SomeQualifierAnnotation
-	public SomeInterface someInterface() {
-		return new SomeDependencyWithQualifierOnProviderWhichImplementsSomeInterface();
-	}
+		@Bean
+		@SomeBindingAnnotation
+		SomeDependencyWithBindingAnnotationOnProvider someDependencyWithBindingAnnotationOnProvider() {
+			return new SomeDependencyWithBindingAnnotationOnProvider();
+		}
 
-	@Bean
-	@Named("sameNameDifferentType")
-	public SomeNamedDepWithType1 someNamedDepWithType1() {
-		return new SomeNamedDepWithType1();
-	}
+		@Bean
+		@Named("javaxNamed")
+		SomeDependencyWithNamedAnnotationOnProvider someDependencyWithNamedAnnotationOnProvider() {
+			return new SomeDependencyWithNamedAnnotationOnProvider();
+		}
 
-	@Bean
-	@Named("sameNameDifferentType")
-	public SomeNamedDepWithType2 someNamedDepWithType2() {
-		return new SomeNamedDepWithType2();
-	}
+		@Bean(name = "javaxNamed2")
+		@Named("javaxNamed2")
+		SomeDependencyWithNamedAnnotationOnProvider someSecondDependencyWithNamedAnnotationOnProvider() {
+			return new SomeDependencyWithNamedAnnotationOnProvider();
+		}
 
-	@Bean
-	public SomeStringHolder stringHolder() {
-		return new SomeStringHolder();
-	}
+		@Bean
+		@com.google.inject.name.Named("guiceNamed")
+		SomeDependencyWithGuiceNamedAnnotationOnProvider someDependencyWithGuiceNamedAnnotationOnProvider() {
+			return new SomeDependencyWithGuiceNamedAnnotationOnProvider();
+		}
 
-	@Bean
-	public AbstractModule module() {
-		return new AbstractModule() {
-			@Override
-			protected void configure() {
-				bind(String.class).annotatedWith(SomeBindingAnnotation.class).toInstance("annotated");
-				bind(String.class).annotatedWith(SomeOtherBindingAnnotation.class).toInstance("other");
-			}
-		};
+		@Bean
+		@com.google.inject.name.Named("guiceNamed2")
+		SomeDependencyWithGuiceNamedAnnotationOnProvider someSecondDependencyWithGuiceNamedAnnotationOnProvider() {
+			return new SomeDependencyWithGuiceNamedAnnotationOnProvider();
+		}
+
+		@Bean
+		@SomeQualifierAnnotation
+		SomeInterface someInterface() {
+			return new SomeDependencyWithQualifierOnProviderWhichImplementsSomeInterface();
+		}
+
+		@Bean
+		@Named("sameNameDifferentType")
+		SomeNamedDepWithType1 someNamedDepWithType1() {
+			return new SomeNamedDepWithType1();
+		}
+
+		@Bean
+		@Named("sameNameDifferentType")
+		SomeNamedDepWithType2 someNamedDepWithType2() {
+			return new SomeNamedDepWithType2();
+		}
+
+		@Bean
+		SomeStringHolder stringHolder() {
+			return new SomeStringHolder();
+		}
+
+		@Bean
+		AbstractModule module() {
+			return new AbstractModule() {
+				@Override
+				protected void configure() {
+					bind(String.class).annotatedWith(SomeBindingAnnotation.class).toInstance("annotated");
+					bind(String.class).annotatedWith(SomeOtherBindingAnnotation.class).toInstance("other");
+				}
+			};
+		}
+
 	}
 
 }

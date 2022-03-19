@@ -1,35 +1,22 @@
 /*
  * Copyright 2013-2014 the original author or authors.
  *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * https://www.apache.org/licenses/LICENSE-2.0
+ *      https://www.apache.org/licenses/LICENSE-2.0
  *
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package org.springframework.guice.module;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-
 import javax.inject.Inject;
-
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.core.type.filter.AnnotationTypeFilter;
-import org.springframework.core.type.filter.AssignableTypeFilter;
-import org.springframework.guice.module.GuiceModuleMetadata;
-import org.springframework.guice.module.SpringModule;
 
 import com.google.inject.ConfigurationException;
 import com.google.inject.Guice;
@@ -37,6 +24,20 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.ProvisionException;
 import com.google.inject.name.Names;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
+
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.core.type.filter.AnnotationTypeFilter;
+import org.springframework.core.type.filter.AssignableTypeFilter;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 /**
  * @author Dave Syer
@@ -56,7 +57,7 @@ public class SpringModuleMetadataTests {
 	@Test
 	public void twoServices() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MoreConfig.class);
-		expected.expect(ProvisionException.class);
+		this.expected.expect(ProvisionException.class);
 		assertNotNull(injector.getInstance(Service.class));
 	}
 
@@ -75,14 +76,14 @@ public class SpringModuleMetadataTests {
 	@Test
 	public void includes() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MetadataIncludesConfig.class);
-		expected.expect(ConfigurationException.class);
+		this.expected.expect(ConfigurationException.class);
 		assertNull(injector.getBinding(Service.class));
 	}
 
 	@Test
 	public void excludes() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MetadataExcludesConfig.class);
-		expected.expect(ConfigurationException.class);
+		this.expected.expect(ConfigurationException.class);
 		assertNull(injector.getInstance(Service.class));
 	}
 

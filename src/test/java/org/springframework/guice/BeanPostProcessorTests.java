@@ -1,10 +1,27 @@
-package org.springframework.guice;
+/*
+ * Copyright 2018-2022 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-import static org.junit.Assert.assertTrue;
+package org.springframework.guice;
 
 import javax.inject.Inject;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Module;
 import org.junit.Test;
+
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -14,15 +31,9 @@ import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProce
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.Ordered;
-import org.springframework.guice.BeanPostProcessorTests.GuiceBeanThatWantsPostProcessedBean;
-import org.springframework.guice.BeanPostProcessorTests.GuiceBeanThatWantsSpringBean;
-import org.springframework.guice.BeanPostProcessorTests.PostProcessedBean;
-import org.springframework.guice.BeanPostProcessorTests.SpringBeanThatWantsPostProcessedBean;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Module;
+import static org.junit.Assert.assertTrue;
 
 public class BeanPostProcessorTests {
 
@@ -81,69 +92,69 @@ public class BeanPostProcessorTests {
 
 	}
 
-}
+	@EnableGuiceModules
+	@Configuration
+	static class BeanPostProcessorTestConfig {
 
-@EnableGuiceModules
-@Configuration
-class BeanPostProcessorTestConfig {
-
-	public static class PostProcessorRegistrar implements BeanDefinitionRegistryPostProcessor {
-
-		@Override
-		public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
-			BeanDefinitionBuilder bean = BeanDefinitionBuilder.genericBeanDefinition(TestBeanPostProcessor.class);
-			registry.registerBeanDefinition("postProcessor", bean.getBeanDefinition());
+		@Bean
+		PostProcessorRegistrar postProcessorRegistrar() {
+			return new PostProcessorRegistrar();
 		}
 
-		@Override
-		public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+		@Bean
+		PostProcessedBean postProcessedBean() {
+			return new PostProcessedBean();
 		}
 
-	}
-
-	public static class TestBeanPostProcessor implements BeanPostProcessor {
-
-		@Override
-		public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
-			if (bean instanceof PostProcessedBean) {
-				((PostProcessedBean) bean).postProcessed = true;
-			}
-			return bean;
+		@Bean
+		SpringBeanThatWantsPostProcessedBean springBean(PostProcessedBean ppb) {
+			return new SpringBeanThatWantsPostProcessedBean(ppb);
 		}
 
-		@Override
-		public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-			return bean;
+		@Bean
+		Module someGuiceModule() {
+			return new AbstractModule() {
+
+				@Override
+				protected void configure() {
+					binder().requireExplicitBindings();
+					bind(GuiceBeanThatWantsPostProcessedBean.class).asEagerSingleton();
+					bind(GuiceBeanThatWantsSpringBean.class).asEagerSingleton();
+				}
+			};
 		}
 
-	}
-
-	@Bean
-	public PostProcessorRegistrar postProcessorRegistrar() {
-		return new PostProcessorRegistrar();
-	}
-
-	@Bean
-	public PostProcessedBean postProcessedBean() {
-		return new PostProcessedBean();
-	}
-
-	@Bean
-	public SpringBeanThatWantsPostProcessedBean springBean(PostProcessedBean ppb) {
-		return new SpringBeanThatWantsPostProcessedBean(ppb);
-	}
-
-	@Bean
-	public Module someGuiceModule() {
-		return new AbstractModule() {
+		public static class PostProcessorRegistrar implements BeanDefinitionRegistryPostProcessor {
 
 			@Override
-			protected void configure() {
-				binder().requireExplicitBindings();
-				bind(GuiceBeanThatWantsPostProcessedBean.class).asEagerSingleton();
-				bind(GuiceBeanThatWantsSpringBean.class).asEagerSingleton();
+			public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
+				BeanDefinitionBuilder bean = BeanDefinitionBuilder.genericBeanDefinition(TestBeanPostProcessor.class);
+				registry.registerBeanDefinition("postProcessor", bean.getBeanDefinition());
 			}
-		};
+
+			@Override
+			public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) throws BeansException {
+			}
+
+		}
+
+		public static class TestBeanPostProcessor implements BeanPostProcessor {
+
+			@Override
+			public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+				if (bean instanceof PostProcessedBean) {
+					((PostProcessedBean) bean).postProcessed = true;
+				}
+				return bean;
+			}
+
+			@Override
+			public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+				return bean;
+			}
+
+		}
+
 	}
 
 }
