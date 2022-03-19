@@ -20,7 +20,7 @@ import javax.inject.Inject;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -33,7 +33,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class BeanPostProcessorTests {
 

@@ -23,9 +23,9 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.name.Names;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils;
@@ -34,19 +34,20 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class PrivateModuleTests {
 
 	private static AnnotationConfigApplicationContext context;
 
-	@BeforeClass
+	@BeforeAll
 	public static void init() {
 		context = new AnnotationConfigApplicationContext(PrivateModuleTestConfig.class);
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void cleanup() {
 		if (context != null) {
 			context.close();
@@ -71,20 +72,22 @@ public class PrivateModuleTests {
 		assertEquals("foo", beanDependingOnPrivateBinding);
 	}
 
-	@Test(expected = ConfigurationException.class)
+	@Test
 	public void verifyPrivateModulesPrivateBindingsAreNotExposedViaInjector() {
 		Injector injector = context.getBean(Injector.class);
-		injector.getInstance(Key.get(SomeInterface.class, Names.named("notexposed")));
+		assertThrows(ConfigurationException.class,
+				() -> injector.getInstance(Key.get(SomeInterface.class, Names.named("notexposed"))));
 	}
 
-	@Test(expected = NoSuchBeanDefinitionException.class)
+	@Test
 	public void verifyPrivateModulesPrivateBindingsAreNotExposedViaSpring() {
-		context.getBean("notexposed", SomeInterface.class);
+		assertThrows(NoSuchBeanDefinitionException.class, () -> context.getBean("notexposed", SomeInterface.class));
 	}
 
-	@Test(expected = NoSuchBeanDefinitionException.class)
+	@Test
 	public void verifyPrivateModulesPrivateBindingsAreNotExposedViaSpringWithQualifier() {
-		BeanFactoryAnnotationUtils.qualifiedBeanOfType(context.getBeanFactory(), SomeInterface.class, "notexposed");
+		assertThrows(NoSuchBeanDefinitionException.class, () -> BeanFactoryAnnotationUtils
+				.qualifiedBeanOfType(context.getBeanFactory(), SomeInterface.class, "notexposed"));
 	}
 
 	public interface SomeInterface {

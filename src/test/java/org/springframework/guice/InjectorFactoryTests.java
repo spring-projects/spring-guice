@@ -17,8 +17,8 @@
 package org.springframework.guice;
 
 import com.google.inject.Guice;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import org.springframework.context.ApplicationContextException;
@@ -28,11 +28,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 import org.springframework.guice.annotation.InjectorFactory;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 public class InjectorFactoryTests {
 
 	private static final InjectorFactory injectorFactory = Mockito.mock(InjectorFactory.class);
 
-	@Before
+	@BeforeEach
 	public void init() {
 		Mockito.when(injectorFactory.createInjector(Mockito.anyList())).thenReturn(Guice.createInjector());
 	}
@@ -45,11 +47,13 @@ public class InjectorFactoryTests {
 		context.close();
 	}
 
-	@Test(expected = ApplicationContextException.class)
+	@Test
 	public void testMultipleInjectorFactoriesThrowsApplicationContextException() {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(InjectorFactoryConfig.class,
-				SecondInjectorFactoryConfig.class, ModulesConfig.class);
-		context.close();
+		assertThrows(ApplicationContextException.class, () -> {
+			AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+					InjectorFactoryConfig.class, SecondInjectorFactoryConfig.class, ModulesConfig.class);
+			context.close();
+		});
 	}
 
 	@Configuration

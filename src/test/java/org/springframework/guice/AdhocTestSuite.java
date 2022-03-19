@@ -16,10 +16,9 @@
 
 package org.springframework.guice;
 
-import org.junit.Ignore;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
-import org.junit.runners.Suite.SuiteClasses;
+import org.junit.jupiter.api.Disabled;
+import org.junit.platform.suite.api.SelectClasses;
+import org.junit.platform.suite.api.Suite;
 
 import org.springframework.guice.annotation.EnableGuiceModulesTests;
 
@@ -28,9 +27,9 @@ import org.springframework.guice.annotation.EnableGuiceModulesTests;
  *
  * @author Dave Syer
  */
-@RunWith(Suite.class)
-@SuiteClasses({ BindingDeduplicationTests.class, EnableGuiceModulesTests.class })
-@Ignore
+@Suite
+@SelectClasses({ BindingDeduplicationTests.class, EnableGuiceModulesTests.class })
+@Disabled
 public class AdhocTestSuite {
 
 }

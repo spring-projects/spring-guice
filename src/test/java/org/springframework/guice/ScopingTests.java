@@ -21,16 +21,16 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.Scope;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class ScopingTests {
 
@@ -49,14 +49,14 @@ public class ScopingTests {
 
 		assertNotNull(someNoScopeDependency1);
 		assertNotNull(someNoScopeDependency2);
-		assertNotEquals(someNoScopeDependency1, someNoScopeDependency2);
+		Assertions.assertNotEquals(someNoScopeDependency1, someNoScopeDependency2);
 
 		SomeCustomScopeDependency someCustomScopeDependency1 = context.getBean(SomeCustomScopeDependency.class);
 		SomeCustomScopeDependency someCustomScopeDependency2 = context.getBean(SomeCustomScopeDependency.class);
 
 		assertNotNull(someCustomScopeDependency1);
 		assertNotNull(someCustomScopeDependency2);
-		assertNotEquals(someCustomScopeDependency1, someCustomScopeDependency2);
+		Assertions.assertNotEquals(someCustomScopeDependency1, someCustomScopeDependency2);
 		assertEquals(someCustomScopeDependency1.value, "custom");
 		assertEquals(someCustomScopeDependency2.value, "custom");
 

@@ -23,8 +23,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -33,7 +33,7 @@ import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author Dave Syer
@@ -41,7 +41,7 @@ import static org.junit.Assert.assertNotNull;
  */
 public class EnableGuiceModulesTests {
 
-	@After
+	@AfterEach
 	public void cleanUp() {
 		System.clearProperty("spring.guice.dedup");
 	}

@@ -20,8 +20,8 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Module;
 import com.google.inject.Stage;
-import org.junit.AfterClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -30,35 +30,34 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 import org.springframework.guice.annotation.InjectorFactory;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ModuleFilteringTests {
 
-	@AfterClass
+	@AfterAll
 	public static void cleanUp() {
 		System.clearProperty("spring.guice.modules.exclude");
 	}
 
-	@Test(expected = RuntimeException.class)
+	@Test
 	public void verifyAllIsWellWhenNoModulesFiltered() {
 		System.setProperty("spring.guice.modules.exclude", "FilterSomeNonExistentModule");
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-				ModuleFilteringTestsConfig.class);
-		SomeInterface someDependency = context.getBean(SomeInterface.class);
-		assertNotNull(someDependency);
-		context.close();
+		assertThrows(RuntimeException.class, () -> {
+			AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+					ModuleFilteringTestsConfig.class);
+			SomeInterface someDependency = context.getBean(SomeInterface.class);
+			assertNotNull(someDependency);
+			context.close();
+		});
 	}
 
-	@Test(expected = NoSuchBeanDefinitionException.class)
+	@Test
 	public void verifyFilteredModuleIsFiltered() {
 		System.setProperty("spring.guice.modules.exclude", "FilterThisModule");
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-				ModuleFilteringTestsConfig.class);
-		try {
-			context.getBean(SomeInterface.class);
-		}
-		finally {
-			context.close();
+		try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+				ModuleFilteringTestsConfig.class)) {
+			assertThrows(NoSuchBeanDefinitionException.class, () -> context.getBean(SomeInterface.class));
 		}
 	}
 

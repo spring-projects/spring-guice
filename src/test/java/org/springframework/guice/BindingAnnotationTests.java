@@ -29,7 +29,7 @@ import com.google.inject.BindingAnnotation;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -37,8 +37,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class BindingAnnotationTests {
 
@@ -87,8 +87,10 @@ public class BindingAnnotationTests {
 		assertNotNull(injector.getInstance(SomeNamedDepWithType1.class));
 		assertNotNull(injector.getInstance(SomeNamedDepWithType2.class));
 
-		assertNotNull(injector.getInstance(Key.get(SomeNamedDepWithType1.class, Names.named("sameNameDifferentType"))));
-		assertNotNull(injector.getInstance(Key.get(SomeNamedDepWithType2.class, Names.named("sameNameDifferentType"))));
+		assertNotNull(
+				injector.getInstance(Key.get(SomeNamedDepWithType1.class, Names.named("sameNameDifferentType"))));
+		assertNotNull(
+				injector.getInstance(Key.get(SomeNamedDepWithType2.class, Names.named("sameNameDifferentType"))));
 		context.close();
 	}
 

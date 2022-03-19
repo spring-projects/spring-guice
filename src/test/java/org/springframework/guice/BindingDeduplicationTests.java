@@ -20,19 +20,20 @@ import com.google.inject.AbstractModule;
 import com.google.inject.CreationException;
 import com.google.inject.Module;
 import com.google.inject.multibindings.OptionalBinder;
-import org.junit.AfterClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class BindingDeduplicationTests {
 
-	@AfterClass
+	@AfterAll
 	public static void cleanUp() {
 		System.clearProperty("spring.guice.dedup");
 	}
@@ -49,12 +50,14 @@ public class BindingDeduplicationTests {
 		context.close();
 	}
 
-	@Test(expected = CreationException.class)
+	@Test
 	public void verifyDuplicateBindingErrorWhenDedupeNotEnabled() {
 		System.setProperty("spring.guice.dedup", "false");
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
-				BindingDeduplicationTestsConfig.class);
-		context.close();
+		assertThrows(CreationException.class, () -> {
+			AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+					BindingDeduplicationTestsConfig.class);
+			context.close();
+		});
 	}
 
 	public static class SomeDependency {

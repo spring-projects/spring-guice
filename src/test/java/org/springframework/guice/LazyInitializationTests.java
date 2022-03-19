@@ -17,7 +17,7 @@
 package org.springframework.guice;
 
 import com.google.inject.AbstractModule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import org.springframework.aop.support.AopUtils;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -26,8 +26,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class LazyInitializationTests {
 
