@@ -56,7 +56,7 @@ public class ModuleBeanWiringTests extends AbstractCompleteWiringTests {
 	}
 
 	@EnableGuiceModules
-	@Configuration
+	@Configuration(proxyBeanMethods = false)
 	public static class TestConfig extends AbstractModule {
 
 		@Autowired

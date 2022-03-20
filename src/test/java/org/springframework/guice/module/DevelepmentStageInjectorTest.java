@@ -65,7 +65,7 @@ public class DevelepmentStageInjectorTest {
 	static class ModulesConfig {
 
 		@Bean
-		TestGuiceModule testGuiceModule() {
+		static TestGuiceModule testGuiceModule() {
 			return new TestGuiceModule();
 		}
 

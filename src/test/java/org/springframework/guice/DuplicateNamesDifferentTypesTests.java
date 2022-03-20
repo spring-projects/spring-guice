@@ -93,7 +93,7 @@ public class DuplicateNamesDifferentTypesTests {
 	static class DuplicateNamesDifferentTypesTestsConfig {
 
 		@Bean
-		Module module() {
+		static Module module() {
 			return new AbstractModule() {
 				@Override
 				protected void configure() {

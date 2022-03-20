@@ -91,7 +91,7 @@ public class ScopingTests {
 	static class ScopingTestsConfig {
 
 		@Bean
-		Module module() {
+		static Module module() {
 			return new AbstractModule() {
 				@Override
 				protected void configure() {

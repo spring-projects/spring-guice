@@ -93,7 +93,7 @@ public class ModuleFilteringTests {
 		}
 
 		@Bean
-		Module module() {
+		static Module module() {
 			return new AbstractModule() {
 
 				@Override

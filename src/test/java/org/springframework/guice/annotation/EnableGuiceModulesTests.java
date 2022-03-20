@@ -119,7 +119,7 @@ public class EnableGuiceModulesTests {
 
 	}
 
-	@Configuration
+	@Configuration(proxyBeanMethods = false)
 	@EnableGuiceModules
 	protected static class ModuleConfig extends AbstractModule {
 
@@ -135,12 +135,12 @@ public class EnableGuiceModulesTests {
 
 	}
 
-	@Configuration
+	@Configuration(proxyBeanMethods = false)
 	@EnableGuiceModules
 	protected static class ModuleBeanConfig {
 
 		@Bean
-		public MyModule module() {
+		public static MyModule module() {
 			return new MyModule();
 		}
 
@@ -204,7 +204,7 @@ public class EnableGuiceModulesTests {
 		}
 
 		@Bean
-		public MyGuiceModule bazModule() {
+		public static MyGuiceModule bazModule() {
 			return new MyGuiceModule();
 		}
 

@@ -361,7 +361,7 @@ public class SuperClassTests {
 	static class DisableJITConfig {
 
 		@Bean
-		AbstractModule disableJITModule() {
+		static AbstractModule disableJITModule() {
 			return new AbstractModule() {
 				@Override
 				protected void configure() {

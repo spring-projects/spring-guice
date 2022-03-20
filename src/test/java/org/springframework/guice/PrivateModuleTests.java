@@ -121,7 +121,7 @@ public class PrivateModuleTests {
 		}
 
 		@Bean
-		Module module() {
+		static Module module() {
 			return new AbstractModule() {
 				@Override
 				protected void configure() {

@@ -76,7 +76,7 @@ import org.springframework.guice.module.SpringModule;
  * @author Howard Yuan
  *
  */
-@Configuration
+@Configuration(proxyBeanMethods = false)
 @Order(Ordered.HIGHEST_PRECEDENCE)
 class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor, ApplicationContextAware {
 

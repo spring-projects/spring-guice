@@ -49,7 +49,7 @@ public class PrototypeScopedBeanTests {
 	static class ModulesConfig {
 
 		@Bean
-		Module guiceModule() {
+		static Module guiceModule() {
 			return new AbstractModule() {
 				@Override
 				protected void configure() {

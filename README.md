@@ -97,7 +97,7 @@ bindings. Example:
 public static class TestConfig {
 
     @Bean
-    public MyModule myModule() {
+    public static MyModule myModule() {
         return new MyModule();
     }
 
@@ -111,6 +111,35 @@ public static class TestConfig {
 
 The `Service` was defined in the Guice module `MyModule`, and then it
 was be bound to the autowired `spam()` method when Spring started.
+
+## Configuration Class Enhancements
+
+Note that the `Module` bean definition in the example above is 
+declared in a `static` method. This is intentional and can be used to
+avoid accidentally preventing Spring from being able to enhance the
+parent `@Configuration` class. The default behaviour for Spring is to
+create a proxy for `@Configuration` classes so the `@Bean` methods
+can call each other and Spring will preserve the singleton nature of
+the bean factory - one bean of each type per bean id.
+
+If you see logs like this when the context starts:
+
+```
+Mar 21, 2022 8:30:35 AM org.springframework.context.annotation.ConfigurationClassPostProcessor enhanceConfigurationClasses
+INFO: Cannot enhance @Configuration bean definition 'TestConfig' since its singleton instance has been created too early. The typical cause is a non-static @Bean method with a BeanDefinitionRegistryPostProcessor return type: Consider declaring such methods as 'static'.
+```
+
+that is a sign that you might want to use static methods to define
+any beans of type `Module`. It is logged at INFO because Spring 
+doesn't know if it was intentional or not. Most likely it was
+unintentional, and it is better to avoid nasty surprises later 
+if we can.
+
+Another way to avoid the warning is to declare the parent class as 
+`@Configuration(proxyBeanMethods = false)` so that Spring knows that
+you don't even want to enhance the class. It's not a bad idea to use
+that flag wherever you can because it saves some time on start up
+if the proxy doesn't need to be created.
 
 ## Using Guice as an API for accessing a Spring ApplicationContext
 

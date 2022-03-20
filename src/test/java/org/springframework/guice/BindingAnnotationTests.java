@@ -222,7 +222,7 @@ public class BindingAnnotationTests {
 		}
 
 		@Bean
-		AbstractModule module() {
+		static AbstractModule module() {
 			return new AbstractModule() {
 				@Override
 				protected void configure() {

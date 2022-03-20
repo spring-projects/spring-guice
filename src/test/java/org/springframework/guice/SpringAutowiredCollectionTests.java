@@ -61,7 +61,7 @@ public class SpringAutowiredCollectionTests {
 		}
 
 		@Bean
-		GuiceModule guiceServiceModule() {
+		static GuiceModule guiceServiceModule() {
 			return new GuiceModule();
 		}
 

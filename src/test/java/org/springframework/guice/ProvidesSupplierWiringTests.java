@@ -71,7 +71,7 @@ public class ProvidesSupplierWiringTests {
 	static class ModulesConfig {
 
 		@Bean
-		TestConfig testConfig() {
+		static TestConfig testConfig() {
 			return new TestConfig();
 		}
 

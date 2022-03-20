@@ -49,7 +49,7 @@ public class MapWiringTests {
 	static class ModulesConfig {
 
 		@Bean
-		TestConfig testConfig() {
+		static TestConfig testConfig() {
 			return new TestConfig();
 		}
 

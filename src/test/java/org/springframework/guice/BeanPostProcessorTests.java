@@ -97,7 +97,7 @@ public class BeanPostProcessorTests {
 	static class BeanPostProcessorTestConfig {
 
 		@Bean
-		PostProcessorRegistrar postProcessorRegistrar() {
+		static PostProcessorRegistrar postProcessorRegistrar() {
 			return new PostProcessorRegistrar();
 		}
 
@@ -112,7 +112,7 @@ public class BeanPostProcessorTests {
 		}
 
 		@Bean
-		Module someGuiceModule() {
+		static Module someGuiceModule() {
 			return new AbstractModule() {
 
 				@Override

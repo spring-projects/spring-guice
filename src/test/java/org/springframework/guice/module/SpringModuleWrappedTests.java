@@ -79,7 +79,7 @@ public class SpringModuleWrappedTests {
 	protected static class ModuleProviderConfig {
 
 		@Bean
-		public ProviderModule module() {
+		public static ProviderModule module() {
 			return new ProviderModule();
 		}
 

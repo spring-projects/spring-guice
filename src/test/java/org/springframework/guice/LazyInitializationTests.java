@@ -71,7 +71,7 @@ public class LazyInitializationTests {
 	static class GuiceConfig {
 
 		@Bean
-		GuiceModule guiceModule() {
+		static GuiceModule guiceModule() {
 			return new GuiceModule();
 		}
 
