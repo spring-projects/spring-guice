@@ -155,6 +155,10 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 					&& entry.getKey().getAnnotationType().getName().startsWith("com.google.inject.multibindings")) {
 				continue;
 			}
+			if (entry.getKey().getAnnotationType() != null && entry.getKey().getAnnotationType().getName()
+					.startsWith("com.google.inject.internal.UniqueAnnotations")) {
+				continue;
+			}
 
 			Binding<?> binding = entry.getValue();
 			Key<?> key = entry.getKey();
