@@ -28,7 +28,11 @@ import com.google.inject.AbstractModule;
 import com.google.inject.BindingAnnotation;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
 import com.google.inject.name.Names;
+import com.google.inject.throwingproviders.CheckedProvider;
+import com.google.inject.throwingproviders.CheckedProvides;
+import com.google.inject.throwingproviders.ThrowingProviderBinder;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -90,6 +94,14 @@ public class BindingAnnotationTests {
 				.isNotNull();
 		assertThat(injector.getInstance(Key.get(SomeNamedDepWithType2.class, Names.named("sameNameDifferentType"))))
 				.isNotNull();
+
+		assertThat(injector
+				.getInstance(Key.get(new TypeLiteral<TestCheckedProvider<SomeDependencyFromTestCheckedProvider>>() {
+				}))).isNotNull();
+		assertThat(injector.getInstance(
+				Key.get(new TypeLiteral<TestCheckedProvider<SomeOtherDependencyFromTestCheckedProvider>>() {
+				}))).isNotNull();
+
 		context.close();
 	}
 
@@ -155,6 +167,18 @@ public class BindingAnnotationTests {
 		@Autowired
 		@SomeOtherBindingAnnotation
 		String otherAnnotatedString;
+
+	}
+
+	public interface TestCheckedProvider<T> extends CheckedProvider<T> {
+
+	}
+
+	public static class SomeDependencyFromTestCheckedProvider {
+
+	}
+
+	public static class SomeOtherDependencyFromTestCheckedProvider {
 
 	}
 
@@ -226,9 +250,21 @@ public class BindingAnnotationTests {
 			return new AbstractModule() {
 				@Override
 				protected void configure() {
+					install(ThrowingProviderBinder.forModule(this));
 					bind(String.class).annotatedWith(SomeBindingAnnotation.class).toInstance("annotated");
 					bind(String.class).annotatedWith(SomeOtherBindingAnnotation.class).toInstance("other");
 				}
+
+				@CheckedProvides(TestCheckedProvider.class)
+				SomeDependencyFromTestCheckedProvider some() throws Exception {
+					return new SomeDependencyFromTestCheckedProvider();
+				}
+
+				@CheckedProvides(TestCheckedProvider.class)
+				SomeOtherDependencyFromTestCheckedProvider other() throws Exception {
+					return new SomeOtherDependencyFromTestCheckedProvider();
+				}
+
 			};
 		}
 
