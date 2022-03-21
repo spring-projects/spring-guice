@@ -79,7 +79,7 @@ class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateR
 		}
 		catch (NoSuchBeanDefinitionException ex) {
 			if (ex.getResolvableType() != null) {
-				this.logger.info(String.format("Use just in time binding for %s in bean: %s",
+				this.logger.debug(String.format("Using just in time binding for %s in bean: %s",
 						ex.getResolvableType().getType().getTypeName(), beanName));
 			}
 			return true;
