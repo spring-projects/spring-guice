@@ -16,6 +16,7 @@
 
 package org.springframework.guice.module;
 
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
@@ -25,12 +26,14 @@ import javax.inject.Provider;
 import com.google.inject.BindingAnnotation;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.name.Names;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.springframework.aop.TargetSource;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.annotation.ContextAnnotationAutowireCandidateResolver;
@@ -117,8 +120,8 @@ class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateR
 						target = beanFactory.doResolveDependency(descriptor, beanName, null, null);
 					}
 					catch (NoSuchBeanDefinitionException ex) {
-						target = GuiceAutowireCandidateResolver.this.injectorProvider.get()
-								.getInstance(Key.get(descriptor.getResolvableType().getType()));
+						Key<?> key = guiceInstanceResolverKey();
+						target = GuiceAutowireCandidateResolver.this.injectorProvider.get().getInstance(key);
 						this.isGuiceResolvable = Optional.of(true);
 					}
 				}
@@ -127,6 +130,26 @@ class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateR
 							"Optional dependency not present for lazy injection point");
 				}
 				return target;
+			}
+
+			private Key<?> guiceInstanceResolverKey() {
+				Type type = descriptor.getResolvableType().getType();
+
+				Optional<String> qualifierValue = qualifierBean(descriptor).map(Qualifier::value);
+				if (qualifierValue.isPresent()) {
+					return Key.get(type, Names.named(qualifierValue.get()));
+				}
+				return Key.get(type);
+			}
+
+			private Optional<Qualifier> qualifierBean(DependencyDescriptor descriptor) {
+				if (descriptor.getField() != null) {
+					return Optional.ofNullable(descriptor.getField().getAnnotation(Qualifier.class));
+				}
+				if (descriptor.getMethodParameter() != null) {
+					return Optional.ofNullable(descriptor.getMethodParameter().getParameterAnnotation(Qualifier.class));
+				}
+				return Optional.empty();
 			}
 
 			@Override
