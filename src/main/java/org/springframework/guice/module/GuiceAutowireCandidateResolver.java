@@ -135,21 +135,21 @@ class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateR
 			private Key<?> guiceInstanceResolverKey() {
 				Type type = descriptor.getResolvableType().getType();
 
-				Optional<String> qualifierValue = qualifierBean(descriptor).map(Qualifier::value);
-				if (qualifierValue.isPresent()) {
-					return Key.get(type, Names.named(qualifierValue.get()));
+				Qualifier qualifierValue = qualifierBean(descriptor);
+				if (qualifierValue != null) {
+					return Key.get(type, Names.named(qualifierValue.value()));
 				}
 				return Key.get(type);
 			}
 
-			private Optional<Qualifier> qualifierBean(DependencyDescriptor descriptor) {
+			private Qualifier qualifierBean(DependencyDescriptor descriptor) {
 				if (descriptor.getField() != null) {
-					return Optional.ofNullable(descriptor.getField().getAnnotation(Qualifier.class));
+					return descriptor.getField().getAnnotation(Qualifier.class);
 				}
 				if (descriptor.getMethodParameter() != null) {
-					return Optional.ofNullable(descriptor.getMethodParameter().getParameterAnnotation(Qualifier.class));
+					return descriptor.getMethodParameter().getParameterAnnotation(Qualifier.class);
 				}
-				return Optional.empty();
+				return null;
 			}
 
 			@Override
