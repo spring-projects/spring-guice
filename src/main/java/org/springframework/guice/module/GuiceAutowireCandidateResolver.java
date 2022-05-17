@@ -112,16 +112,14 @@ class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateR
 			public Object getTarget() {
 				Object target = null;
 				if (this.isGuiceResolvable.isPresent() && this.isGuiceResolvable.get()) {
-					target = GuiceAutowireCandidateResolver.this.injectorProvider.get()
-							.getInstance(Key.get(descriptor.getResolvableType().getType()));
+					target = targetGuiceObject();
 				}
 				else {
 					try {
 						target = beanFactory.doResolveDependency(descriptor, beanName, null, null);
 					}
 					catch (NoSuchBeanDefinitionException ex) {
-						Key<?> key = guiceInstanceResolverKey();
-						target = GuiceAutowireCandidateResolver.this.injectorProvider.get().getInstance(key);
+						target = targetGuiceObject();
 						this.isGuiceResolvable = Optional.of(true);
 					}
 				}
@@ -130,6 +128,11 @@ class GuiceAutowireCandidateResolver extends ContextAnnotationAutowireCandidateR
 							"Optional dependency not present for lazy injection point");
 				}
 				return target;
+			}
+
+			private Object targetGuiceObject() {
+				Key<?> key = guiceInstanceResolverKey();
+				return GuiceAutowireCandidateResolver.this.injectorProvider.get().getInstance(key);
 			}
 
 			private Key<?> guiceInstanceResolverKey() {
