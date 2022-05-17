@@ -71,6 +71,26 @@ public class PartialInjectionTests {
 		assertThat(example.getUnnamedMessage()).isEqualTo("apple");
 	}
 
+	@Test
+	void shouldResolveNamedComponentOnSecondInjectWhenUsingConstructorInjection() {
+		Injector injector = guiceInjectorWithSpringBean(ConstructorInjectionExample.class);
+
+		ConstructorInjectionExample example = injector.getInstance(ConstructorInjectionExample.class);
+
+		example.getNamedMessage();
+		assertThat(example.getNamedMessage()).isEqualTo("banana");
+	}
+
+	@Test
+	void shouldResolveNamedComponentOnSecondInjectWhenUsingSetterInjection() {
+		Injector injector = guiceInjectorWithSpringBean(SetterInjectionExample.class);
+
+		SetterInjectionExample example = injector.getInstance(SetterInjectionExample.class);
+
+		example.getNamedMessage();
+		assertThat(example.getNamedMessage()).isEqualTo("banana");
+	}
+
 	private Injector guiceInjectorWithSpringBean(Class<?> classForContext) {
 		Class<?>[] components = new Class<?>[] { classForContext };
 		BeanFactoryProvider beanFactoryProvider = BeanFactoryProvider.from(components);
