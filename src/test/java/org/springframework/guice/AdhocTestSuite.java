@@ -28,7 +28,7 @@ import org.springframework.guice.annotation.EnableGuiceModulesTests;
  * @author Dave Syer
  */
 @Suite
-@SelectClasses({ BindingDeduplicationTests.class, EnableGuiceModulesTests.class })
+@SelectClasses({ MapBindingDeduplicationTests.class, BindingDeduplicationTests.class, EnableGuiceModulesTests.class })
 @Disabled
 public class AdhocTestSuite {
 

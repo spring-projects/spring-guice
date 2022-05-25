@@ -16,6 +16,9 @@
 
 package org.springframework.guice.annotation;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,24 +26,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.google.inject.Binding;
+import com.google.inject.ConfigurationException;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.Stage;
+import com.google.inject.TypeLiteral;
+import com.google.inject.internal.BindingImpl;
 import com.google.inject.name.Named;
 import com.google.inject.spi.Element;
 import com.google.inject.spi.ElementSource;
 import com.google.inject.spi.Elements;
 import com.google.inject.spi.LinkedKeyBinding;
+import com.google.inject.spi.Message;
 import com.google.inject.spi.PrivateElements;
+import com.google.inject.spi.UntargettedBinding;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -86,11 +95,27 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 
 	private static final String SPRING_GUICE_STAGE_PROPERTY_NAME = "spring.guice.stage";
 
+	private static final List<String> SPRING_GUICE_IGNORED_ANNOTATION_PREFIXES = Arrays.asList(
+			"com.google.inject.multibindings", "com.google.inject.internal.Element",
+			"com.google.inject.internal.UniqueAnnotations", "com.google.inject.internal.RealOptionalBinder");
+
 	private final Log logger = LogFactory.getLog(getClass());
 
 	private ApplicationContext applicationContext;
 
 	private boolean enableJustInTimeBinding = true;
+
+	protected static final Method GUICE_BINDINGIMPL_WITHKEY;
+
+	static {
+		try {
+			GUICE_BINDINGIMPL_WITHKEY = BindingImpl.class.getDeclaredMethod("withKey", Key.class);
+			GUICE_BINDINGIMPL_WITHKEY.setAccessible(true);
+		}
+		catch (NoSuchMethodException ex) {
+			throw new RuntimeException(ex);
+		}
+	}
 
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
@@ -106,6 +131,11 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 		modules.add(new SpringModule((ConfigurableListableBeanFactory) registry, this.enableJustInTimeBinding));
 		Map<Key<?>, Binding<?>> bindings = new HashMap<Key<?>, Binding<?>>();
 		List<Element> elements = Elements.getElements(Stage.TOOL, modules);
+		List<Message> errors = elements.stream().filter((e) -> e instanceof Message).map((e) -> (Message) e)
+				.collect(Collectors.toList());
+		if (!errors.isEmpty()) {
+			throw new ConfigurationException(errors);
+		}
 		if (this.applicationContext.getEnvironment().getProperty(SPRING_GUICE_DEDUPE_BINDINGS_PROPERTY_NAME,
 				Boolean.class, false)) {
 			elements = removeDuplicates(elements);
@@ -146,34 +176,53 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 		Stage stage = this.applicationContext.getEnvironment().getProperty(SPRING_GUICE_STAGE_PROPERTY_NAME,
 				Stage.class, Stage.PRODUCTION);
 		boolean ifLazyInit = stage.equals(Stage.DEVELOPMENT);
-		for (Entry<Key<?>, Binding<?>> entry : bindings.entrySet()) {
-			if (entry.getKey().getTypeLiteral().getRawType().equals(Injector.class) || SpringModule.SPRING_GUICE_SOURCE
-					.equals(Optional.ofNullable(entry.getValue().getSource()).map(Object::toString).orElse(""))) {
-				continue;
-			}
-			if (entry.getKey().getAnnotationType() != null
-					&& entry.getKey().getAnnotationType().getName().startsWith("com.google.inject.multibindings")) {
-				continue;
-			}
-			if (entry.getKey().getAnnotationType() != null && entry.getKey().getAnnotationType().getName()
-					.startsWith("com.google.inject.internal.UniqueAnnotations")) {
-				continue;
-			}
+		Map<? extends Key<?>, List<LinkedKeyBinding<?>>> linkedBindingsByKey = bindings.values().stream()
+				.filter((e) -> e instanceof LinkedKeyBinding).map((e) -> ((LinkedKeyBinding<?>) e))
+				.collect(Collectors.groupingBy(LinkedKeyBinding::getLinkedKey));
 
+		Map<? extends Key<?>, ? extends Binding<?>> guiceBindingsByKey = bindings.entrySet().stream()
+				.filter((entry) -> {
+					Binding<?> binding = entry.getValue();
+					Key<?> key = entry.getKey();
+					Object source = binding.getSource();
+
+					TypeLiteral<?> typeLiteral = key.getTypeLiteral();
+					Class<? extends Annotation> annotationType = key.getAnnotationType();
+
+					if (binding instanceof UntargettedBinding && linkedBindingsByKey.containsKey(binding.getKey())) {
+						return false;
+					}
+					if (typeLiteral.getRawType().equals(Injector.class) || SpringModule.SPRING_GUICE_SOURCE
+							.equals(Optional.ofNullable(source).map(Object::toString).orElse(""))) {
+						return false;
+					}
+					if (annotationType != null) {
+						if (SPRING_GUICE_IGNORED_ANNOTATION_PREFIXES.stream()
+								.anyMatch((prefix) -> annotationType.getName().startsWith(prefix))) {
+							return false;
+						}
+					}
+					return true;
+				}).collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+		for (Entry<? extends Key<?>, ? extends Binding<?>> entry : guiceBindingsByKey.entrySet()) {
 			Binding<?> binding = entry.getValue();
 			Key<?> key = entry.getKey();
-			Object source = binding.getSource();
+
+			TypeLiteral<?> typeLiteral = key.getTypeLiteral();
+			Class<? extends Annotation> annotationType = key.getAnnotationType();
 
 			RootBeanDefinition bean = new RootBeanDefinition(GuiceFactoryBean.class);
 			ConstructorArgumentValues args = new ConstructorArgumentValues();
-			args.addIndexedArgumentValue(0, key.getTypeLiteral().getRawType());
+			args.addIndexedArgumentValue(0, typeLiteral.getRawType());
 			args.addIndexedArgumentValue(1, key);
 			args.addIndexedArgumentValue(2, Scopes.isSingleton(binding));
 			bean.setConstructorArgumentValues(args);
-			bean.setTargetType(ResolvableType.forType(key.getTypeLiteral().getType()));
+			bean.setTargetType(ResolvableType.forType(typeLiteral.getType()));
 			if (!Scopes.isSingleton(binding)) {
 				bean.setScope(ConfigurableBeanFactory.SCOPE_PROTOTYPE);
 			}
+			Object source = binding.getSource();
 			if (source instanceof ElementSource) {
 				bean.setResourceDescription(((ElementSource) source).getDeclaringSource().toString());
 			}
@@ -181,10 +230,10 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 				bean.setResourceDescription(SpringModule.SPRING_GUICE_SOURCE);
 			}
 			bean.setAttribute(SpringModule.SPRING_GUICE_SOURCE, true);
-			if (key.getAnnotationType() != null) {
-				bean.addQualifier(new AutowireCandidateQualifier(Qualifier.class, getValueAttributeForNamed(key)));
-				bean.addQualifier(
-						new AutowireCandidateQualifier(key.getAnnotationType(), getValueAttributeForNamed(key)));
+			if (annotationType != null) {
+				String nameValue = getValueAttributeForNamed(key);
+				bean.addQualifier(new AutowireCandidateQualifier(Qualifier.class, nameValue));
+				bean.addQualifier(new AutowireCandidateQualifier(annotationType, nameValue));
 			}
 			if (ifLazyInit) {
 				bean.setLazyInit(true);
@@ -252,69 +301,62 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 	 * @return de-duplicated list of bindings
 	 */
 	protected List<Element> removeDuplicates(List<Element> elements) {
-		List<Element> duplicateElements = elements.stream().filter((e) -> e instanceof Binding)
-				.map((e) -> (Binding<?>) e)
-				.collect(Collectors.groupingBy(ModuleRegistryConfiguration::getLinkedKeyIfRequired)).entrySet().stream()
-				.filter((e) -> e.getValue().size() > 1 && e.getValue().stream()
-						.anyMatch((binding) -> binding.getSource() != null
-								&& binding.getSource().toString().contains(SpringModule.SPRING_GUICE_SOURCE))) // find
-																												// duplicates
-				.flatMap((e) -> e.getValue().stream())
-				.filter((e) -> e.getSource() != null
-						&& !e.getSource().toString().contains(SpringModule.SPRING_GUICE_SOURCE))
-				.collect(Collectors.toList());
+		Predicate<Element> hasSpringSource = ((element) -> element.getSource() != null
+				&& element.getSource().toString().contains(SpringModule.SPRING_GUICE_SOURCE));
 
-		@SuppressWarnings("unlikely-arg-type")
-		List<Element> dedupedElements = elements.stream().filter((e) -> {
+		List<? extends Binding<?>> bindings = elements.stream().filter((e) -> e instanceof Binding)
+				.map((e) -> (Binding<?>) e).collect(Collectors.toList());
+
+		Map<? extends Key<?>, ? extends Key<?>> injectionKeys = bindings.stream()
+				.collect(Collectors.groupingBy(Binding::getKey)).entrySet().stream()
+				.collect(Collectors.toMap(Map.Entry::getKey, (e) -> {
+					List<? extends Binding<?>> keyBindings = e.getValue();
+					if (keyBindings.size() == 1) {
+						// If a linked binding isn't duplicated by its key, try the linked
+						// injection key
+						Binding<?> binding = keyBindings.get(0);
+						if (binding instanceof LinkedKeyBinding) {
+							return ((LinkedKeyBinding<?>) binding).getLinkedKey();
+						}
+					}
+					return e.getKey();
+				}));
+
+		Map<? extends Key<?>, List<? extends Binding<?>>> duplicateBindings = bindings.stream()
+				.collect(Collectors.groupingBy((e) -> injectionKeys.get(e.getKey()))).entrySet().stream()
+				.filter((e) -> e.getValue().size() > 1 && e.getValue().stream().anyMatch(hasSpringSource))
+				.collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+
+		return elements.stream().flatMap((e) -> {
 			if (e instanceof Binding) {
-				return !duplicateElements.contains(new SourceComparableBinding((Binding<?>) e));
+				Binding<?> b = (Binding<?>) e;
+				Key<?> key = injectionKeys.get(b.getKey());
+				List<? extends Binding<?>> duplicates = duplicateBindings.get(key);
+				if (duplicates != null) {
+					if (hasSpringSource.test(b)) {
+						return duplicates.stream().filter(hasSpringSource.negate())
+								.map((guiceBinding) -> withKey(b, guiceBinding.getKey()));
+					}
+					else {
+						// Remove the duplicate Guice binding
+						return Stream.empty();
+					}
+				}
 			}
-			else {
-				return true;
-			}
+			return Stream.of(e);
 		}).collect(Collectors.toList());
-		return dedupedElements;
 	}
 
-	private static Key<?> getLinkedKeyIfRequired(Binding<?> binding) {
-		if (binding == null) {
-			return null;
+	/*
+	 * Re-key the Spring source binding with the Guice key for the built-in bindings.
+	 */
+	private Binding<?> withKey(Binding<?> binding, Key<?> key) {
+		try {
+			return (BindingImpl<?>) GUICE_BINDINGIMPL_WITHKEY.invoke(binding, key);
 		}
-
-		if (binding instanceof LinkedKeyBinding) {
-			LinkedKeyBinding<?> linkedBinding = (LinkedKeyBinding<?>) binding;
-			return linkedBinding.getLinkedKey();
+		catch (IllegalAccessException | InvocationTargetException ex) {
+			throw new RuntimeException(ex);
 		}
-
-		return binding.getKey();
-	}
-
-	@SuppressWarnings("checkstyle:EqualsHashCode")
-	private static class SourceComparableBinding {
-
-		private Binding<?> binding;
-
-		SourceComparableBinding(Binding<?> binding) {
-			this.binding = binding;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (obj instanceof Binding) {
-				Binding<?> compareTo = (Binding<?>) obj;
-				if (compareTo.getSource() != null && this.binding != null) {
-					return this.binding.equals(compareTo)
-							&& Objects.equals(this.binding.getSource(), compareTo.getSource());
-				}
-				else {
-					return Objects.equals(this.binding, compareTo);
-				}
-			}
-			else {
-				return false;
-			}
-		}
-
 	}
 
 	/**

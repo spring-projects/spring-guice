@@ -168,9 +168,6 @@ public class SpringModule extends AbstractModule {
 					type = clazz;
 				}
 
-				if (type == null) {
-					continue;
-				}
 				Provider<?> typeProvider = BeanFactoryProvider.typed(beanFactory, type, bindingAnnotation);
 				Provider<?> namedProvider = BeanFactoryProvider.named(beanFactory, name, type, bindingAnnotation);
 
@@ -305,7 +302,8 @@ public class SpringModule extends AbstractModule {
 		if (!this.matcher.matches(name, type)) {
 			return;
 		}
-		if (type.getTypeName().startsWith("com.google.inject")) {
+		String typeName = type.getTypeName();
+		if (typeName.startsWith("com.google.inject") || typeName.startsWith("javax.inject.Provider")) {
 			return;
 		}
 		if (type instanceof ParameterizedType) {
@@ -318,13 +316,11 @@ public class SpringModule extends AbstractModule {
 		}
 		Key<?> key = bindingAnnotation.map((a) -> (Key<Object>) Key.get(type, a)).orElse((Key<Object>) Key.get(type));
 		StageTypeKey stageTypeKey = new StageTypeKey(binder.currentStage(), key);
-		if (this.bound.get(stageTypeKey) == null) {
-			// Only bind one provider for each type
-
+		// Only bind one provider for each type
+		if (this.bound.put(stageTypeKey, typeProvider) == null) {
 			binder.withSource(SPRING_GUICE_SOURCE).bind(key).toProvider(typeProvider);
-			this.bound.put(stageTypeKey, typeProvider);
 		}
-		// But allow binding to named beans if not already bound
+		// Allow binding to named beans if not already bound
 		if (!name.equals(getNameFromBindingAnnotation(bindingAnnotation))) {
 			binder.withSource(SPRING_GUICE_SOURCE).bind(TypeLiteral.get(type)).annotatedWith(Names.named(name))
 					.toProvider(namedProvider);
@@ -375,6 +371,11 @@ public class SpringModule extends AbstractModule {
 			result = prime * result + ((this.key == null) ? 0 : this.key.hashCode());
 			result = prime * result + ((this.stage == null) ? 0 : this.stage.hashCode());
 			return result;
+		}
+
+		@Override
+		public String toString() {
+			return "StageTypeKey[key=" + this.key + ", stage=" + this.stage + "]";
 		}
 
 	}
