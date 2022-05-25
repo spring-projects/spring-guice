@@ -21,6 +21,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Qualifier;
 
@@ -35,6 +36,7 @@ import com.google.inject.throwingproviders.CheckedProvides;
 import com.google.inject.throwingproviders.ThrowingProviderBinder;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -42,6 +44,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.guice.annotation.EnableGuiceModules;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 public class BindingAnnotationTests {
 
@@ -105,6 +108,15 @@ public class BindingAnnotationTests {
 		context.close();
 	}
 
+	@Test
+	public void verifyBindingAnnotationsDuplicateBeans() {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+				BindingAnnotationTestsConfig.class);
+		assertThatExceptionOfType(NoUniqueBeanDefinitionException.class)
+				.isThrownBy(() -> assertThat(context.getBean(SomeService.class)).isNotNull());
+		context.close();
+	}
+
 	public static class SomeDependencyWithQualifierOnProvider {
 
 	}
@@ -145,7 +157,7 @@ public class BindingAnnotationTests {
 	}
 
 	@BindingAnnotation
-	@Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD })
+	@Target({ ElementType.TYPE, ElementType.METHOD, ElementType.FIELD, ElementType.PARAMETER })
 	@Retention(RetentionPolicy.RUNTIME)
 	@interface SomeBindingAnnotation {
 
@@ -179,6 +191,32 @@ public class BindingAnnotationTests {
 	}
 
 	public static class SomeOtherDependencyFromTestCheckedProvider {
+
+	}
+
+	interface SomeService {
+
+	}
+
+	static class BaseSomeService implements SomeService {
+
+	}
+
+	static class ShadowingSomeService implements SomeService {
+
+		@Inject
+		ShadowingSomeService(@SomeBindingAnnotation SomeService baseService) {
+
+		}
+
+	}
+
+	public static class SomeProvider implements javax.inject.Provider<Object> {
+
+		@Override
+		public Object get() {
+			return null;
+		}
 
 	}
 
@@ -246,6 +284,11 @@ public class BindingAnnotationTests {
 		}
 
 		@Bean
+		SomeProvider someProvider() {
+			return new SomeProvider();
+		}
+
+		@Bean
 		static AbstractModule module() {
 			return new AbstractModule() {
 				@Override
@@ -253,6 +296,9 @@ public class BindingAnnotationTests {
 					install(ThrowingProviderBinder.forModule(this));
 					bind(String.class).annotatedWith(SomeBindingAnnotation.class).toInstance("annotated");
 					bind(String.class).annotatedWith(SomeOtherBindingAnnotation.class).toInstance("other");
+
+					bind(SomeService.class).annotatedWith(SomeBindingAnnotation.class).to(BaseSomeService.class);
+					bind(SomeService.class).to(ShadowingSomeService.class);
 				}
 
 				@CheckedProvides(TestCheckedProvider.class)
