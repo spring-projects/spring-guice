@@ -3,9 +3,10 @@
 ---
 resource_types:
 - name: slack-notification
-  type: docker-image
+  type: registry-image
   source:
     repository: harbor-repo.vmware.com/dockerhub-proxy-cache/nebhale/slack-notification-resource
+    tag: latest
 
 resources:
 - name: source
@@ -15,7 +16,7 @@ resources:
 - name: slack
   type: slack-notification
   source:
-    url: {{slack-url}}
+    url: ((slack-webhook-url))
   
 slack-failure: &slack-failure
   put: slack
@@ -46,10 +47,11 @@ jobs:
     config:
       platform: linux
       image_resource:
-        type: docker-image
+        type: registry-image
         source: 
-          repository: harbor-repo.vmware.com/dockerhub-proxy-cache/springio/spring-ci-base
-      inputs:
+          repository: harbor-repo.vmware.com/dockerhub-proxy-cache/springci/spring-framework-ci-jdk11
+          tag: 5.3.x
+        inputs:
         - name: source
       caches:
         - path: source/.m2
@@ -70,9 +72,10 @@ jobs:
     config:
       platform: linux
       image_resource:
-        type: docker-image
+        type: registry-image
         source:
-          repository: harbor-repo.vmware.com/dockerhub-proxy-cache/springio/spring-ci-base
+          repository: harbor-repo.vmware.com/dockerhub-proxy-cache/springci/spring-framework-ci-jdk17
+          tag: 5.3.x
       inputs:
         - name: source
       caches:
@@ -95,9 +98,10 @@ jobs:
     config:
       platform: linux
       image_resource:
-        type: docker-image
+        type: registry-image
         source: 
-          repository: harbor-repo.vmware.com/dockerhub-proxy-cache/springio/spring-ci-base
+          repository: harbor-repo.vmware.com/dockerhub-proxy-cache/springci/spring-framework-ci-jdk11
+          tag: 5.3.x
       inputs:
         - name: source
       caches:
@@ -113,11 +117,11 @@ jobs:
           ./mvnw deploy -DskipTests -s .mvn/settings.xml
     params:
       TERM: dumb
-      passphrase: {{passphrase}}
-      sonatype_username: {{sonatype-username}}
-      sonatype_password: {{sonatype-password}}
-      spring_username: {{spring-username}}
-      spring_password: {{spring-password}}
+      passphrase: ((signing-passphrase))
+      sonatype_username: ((sonatype-username))
+      sonatype_password: ((sonatype-password))
+      spring_username: ((artifactory-username))
+      spring_password: ((artifactory-password))
     on_failure: *slack-failure
     on_success: *slack-success
 
