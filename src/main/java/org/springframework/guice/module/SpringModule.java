@@ -17,11 +17,9 @@
 package org.springframework.guice.module;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -58,11 +56,9 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.ResolvableType;
-import org.springframework.core.annotation.AnnotationUtils;
+import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.core.type.MethodMetadata;
-import org.springframework.core.type.StandardMethodMetadata;
 import org.springframework.util.ClassUtils;
-import org.springframework.util.ReflectionUtils;
 
 /**
  * A Guice module that wraps a Spring {@link ApplicationContext}.
@@ -137,7 +133,7 @@ public class SpringModule extends AbstractModule {
 			if (definition.hasAttribute(SPRING_GUICE_SOURCE)) {
 				continue;
 			}
-			Optional<Annotation> bindingAnnotation = getAnnotationForBeanDefinition(definition, beanFactory);
+			Optional<Annotation> bindingAnnotation = getAnnotationForBeanDefinition(definition);
 			if (definition.isAutowireCandidate() && definition.getRole() == AbstractBeanDefinition.ROLE_APPLICATION) {
 				Type type;
 				Class<?> clazz = beanFactory.getType(name);
@@ -204,65 +200,21 @@ public class SpringModule extends AbstractModule {
 		}
 	}
 
-	private static Optional<Annotation> getAnnotationForBeanDefinition(BeanDefinition definition,
-			ConfigurableListableBeanFactory beanFactory) {
-		if (definition instanceof AnnotatedBeanDefinition
-				&& ((AnnotatedBeanDefinition) definition).getFactoryMethodMetadata() != null) {
-			try {
-				Method factoryMethod = getFactoryMethod(beanFactory, definition);
-				return Arrays.stream(AnnotationUtils.getAnnotations(factoryMethod))
-						.filter((a) -> Annotations.isBindingAnnotation(a.annotationType())).findFirst();
+	private static Optional<Annotation> getAnnotationForBeanDefinition(BeanDefinition definition) {
+		if (definition instanceof AnnotatedBeanDefinition) {
+			MethodMetadata methodMetadata = ((AnnotatedBeanDefinition) definition).getFactoryMethodMetadata();
+			if (methodMetadata != null) {
+				return methodMetadata.getAnnotations().stream().filter(MergedAnnotation::isDirectlyPresent)
+						.filter((mergedAnnotation) -> Annotations.isBindingAnnotation(mergedAnnotation.getType()))
+						.map(MergedAnnotation::synthesize).findFirst();
 			}
-			catch (Exception ex) {
+			else {
 				return Optional.empty();
 			}
 		}
 		else {
 			return Optional.empty();
 		}
-	}
-
-	private static Method getFactoryMethod(ConfigurableListableBeanFactory beanFactory, BeanDefinition definition)
-			throws Exception {
-		if (definition instanceof AnnotatedBeanDefinition) {
-			MethodMetadata factoryMethodMetadata = ((AnnotatedBeanDefinition) definition).getFactoryMethodMetadata();
-			if (factoryMethodMetadata instanceof StandardMethodMetadata) {
-				return ((StandardMethodMetadata) factoryMethodMetadata).getIntrospectedMethod();
-			}
-		}
-		BeanDefinition factoryDefinition = beanFactory.getBeanDefinition(definition.getFactoryBeanName());
-		Class<?> factoryClass = ClassUtils.forName(factoryDefinition.getBeanClassName(),
-				beanFactory.getBeanClassLoader());
-		return getFactoryMethod(definition, factoryClass);
-	}
-
-	private static Method getFactoryMethod(BeanDefinition definition, Class<?> factoryClass) {
-		Method uniqueMethod = null;
-		for (Method candidate : getCandidateFactoryMethods(definition, factoryClass)) {
-			if (candidate.getName().equals(definition.getFactoryMethodName())) {
-				if (uniqueMethod == null) {
-					uniqueMethod = candidate;
-				}
-				else if (!hasMatchingParameterTypes(candidate, uniqueMethod)) {
-					return null;
-				}
-			}
-		}
-		return uniqueMethod;
-	}
-
-	private static Method[] getCandidateFactoryMethods(BeanDefinition definition, Class<?> factoryClass) {
-		return shouldConsiderNonPublicMethods(definition) ? ReflectionUtils.getAllDeclaredMethods(factoryClass)
-				: factoryClass.getMethods();
-	}
-
-	private static boolean shouldConsiderNonPublicMethods(BeanDefinition definition) {
-		return (definition instanceof AbstractBeanDefinition)
-				&& ((AbstractBeanDefinition) definition).isNonPublicAccessAllowed();
-	}
-
-	private static boolean hasMatchingParameterTypes(Method candidate, Method current) {
-		return Arrays.equals(candidate.getParameterTypes(), current.getParameterTypes());
 	}
 
 	private static Set<Type> getAllSuperTypes(Type originalType, Class<?> clazz) {
@@ -420,34 +372,65 @@ public class SpringModule extends AbstractModule {
 
 				String[] named = BeanFactoryUtils.beanNamesForTypeIncludingAncestors(this.beanFactory,
 						ResolvableType.forType(this.type));
-				List<String> names = new ArrayList<String>(named.length);
-				if (named.length == 1) {
-					names.add(named[0]);
+
+				List<String> candidateBeanNames = new ArrayList<>(named.length);
+				for (String name : named) {
+					BeanDefinition beanDefinition = this.beanFactory.getBeanDefinition(name);
+					// This is a Guice component bridged to spring
+					// If this were the target candidate,
+					// Guice would have injected it natively.
+					// Thus, it cannot be a candidate.
+					// GuiceFactoryBeans don't have 1-to-1 annotation mapping
+					// (since annotation attributes are ignored)
+					// Skip this candidate to avoid unexpected matches
+					// due to imprecise annotation mapping
+					if (!beanDefinition.hasAttribute(SPRING_GUICE_SOURCE)) {
+						candidateBeanNames.add(name);
+					}
+				}
+
+				List<String> matchingBeanNames;
+				if (candidateBeanNames.size() == 1) {
+					matchingBeanNames = candidateBeanNames;
 				}
 				else {
-					for (String name : named) {
-						if (this.bindingAnnotation.isPresent()) {
-							if (this.bindingAnnotation.get() instanceof Named
-									|| this.bindingAnnotation.get() instanceof javax.inject.Named) {
-								Optional<Annotation> annotation = SpringModule.getAnnotationForBeanDefinition(
-										this.beanFactory.getMergedBeanDefinition(name), this.beanFactory);
-								String boundName = getNameFromBindingAnnotation(this.bindingAnnotation);
-								if (annotation.isPresent() && this.bindingAnnotation.get().equals(annotation.get())
-										|| name.equals(boundName)) {
-									names.add(name);
+					matchingBeanNames = new ArrayList<String>(candidateBeanNames.size());
+					for (String name : candidateBeanNames) {
+						// Make sure we don't add the same name twice using if/else
+						if (name.equals(this.name)) {
+							// Guice is injecting dependency of this type by bean name
+							matchingBeanNames.add(name);
+						}
+						else if (this.bindingAnnotation.isPresent()) {
+							String boundName = getNameFromBindingAnnotation(this.bindingAnnotation);
+							if (name.equals(boundName)) {
+								// Spring bean definition has a Named annotation that
+								// matches the name of the bean
+								// In such cases, we dedupe namedProvider (because it's
+								// Key equals typeProvider Key)
+								// Thus, this complementary check is required
+								// (because name field is null in typeProvider,
+								// and if check above wouldn't pass)
+								matchingBeanNames.add(name);
+							}
+							else {
+								Optional<Annotation> annotationOptional = SpringModule
+										.getAnnotationForBeanDefinition(this.beanFactory.getBeanDefinition(name));
+
+								if (annotationOptional.equals(this.bindingAnnotation)) {
+									// Found a bean with matching qualifier annotation
+									matchingBeanNames.add(name);
 								}
 							}
 						}
-						if (name.equals(this.name)) {
-							names.add(name);
-						}
 					}
 				}
-				if (names.size() == 1) {
-					this.resultProvider = () -> this.beanFactory.getBean(names.get(0));
+				if (matchingBeanNames.size() == 1) {
+					this.resultProvider = () -> this.beanFactory.getBean(matchingBeanNames.get(0));
 				}
 				else {
-					for (String name : named) {
+					// Shouldn't we iterate over matching bean names here?
+					for (String name : candidateBeanNames) {
 						if (this.beanFactory.getBeanDefinition(name).isPrimary()) {
 							this.resultProvider = () -> this.beanFactory.getBean(name);
 							break;
