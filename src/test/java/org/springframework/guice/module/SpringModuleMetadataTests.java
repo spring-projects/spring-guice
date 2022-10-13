@@ -16,7 +16,12 @@
 
 package org.springframework.guice.module;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Qualifier;
 
 import com.google.inject.ConfigurationException;
 import com.google.inject.Guice;
@@ -35,6 +40,7 @@ import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.core.type.filter.AssignableTypeFilter;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 /**
@@ -69,6 +75,43 @@ public class SpringModuleMetadataTests {
 	}
 
 	@Test
+	public void threeServicesByQualifier() throws Exception {
+		Injector injector = createInjector(PrimaryConfig.class, QualifiedConfig.class);
+
+		assertThat(injector.getInstance(
+				Key.get(Service.class, ServiceQualifierAnnotated.class.getAnnotation(ServiceQualifier.class))))
+						.extracting("name").isEqualTo("emptyQualifierService");
+
+		assertThat(injector.getInstance(
+				Key.get(Service.class, EmptyServiceQualifierAnnotated.class.getAnnotation(ServiceQualifier.class))))
+						.extracting("name").isEqualTo("emptyQualifierService");
+
+		assertThat(injector.getInstance(
+				Key.get(Service.class, MyServiceQualifierAnnotated.class.getAnnotation(ServiceQualifier.class))))
+						.extracting("name").isEqualTo("myService");
+
+		assertThat(injector.getInstance(Key.get(Service.class, Names.named("namedService")))).extracting("name")
+				.isEqualTo("namedService");
+
+		assertThat(injector.getInstance(Key.get(Service.class, Names.named("namedServiceWithADifferentBeanName"))))
+				.extracting("name").isEqualTo("namedServiceWithADifferentBeanName");
+
+		assertThat(injector.getInstance(Service.class)).extracting("name").isEqualTo("primary");
+
+		// Test cases where we don't expect to find any bindings
+		assertThatCode(() -> injector.getInstance(Key.get(Service.class, Names.named("randomService"))))
+				.isInstanceOf(ConfigurationException.class);
+
+		assertThatCode(() -> injector.getInstance(
+				Key.get(Service.class, NoServiceQualifierAnnotated.class.getAnnotation(ServiceQualifier.class))))
+						.isInstanceOf(ConfigurationException.class);
+
+		assertThatCode(() -> injector.getInstance(Key.get(Service.class, UnboundServiceQualifier.class)))
+				.isInstanceOf(ConfigurationException.class);
+
+	}
+
+	@Test
 	public void includes() throws Exception {
 		Injector injector = createInjector(TestConfig.class, MetadataIncludesConfig.class);
 		assertThatExceptionOfType(ConfigurationException.class)
@@ -92,9 +135,22 @@ public class SpringModuleMetadataTests {
 
 	interface Service {
 
+		String getName();
+
 	}
 
 	protected static class MyService implements Service {
+
+		private final String name;
+
+		protected MyService(String name) {
+			this.name = name;
+		}
+
+		@Override
+		public String getName() {
+			return this.name;
+		}
 
 	}
 
@@ -135,7 +191,7 @@ public class SpringModuleMetadataTests {
 
 		@Bean
 		public Service service() {
-			return new MyService();
+			return new MyService("service");
 		}
 
 	}
@@ -146,7 +202,7 @@ public class SpringModuleMetadataTests {
 		@Bean
 		@Primary
 		public Service primary() {
-			return new MyService();
+			return new MyService("primary");
 		}
 
 	}
@@ -156,13 +212,76 @@ public class SpringModuleMetadataTests {
 
 		@Bean
 		public Service more() {
-			return new MyService();
+			return new MyService("more");
+		}
+
+	}
+
+	@Configuration
+	public static class QualifiedConfig {
+
+		@Bean
+		@Named("namedService")
+		public Service namedService() {
+			return new MyService("namedService");
+		}
+
+		@Bean
+		@Named("namedServiceWithADifferentBeanName")
+		public Service anotherNamedService() {
+			return new MyService("namedServiceWithADifferentBeanName");
+		}
+
+		@Bean
+		@ServiceQualifier
+		public Service emptyQualifierService() {
+			return new MyService("emptyQualifierService");
+		}
+
+		@Bean
+		@ServiceQualifier(type = "myService")
+		public Service myService(@Named("namedService") Service service) {
+			return new MyService("myService");
 		}
 
 	}
 
 	@Configuration
 	public static class OtherConfig {
+
+	}
+
+	@Qualifier
+	@Retention(RetentionPolicy.RUNTIME)
+	@interface ServiceQualifier {
+
+		String type() default "";
+
+	}
+
+	@Qualifier
+	@Retention(RetentionPolicy.RUNTIME)
+	@interface UnboundServiceQualifier {
+
+	}
+
+	@ServiceQualifier
+	interface ServiceQualifierAnnotated {
+
+	}
+
+	@ServiceQualifier(type = "")
+	interface EmptyServiceQualifierAnnotated {
+
+	}
+
+	@ServiceQualifier(type = "myService")
+	interface MyServiceQualifierAnnotated {
+
+	}
+
+	@ServiceQualifier(type = "noService")
+	interface NoServiceQualifierAnnotated {
 
 	}
 
