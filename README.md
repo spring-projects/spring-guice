@@ -1,5 +1,5 @@
 This project provides bridges between Spring and Guice so that you can
-use one from the other (and vice versa)
+use one from the other (and vice versa). It works with Spring 6 (or at least the tests are green), but Guice does [not support the Jakarta annotations](https://github.com/google/guice/issues/1383) so it may break in unexpected ways.
 
 ![Build Status](https://travis-ci.org/spring-projects/spring-guice.svg?branch=master)
 
