@@ -59,6 +59,11 @@ public abstract class AbstractCompleteWiringTests {
 	}
 
 	@Test
+	public void getInstanceUnboundWithDependency() {
+		assertThat(this.injector.getInstance(Bar.class).service).isNotNull();
+	}
+
+	@Test
 	public void getInstanceBound() {
 		assertThat(this.injector.getInstance(Service.class)).isNotNull();
 	}
@@ -87,7 +92,8 @@ public abstract class AbstractCompleteWiringTests {
 
 	@Test
 	public void getNamedInjectedInstance() {
-		assertThat(this.injector.getInstance(Thing.class).thang).isNotNull();
+		Thang thang = this.injector.getInstance(Thing.class).thang;
+		assertThat(thang).isNotNull();
 	}
 
 	@Test

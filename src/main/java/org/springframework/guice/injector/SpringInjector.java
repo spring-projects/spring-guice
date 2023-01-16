@@ -21,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.inject.Qualifier;
+
 import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -35,9 +37,12 @@ import com.google.inject.spi.InjectionPoint;
 import com.google.inject.spi.TypeConverterBinding;
 
 import org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils;
+import org.springframework.beans.factory.annotation.QualifierAnnotationAutowireCandidateResolver;
+import org.springframework.beans.factory.support.AutowireCandidateResolver;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.SpringVersion;
 
 /**
  * An {@link Injector} that wraps an {@link ApplicationContext}, and can be used to expose
@@ -53,8 +58,17 @@ public class SpringInjector implements Injector {
 
 	private DefaultListableBeanFactory beanFactory;
 
+	private static boolean JAKARTA = false;
+
 	public SpringInjector(ApplicationContext context) {
 		this.beanFactory = (DefaultListableBeanFactory) context.getAutowireCapableBeanFactory();
+		AutowireCandidateResolver resolver = this.beanFactory.getAutowireCandidateResolver();
+		if (resolver instanceof QualifierAnnotationAutowireCandidateResolver && JAKARTA) {
+			// Guice does not yet support jakarta namespace but we can help Spring 6 to
+			// recognize javax.inject
+			QualifierAnnotationAutowireCandidateResolver qualified = (QualifierAnnotationAutowireCandidateResolver) resolver;
+			qualified.addQualifierType(Qualifier.class);
+		}
 		if (context.getBeanNamesForType(Injector.class, true, false).length > 0) {
 			this.injector = context.getBean(Injector.class);
 		}
@@ -206,6 +220,13 @@ public class SpringInjector implements Injector {
 	@Override
 	public Map<TypeLiteral<?>, List<InjectionPoint>> getAllMembersInjectorInjectionPoints() {
 		return null;
+	}
+
+	static {
+		String version = SpringVersion.getVersion();
+		if (version != null && version.contains(".") && Integer.parseInt(version, 0, version.indexOf("."), 10) > 5) {
+			JAKARTA = true;
+		}
 	}
 
 }

@@ -88,7 +88,7 @@ jobs:
         - |
           rm -rf ~/.m2
           ln -s $(pwd)/.m2 ~/.m2
-          ./mvnw install -Dspring.version=5.3.16
+          ./mvnw install -Dspring.version=6.0.1
 - name: deploy
   plan:
   - get: source
