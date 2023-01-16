@@ -16,7 +16,7 @@ resources:
 - name: slack
   type: slack-notification
   source:
-    url: ((slack-webhook-url))
+    url: {{slack-url}}
   
 slack-failure: &slack-failure
   put: slack
