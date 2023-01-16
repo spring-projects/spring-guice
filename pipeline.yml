@@ -114,6 +114,8 @@ jobs:
         - |
           rm -rf ~/.m2
           ln -s $(pwd)/.m2 ~/.m2
+          echo "((signing-key))" > private.asc
+          gpg --import --batch --no-tty private.asc
           ./mvnw deploy -DskipTests -s .mvn/settings.xml
     params:
       TERM: dumb
