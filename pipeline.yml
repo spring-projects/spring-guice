@@ -47,11 +47,10 @@ jobs:
     config:
       platform: linux
       image_resource:
-        type: registry-image
-        source: 
-          repository: harbor-repo.vmware.com/dockerhub-proxy-cache/springci/spring-framework-ci-jdk11
-          tag: 5.3.x
-        inputs:
+        type: docker-image
+        source:
+          repository: harbor-repo.vmware.com/dockerhub-proxy-cache/springio/spring-ci-base
+      inputs:
         - name: source
       caches:
         - path: source/.m2
@@ -72,10 +71,9 @@ jobs:
     config:
       platform: linux
       image_resource:
-        type: registry-image
+        type: docker-image
         source:
-          repository: harbor-repo.vmware.com/dockerhub-proxy-cache/springci/spring-framework-ci-jdk17
-          tag: 5.3.x
+          repository: harbor-repo.vmware.com/dockerhub-proxy-cache/springio/spring-ci-base
       inputs:
         - name: source
       caches:
@@ -98,10 +96,9 @@ jobs:
     config:
       platform: linux
       image_resource:
-        type: registry-image
-        source: 
-          repository: harbor-repo.vmware.com/dockerhub-proxy-cache/springci/spring-framework-ci-jdk11
-          tag: 5.3.x
+        type: docker-image
+        source:
+          repository: harbor-repo.vmware.com/dockerhub-proxy-cache/springio/spring-ci-base
       inputs:
         - name: source
       caches:
