@@ -47,9 +47,10 @@ jobs:
     config:
       platform: linux
       image_resource:
-        type: docker-image
-        source:
-          repository: harbor-repo.vmware.com/dockerhub-proxy-cache/springio/spring-ci-base
+        type: registry-image
+        source: 
+          repository: harbor-repo.vmware.com/dockerhub-proxy-cache/springci/spring-framework-ci
+          tag: 5.3.x
       inputs:
         - name: source
       caches:
@@ -71,9 +72,10 @@ jobs:
     config:
       platform: linux
       image_resource:
-        type: docker-image
-        source:
-          repository: harbor-repo.vmware.com/dockerhub-proxy-cache/springio/spring-ci-base
+        type: registry-image
+        source: 
+          repository: harbor-repo.vmware.com/dockerhub-proxy-cache/springci/spring-framework-ci
+          tag: 6.0.x
       inputs:
         - name: source
       caches:
@@ -86,7 +88,7 @@ jobs:
         - |
           rm -rf ~/.m2
           ln -s $(pwd)/.m2 ~/.m2
-          ./mvnw install -Dspring.version=6.0.3
+          ./mvnw install -Dspring.version=6.0.1
 - name: deploy
   plan:
   - get: source
@@ -96,9 +98,10 @@ jobs:
     config:
       platform: linux
       image_resource:
-        type: docker-image
-        source:
-          repository: harbor-repo.vmware.com/dockerhub-proxy-cache/springio/spring-ci-base
+        type: registry-image
+        source: 
+          repository: harbor-repo.vmware.com/dockerhub-proxy-cache/springci/spring-framework-ci
+          tag: 5.3.x
       inputs:
         - name: source
       caches:
