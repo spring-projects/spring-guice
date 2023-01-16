@@ -224,8 +224,11 @@ public class SpringInjector implements Injector {
 
 	static {
 		String version = SpringVersion.getVersion();
-		if (version != null && version.contains(".") && Integer.parseInt(version, 0, version.indexOf("."), 10) > 5) {
-			JAKARTA = true;
+		if (version != null && version.contains(".")) {
+			version = version.substring(0, version.indexOf("."));
+			if (Integer.parseInt(version) > 5) {
+				JAKARTA = true;
+			}
 		}
 	}
 
