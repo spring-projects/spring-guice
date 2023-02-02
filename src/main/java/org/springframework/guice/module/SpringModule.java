@@ -167,11 +167,11 @@ public class SpringModule extends AbstractModule {
 				Provider<?> typeProvider = BeanFactoryProvider.typed(beanFactory, type, bindingAnnotation);
 				Provider<?> namedProvider = BeanFactoryProvider.named(beanFactory, name, type, bindingAnnotation);
 
-				if (!clazz.isInterface() && !ClassUtils.isCglibProxyClass(clazz)) {
+				if (!clazz.isInterface() && !clazz.getName().contains(ClassUtils.CGLIB_CLASS_SEPARATOR)) {
 					bindConditionally(binder(), name, clazz, typeProvider, namedProvider, bindingAnnotation);
 				}
 				for (Type superType : getAllSuperTypes(type, clazz)) {
-					if (!ClassUtils.isCglibProxyClassName(superType.getTypeName())) {
+					if (!superType.getTypeName().contains(ClassUtils.CGLIB_CLASS_SEPARATOR)) {
 						bindConditionally(binder(), name, superType, typeProvider, namedProvider, bindingAnnotation);
 					}
 				}
