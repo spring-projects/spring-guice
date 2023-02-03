@@ -83,6 +83,8 @@ public class SpringModule extends AbstractModule {
 
 	private boolean enableJustInTimeBinding = true;
 
+	private Provider<Injector> injector;
+
 	public SpringModule(ApplicationContext context) {
 		this(context, true);
 	}
@@ -109,14 +111,15 @@ public class SpringModule extends AbstractModule {
 		if (this.beanFactory == null) {
 			this.beanFactory = this.beanFactoryProvider.get();
 		}
+		this.injector = binder().getProvider(Injector.class);
 		if (this.beanFactory.getBeanNamesForType(ProvisionListener.class).length > 0) {
 			binder().bindListener(Matchers.any(), this.beanFactory.getBeansOfType(ProvisionListener.class).values()
 					.toArray(new ProvisionListener[0]));
 		}
 		if (this.enableJustInTimeBinding) {
 			if (this.beanFactory instanceof DefaultListableBeanFactory) {
-				((DefaultListableBeanFactory) this.beanFactory).setAutowireCandidateResolver(
-						new GuiceAutowireCandidateResolver(binder().getProvider(Injector.class)));
+				((DefaultListableBeanFactory) this.beanFactory)
+						.setAutowireCandidateResolver(new GuiceAutowireCandidateResolver(this.injector));
 			}
 		}
 		if (this.beanFactory.getBeanNamesForType(GuiceModuleMetadata.class).length > 0) {
@@ -124,6 +127,10 @@ public class SpringModule extends AbstractModule {
 					this.beanFactory.getBeansOfType(GuiceModuleMetadata.class).values());
 		}
 		bind(this.beanFactory);
+	}
+
+	public Provider<Injector> getInjector() {
+		return this.injector;
 	}
 
 	private void bind(ConfigurableListableBeanFactory beanFactory) {

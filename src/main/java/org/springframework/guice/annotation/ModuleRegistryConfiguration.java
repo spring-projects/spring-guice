@@ -59,7 +59,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.support.AutowireCandidateQualifier;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
@@ -128,7 +127,9 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 	public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
 		List<Module> modules = new ArrayList<>(
 				((ConfigurableListableBeanFactory) registry).getBeansOfType(Module.class).values());
-		modules.add(new SpringModule((ConfigurableListableBeanFactory) registry, this.enableJustInTimeBinding));
+		SpringModule module = new SpringModule((ConfigurableListableBeanFactory) registry,
+				this.enableJustInTimeBinding);
+		modules.add(module);
 		Map<Key<?>, Binding<?>> bindings = new HashMap<Key<?>, Binding<?>>();
 		List<Element> elements = Elements.getElements(Stage.TOOL, modules);
 		List<Message> errors = elements.stream().filter((e) -> e instanceof Message).map((e) -> (Message) e)
@@ -156,7 +157,7 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 				extractPrivateElements(bindings, (PrivateElements) e);
 			}
 		}
-		mapBindings(bindings, registry);
+		mapBindings(bindings, registry, module);
 
 		// Register the injector initializer
 		RootBeanDefinition beanDefinition = new RootBeanDefinition(GuiceInjectorInitializer.class);
@@ -172,7 +173,7 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 
 	}
 
-	private void mapBindings(Map<Key<?>, Binding<?>> bindings, BeanDefinitionRegistry registry) {
+	private void mapBindings(Map<Key<?>, Binding<?>> bindings, BeanDefinitionRegistry registry, SpringModule module) {
 		Stage stage = this.applicationContext.getEnvironment().getProperty(SPRING_GUICE_STAGE_PROPERTY_NAME,
 				Stage.class, Stage.PRODUCTION);
 		boolean ifLazyInit = stage.equals(Stage.DEVELOPMENT);
@@ -213,11 +214,12 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 			Class<? extends Annotation> annotationType = key.getAnnotationType();
 
 			RootBeanDefinition bean = new RootBeanDefinition(GuiceFactoryBean.class);
-			ConstructorArgumentValues args = new ConstructorArgumentValues();
-			args.addIndexedArgumentValue(0, typeLiteral.getRawType());
-			args.addIndexedArgumentValue(1, key);
-			args.addIndexedArgumentValue(2, Scopes.isSingleton(binding));
-			bean.setConstructorArgumentValues(args);
+			bean.setInstanceSupplier(() -> {
+				@SuppressWarnings({ "rawtypes", "unchecked" })
+				GuiceFactoryBean factory = new GuiceFactoryBean(typeLiteral.getRawType(), key,
+						Scopes.isSingleton(binding), module.getInjector());
+				return factory;
+			});
 			bean.setTargetType(ResolvableType.forType(typeLiteral.getType()));
 			if (!Scopes.isSingleton(binding)) {
 				bean.setScope(ConfigurableBeanFactory.SCOPE_PROTOTYPE);

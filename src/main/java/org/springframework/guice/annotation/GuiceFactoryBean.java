@@ -22,7 +22,6 @@ import com.google.inject.Injector;
 import com.google.inject.Key;
 
 import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Convenience class used to map a Guice {@link Provider} to a Spring bean.
@@ -38,22 +37,18 @@ class GuiceFactoryBean<T> implements FactoryBean<T> {
 
 	private final boolean isSingleton;
 
-	private Injector injector;
+	private final Provider<Injector> injector;
 
-	GuiceFactoryBean(Class<T> beanType, Key<T> key, boolean isSingleton) {
+	GuiceFactoryBean(Class<T> beanType, Key<T> key, boolean isSingleton, Provider<Injector> injector) {
 		this.beanType = beanType;
 		this.key = key;
 		this.isSingleton = isSingleton;
-	}
-
-	@Autowired
-	void setInjector(Injector injector) {
 		this.injector = injector;
 	}
 
 	@Override
 	public T getObject() throws Exception {
-		return (T) this.injector.getInstance(this.key);
+		return (T) this.injector.get().getInstance(this.key);
 	}
 
 	@Override
