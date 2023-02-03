@@ -38,13 +38,17 @@ class GuiceFactoryBean<T> implements FactoryBean<T> {
 
 	private final boolean isSingleton;
 
-	@Autowired
 	private Injector injector;
 
 	GuiceFactoryBean(Class<T> beanType, Key<T> key, boolean isSingleton) {
 		this.beanType = beanType;
 		this.key = key;
 		this.isSingleton = isSingleton;
+	}
+
+	@Autowired
+	void setInjector(Injector injector) {
+		this.injector = injector;
 	}
 
 	@Override

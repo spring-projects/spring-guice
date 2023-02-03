@@ -160,10 +160,10 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 
 		// Register the injector initializer
 		RootBeanDefinition beanDefinition = new RootBeanDefinition(GuiceInjectorInitializer.class);
-		ConstructorArgumentValues args = new ConstructorArgumentValues();
-		args.addIndexedArgumentValue(0, modules);
-		args.addIndexedArgumentValue(1, this.applicationContext);
-		beanDefinition.setConstructorArgumentValues(args);
+		final List<Module> finalModules = new ArrayList<>(modules);
+		beanDefinition.setInstanceSupplier(() -> new GuiceInjectorInitializer(finalModules,
+				(ConfigurableApplicationContext) this.applicationContext));
+		beanDefinition.setAttribute(SpringModule.SPRING_GUICE_SOURCE, true);
 		registry.registerBeanDefinition("guiceInjectorInitializer", beanDefinition);
 	}
 
