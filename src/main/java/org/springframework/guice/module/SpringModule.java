@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
@@ -178,7 +179,8 @@ public class SpringModule extends AbstractModule {
 					bindConditionally(binder(), name, clazz, typeProvider, namedProvider, bindingAnnotation);
 				}
 				for (Type superType : getAllSuperTypes(type, clazz)) {
-					if (!superType.getTypeName().contains(ClassUtils.CGLIB_CLASS_SEPARATOR)) {
+					if (!superType.getTypeName().contains(ClassUtils.CGLIB_CLASS_SEPARATOR)
+							&& !superType.equals(Object.class)) {
 						bindConditionally(binder(), name, superType, typeProvider, namedProvider, bindingAnnotation);
 					}
 				}
@@ -449,6 +451,23 @@ public class SpringModule extends AbstractModule {
 				}
 			}
 			return this.resultProvider.get();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj instanceof BeanFactoryProvider) {
+				BeanFactoryProvider o = (BeanFactoryProvider) obj;
+				return ((this.name == null && o.name == null) || (this.name != null && this.name.equals(o.name)))
+						&& this.type.equals(o.type);
+			}
+			else {
+				return false;
+			}
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(this.name, this.type);
 		}
 
 	}
