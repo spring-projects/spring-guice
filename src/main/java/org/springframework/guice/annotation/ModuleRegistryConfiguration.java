@@ -264,7 +264,19 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 			return ((javax.inject.Named) key.getAnnotation()).value();
 		}
 		else if (key.getAnnotationType() != null) {
-			return key.getAnnotationType().getName();
+			String value = key.getAnnotationType().getName();
+
+			if (key.getAnnotation() != null) {
+				// Edge case when the Named annotation is wrapped
+				String annotationString = key.getAnnotation().toString();
+				String wrappedNamedValue = substringBetween(annotationString, "@com.google.inject.name.Named(\"",
+						"\")");
+				if (wrappedNamedValue != null) {
+					value = wrappedNamedValue + "_" + value;
+				}
+			}
+
+			return value;
 		}
 		else {
 			return null;
@@ -359,6 +371,20 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 		catch (IllegalAccessException | InvocationTargetException ex) {
 			throw new RuntimeException(ex);
 		}
+	}
+
+	private static String substringBetween(String str, String open, String close) {
+		if (str == null || open == null || close == null) {
+			return null;
+		}
+		int start = str.indexOf(open);
+		if (start != -1) {
+			int end = str.indexOf(close, start + open.length());
+			if (end != -1) {
+				return str.substring(start + open.length(), end);
+			}
+		}
+		return null;
 	}
 
 	/**
