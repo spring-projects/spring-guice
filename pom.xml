@@ -5,7 +5,7 @@
 
 	<groupId>org.springframework.guice</groupId>
 	<artifactId>spring-guice</artifactId>
-	<version>2.0.3</version>
+	<version>2.0.4-SNAPSHOT</version>
 
 	<name>spring-guice</name>
 	<description>Utilities for using Spring with Guice and vice versa</description>
@@ -83,7 +83,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<spring.version>5.3.16</spring.version>
 		<!-- Important for reproducible builds. Update using e.g. ./mvnw versions:set -DnewVersion=... -->
-		<project.build.outputTimestamp>2023-05-24T16:04:43Z</project.build.outputTimestamp>
+		<project.build.outputTimestamp>2023-05-25T11:06:34Z</project.build.outputTimestamp>
 	</properties>
 
 	<build>
