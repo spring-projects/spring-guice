@@ -1,5 +1,5 @@
-# fly --target team login --concourse-url https://ci.spring.io --team-name "Spring Team"
-# fly --target team set-pipeline --config pipeline.yml --pipeline spring-guice --load-vars-from credentials.yml
+# fly --target spring-team login --concourse-url https://ci.spring.io --team-name "spring-guice"
+# fly --target spring-team set-pipeline --config pipeline.yml --pipeline spring-guice --load-vars-from credentials.yml
 ---
 resource_types:
 - name: slack-notification
@@ -63,7 +63,7 @@ jobs:
         - |
           rm -rf ~/.m2
           ln -s $(pwd)/.m2 ~/.m2
-          ./mvnw install
+          ./mvnw install -Dgpg.skip=true
 - name: next
   plan:
   - get: source
@@ -88,7 +88,7 @@ jobs:
         - |
           rm -rf ~/.m2
           ln -s $(pwd)/.m2 ~/.m2
-          ./mvnw install -Dspring.version=6.0.3
+          ./mvnw install -Dspring.version=6.0.3 -Dgpg.skip=true
 - name: deploy
   plan:
   - get: source
@@ -112,6 +112,7 @@ jobs:
         args:
         - -c
         - |
+          apt update && apt install gpg -y
           rm -rf ~/.m2
           ln -s $(pwd)/.m2 ~/.m2
           echo "((signing-key))" > private.asc
