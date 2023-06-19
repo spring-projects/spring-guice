@@ -26,12 +26,19 @@ import com.google.inject.Singleton;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -71,6 +78,14 @@ public class EnableGuiceModulesTests {
 	@Test
 	public void moduleBean() {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ModuleBeanConfig.class);
+		assertThat(context.getBean(Foo.class)).isNotNull();
+		context.close();
+	}
+
+	@Test
+	public void moduleBeanFiltersOutModules() {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+				FilteringModuleBeanConfig.class);
 		assertThat(context.getBean(Foo.class)).isNotNull();
 		context.close();
 	}
@@ -151,11 +166,59 @@ public class EnableGuiceModulesTests {
 
 	}
 
+	@Configuration(proxyBeanMethods = false)
+	@EnableGuiceModules
+	@Order(Ordered.HIGHEST_PRECEDENCE)
+	protected static class FilteringModuleBeanConfig implements BeanDefinitionRegistryPostProcessor {
+
+		@Bean
+		public static MyModule2 module2() {
+			return new MyModule2();
+		}
+
+		@Bean
+		public static MyModule module() {
+			return new MyModule();
+		}
+
+		@Bean
+		public Foo service(Service service) {
+			return new Foo(service);
+		}
+
+		@Override
+		public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry beanDefinitionRegistry)
+				throws BeansException {
+			if (beanDefinitionRegistry instanceof DefaultListableBeanFactory) {
+				DefaultListableBeanFactory defaultListableBeanFactory = (DefaultListableBeanFactory) beanDefinitionRegistry;
+				for (String beanName : defaultListableBeanFactory.getBeanNamesForType(MyModule2.class)) {
+					beanDefinitionRegistry.removeBeanDefinition(beanName);
+				}
+			}
+		}
+
+		@Override
+		public void postProcessBeanFactory(ConfigurableListableBeanFactory configurableListableBeanFactory)
+				throws BeansException {
+
+		}
+
+	}
+
 	protected static class MyModule extends AbstractModule {
 
 		@Override
 		protected void configure() {
 			bind(Service.class).to(MyService.class);
+		}
+
+	}
+
+	protected static class MyModule2 extends AbstractModule {
+
+		@Override
+		protected void configure() {
+			throw new RuntimeException("This should not be called when filtered out!");
 		}
 
 	}
