@@ -76,6 +76,14 @@ public class EnableGuiceModulesTests {
 	}
 
 	@Test
+	public void moduleBeanFiltersOutModules() {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+				FilteringModuleBeanConfig.class);
+		assertThat(context.getBean(Foo.class)).isNotNull();
+		context.close();
+	}
+
+	@Test
 	public void testInjectorCreationDoesNotCauseCircularDependencyError() {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(MySpringConfig.class);
 		assertThat(context.getBean(SpringProvidedBean.class)).isNotNull();
@@ -151,11 +159,46 @@ public class EnableGuiceModulesTests {
 
 	}
 
+	@Configuration(proxyBeanMethods = false)
+	@EnableGuiceModules
+	protected static class FilteringModuleBeanConfig {
+
+		@Bean
+		public static MyModule2 module2() {
+			return new MyModule2();
+		}
+
+		@Bean
+		public static MyModule module() {
+			return new MyModule();
+		}
+
+		@Bean
+		public Foo service(Service service) {
+			return new Foo(service);
+		}
+
+		@Bean
+		ModuleFilter moduleFilter() {
+			return module -> !(module instanceof MyModule2);
+		}
+
+	}
+
 	protected static class MyModule extends AbstractModule {
 
 		@Override
 		protected void configure() {
 			bind(Service.class).to(MyService.class);
+		}
+
+	}
+
+	protected static class MyModule2 extends AbstractModule {
+
+		@Override
+		protected void configure() {
+			throw new RuntimeException("This should not be called when filtered out!");
 		}
 
 	}
