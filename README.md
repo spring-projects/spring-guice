@@ -114,9 +114,31 @@ was be bound to the autowired `spam()` method when Spring started.
 
 ### Filtering out modules from startup of ApplicationContext
 
-In certain cases you might need to ensure that some modules are not configured at all, even though they might not be present in the final `ApplicationContext`.
-This might be due to external code that may be hard to change that cause side effects at binding time, or for other reasons.
-To ensure this you can define a `ModuleFilter` bean that will be applied for filtering the list of modules in the Guice context before they are touched by the Spring-Guice bridge. This will ensure that no `configure()` methods are called on the filtered modules.
+In certain cases you might need to ensure that some modules are not configured at all, even though they will be absent from the final `ApplicationContext`.
+This might be due to external code that may be hard to change that causes side effects at binding time, for example.
+To ensure that these modules are not called at all you can define one or more`ModuleFilter` beans that will be applied to filter out modules from the context before they are touched by the Spring-Guice bridge.
+
+```java
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.guice.annotation.ModuleFilter;
+
+public static class TestConfig {
+
+
+  @Bean
+  public static MyModule myModule() {
+    return new MyModule();
+  }
+
+  @Bean
+  public ModuleFilter myFilter() {
+    return module -> !(module instanceof MyModule);
+  }
+}
+
+```
+This will ensure that no `configure()` methods are called on the filtered modules.
 
 ## Configuration Class Enhancements
 

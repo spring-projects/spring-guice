@@ -125,18 +125,8 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 
 	@Override
 	public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
-
-		Map<String, ModuleFilter> moduleFilters = ((ConfigurableListableBeanFactory) registry)
-				.getBeansOfType(ModuleFilter.class);
-		if (moduleFilters.size() > 1) {
-			throw new IllegalStateException(
-					"You can only define zero or one ModuleFilter implementation. Implementations found: "
-							+ String.join(",", moduleFilters.keySet()));
-		}
-		ModuleFilter moduleFilter = moduleFilters.values().stream().findFirst().orElse(module -> true);
-		List<Module> modules = new ArrayList<>(
-				((ConfigurableListableBeanFactory) registry).getBeansOfType(Module.class).values()).stream()
-						.filter(moduleFilter::filter).collect(Collectors.toList());
+		List<Module> modules = filterModules(registry,
+				new ArrayList<>(((ConfigurableListableBeanFactory) registry).getBeansOfType(Module.class).values()));
 		SpringModule module = new SpringModule((ConfigurableListableBeanFactory) registry,
 				this.enableJustInTimeBinding);
 		modules.add(module);
@@ -176,6 +166,16 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 				(ConfigurableApplicationContext) this.applicationContext));
 		beanDefinition.setAttribute(SpringModule.SPRING_GUICE_SOURCE, true);
 		registry.registerBeanDefinition("guiceInjectorInitializer", beanDefinition);
+	}
+
+	private List<Module> filterModules(BeanDefinitionRegistry registry, List<Module> modules) {
+		Map<String, ModuleFilter> moduleFilters = ((ConfigurableListableBeanFactory) registry)
+				.getBeansOfType(ModuleFilter.class);
+		Predicate<Module> moduleFilter = (m) -> true;
+		for (Predicate<Module> value : moduleFilters.values()) {
+			moduleFilter = moduleFilter.and(value);
+		}
+		return modules.stream().filter(moduleFilter).collect(Collectors.toList());
 	}
 
 	@Override
