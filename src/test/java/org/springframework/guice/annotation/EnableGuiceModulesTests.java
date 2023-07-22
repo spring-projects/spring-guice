@@ -84,6 +84,14 @@ public class EnableGuiceModulesTests {
 	}
 
 	@Test
+	public void moduleBeanFiltersOutModulesWithMultipleFilters() {
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(
+				FilteringModuleBeanConfig.class, PermissiveModuleFilterConfig.class);
+		assertThat(context.getBean(Foo.class)).isNotNull();
+		context.close();
+	}
+
+	@Test
 	public void testInjectorCreationDoesNotCauseCircularDependencyError() {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(MySpringConfig.class);
 		assertThat(context.getBean(SpringProvidedBean.class)).isNotNull();
@@ -179,8 +187,18 @@ public class EnableGuiceModulesTests {
 		}
 
 		@Bean
-		ModuleFilter moduleFilter() {
-			return module -> !(module instanceof MyModule2);
+		static ModuleFilter moduleFilter() {
+			return (module) -> !(module instanceof MyModule2);
+		}
+
+	}
+
+	@Configuration
+	static class PermissiveModuleFilterConfig {
+
+		@Bean
+		static ModuleFilter moduleFilter2() {
+			return (module) -> true;
 		}
 
 	}
