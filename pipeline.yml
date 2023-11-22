@@ -54,7 +54,7 @@ jobs:
       inputs:
         - name: source
       caches:
-        - path: source/.m2
+        - path: .m2
       run:
         dir: source
         path: sh
@@ -62,7 +62,7 @@ jobs:
         - -c
         - |
           rm -rf ~/.m2
-          ln -s $(pwd)/.m2 ~/.m2
+          ln -s $(pwd)/../.m2 ~/.m2
           ./mvnw install -Dgpg.skip=true
 - name: next
   plan:
@@ -79,7 +79,7 @@ jobs:
       inputs:
         - name: source
       caches:
-        - path: source/.m2
+        - path: .m2
       run:
         dir: source
         path: sh
@@ -87,7 +87,7 @@ jobs:
         - -c
         - |
           rm -rf ~/.m2
-          ln -s $(pwd)/.m2 ~/.m2
+          ln -s $(pwd)/../.m2 ~/.m2
           ./mvnw install -Dspring.version=6.0.3 -Dgpg.skip=true
 - name: deploy
   plan:
@@ -105,7 +105,7 @@ jobs:
       inputs:
         - name: source
       caches:
-        - path: source/.m2
+        - path: .m2
       run:
         dir: source
         path: sh
@@ -114,7 +114,7 @@ jobs:
         - |
           apt update && apt install gpg -y
           rm -rf ~/.m2
-          ln -s $(pwd)/.m2 ~/.m2
+          ln -s $(pwd)/../.m2 ~/.m2
           echo "((signing-key))" > private.asc
           gpg --import --batch --no-tty private.asc
           ./mvnw deploy -DskipTests -s .mvn/settings.xml
