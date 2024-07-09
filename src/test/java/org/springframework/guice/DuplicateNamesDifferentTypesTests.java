@@ -46,12 +46,12 @@ public class DuplicateNamesDifferentTypesTests {
 		assertThat(BeanFactoryAnnotationUtils.qualifiedBeanOfType(context.getBeanFactory(), SomeNamedDepWithType1.class,
 				"sameNameDifferentType")).isNotNull();
 
-		// Check javax @Named
-		assertThat(context.getBean(SomeJavaxNamedDepWithType1.class)).isNotNull();
-		assertThat(context.getBean(SomeJavaxNamedDepWithType2.class)).isNotNull();
+		// Check jakarta @Named
+		assertThat(context.getBean(SomeJakartaNamedDepWithType1.class)).isNotNull();
+		assertThat(context.getBean(SomeJakartaNamedDepWithType2.class)).isNotNull();
 		assertThat(BeanFactoryAnnotationUtils.qualifiedBeanOfType(context.getBeanFactory(),
-				SomeJavaxNamedDepWithType1.class, "sameJavaxName")).isNotNull();
-		context.getBeansOfType(SomeJavaxNamedDepWithType1.class);
+				SomeJakartaNamedDepWithType1.class, "sameJakartaName")).isNotNull();
+		context.getBeansOfType(SomeJakartaNamedDepWithType1.class);
 
 		context.close();
 	}
@@ -64,27 +64,27 @@ public class DuplicateNamesDifferentTypesTests {
 
 	}
 
-	public static class SomeJavaxNamedDepWithType1 {
+	public static class SomeJakartaNamedDepWithType1 {
 
 	}
 
-	public static class SomeJavaxNamedDepWithType2 {
+	public static class SomeJakartaNamedDepWithType2 {
 
 	}
 
 	public static class SomeClassWithDeps {
 
 		@Autowired
-		@Qualifier("sameJavaxName2")
-		SomeJavaxNamedDepWithType1 qualified;
+		@Qualifier("sameJakartaName2")
+		SomeJakartaNamedDepWithType1 qualified;
 
 		@Autowired
-		@Named("sameJavaxName2")
-		SomeJavaxNamedDepWithType1 named;
+		@Named("sameJakartaName2")
+		SomeJakartaNamedDepWithType1 named;
 
 		@Autowired
-		@javax.inject.Named("sameJavaxName2")
-		SomeJavaxNamedDepWithType1 javaxNamed;
+		@jakarta.inject.Named("sameJakartaName2")
+		SomeJakartaNamedDepWithType1 jakartaNamed;
 
 	}
 
@@ -104,15 +104,15 @@ public class DuplicateNamesDifferentTypesTests {
 				}
 
 				@Provides
-				@Named("sameJavaxName")
-				SomeJavaxNamedDepWithType1 someJavaxNamedDepWithType1() {
-					return new SomeJavaxNamedDepWithType1();
+				@Named("sameJakartaName")
+				SomeJakartaNamedDepWithType1 someJakartaNamedDepWithType1() {
+					return new SomeJakartaNamedDepWithType1();
 				}
 
 				@Provides
-				@Named("sameJavaxName")
-				SomeJavaxNamedDepWithType2 someJavaxNamedDepWithType2() {
-					return new SomeJavaxNamedDepWithType2();
+				@Named("sameJakartaName")
+				SomeJakartaNamedDepWithType2 someJakartaNamedDepWithType2() {
+					return new SomeJakartaNamedDepWithType2();
 				}
 			};
 		}

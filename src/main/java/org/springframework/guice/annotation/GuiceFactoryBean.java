@@ -16,10 +16,9 @@
 
 package org.springframework.guice.annotation;
 
-import javax.inject.Provider;
-
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import jakarta.inject.Provider;
 
 import org.springframework.beans.factory.FactoryBean;
 

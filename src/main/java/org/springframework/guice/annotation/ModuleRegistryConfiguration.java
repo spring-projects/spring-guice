@@ -270,8 +270,8 @@ class ModuleRegistryConfiguration implements BeanDefinitionRegistryPostProcessor
 		if (key.getAnnotation() instanceof Named) {
 			return ((Named) key.getAnnotation()).value();
 		}
-		else if (key.getAnnotation() instanceof javax.inject.Named) {
-			return ((javax.inject.Named) key.getAnnotation()).value();
+		else if (key.getAnnotation() instanceof jakarta.inject.Named) {
+			return ((jakarta.inject.Named) key.getAnnotation()).value();
 		}
 		else if (key.getAnnotationType() != null) {
 			String value = key.getAnnotationType().getName();

@@ -16,12 +16,11 @@
 
 package org.springframework.guice.module;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.context.annotation.Bean;

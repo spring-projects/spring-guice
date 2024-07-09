@@ -21,8 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.inject.Qualifier;
-
 import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Key;
@@ -35,6 +33,7 @@ import com.google.inject.name.Named;
 import com.google.inject.spi.Element;
 import com.google.inject.spi.InjectionPoint;
 import com.google.inject.spi.TypeConverterBinding;
+import jakarta.inject.Qualifier;
 
 import org.springframework.beans.factory.annotation.BeanFactoryAnnotationUtils;
 import org.springframework.beans.factory.annotation.QualifierAnnotationAutowireCandidateResolver;
@@ -65,7 +64,7 @@ public class SpringInjector implements Injector {
 		AutowireCandidateResolver resolver = this.beanFactory.getAutowireCandidateResolver();
 		if (resolver instanceof QualifierAnnotationAutowireCandidateResolver && JAKARTA) {
 			// Guice does not yet support jakarta namespace but we can help Spring 6 to
-			// recognize javax.inject
+			// recognize jakarta.inject
 			QualifierAnnotationAutowireCandidateResolver qualified = (QualifierAnnotationAutowireCandidateResolver) resolver;
 			qualified.addQualifierType(Qualifier.class);
 		}
@@ -166,8 +165,8 @@ public class SpringInjector implements Injector {
 		if (annotation instanceof Named) {
 			return ((Named) annotation).value();
 		}
-		else if (annotation instanceof javax.inject.Named) {
-			return ((javax.inject.Named) annotation).value();
+		else if (annotation instanceof jakarta.inject.Named) {
+			return ((jakarta.inject.Named) annotation).value();
 		}
 		return key.getTypeLiteral().getRawType().getSimpleName();
 	}

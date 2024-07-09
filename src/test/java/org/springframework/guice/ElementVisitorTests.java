@@ -18,8 +18,6 @@ package org.springframework.guice;
 
 import java.util.List;
 
-import javax.inject.Inject;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -27,6 +25,7 @@ import com.google.inject.Module;
 import com.google.inject.Stage;
 import com.google.inject.spi.Element;
 import com.google.inject.spi.Elements;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

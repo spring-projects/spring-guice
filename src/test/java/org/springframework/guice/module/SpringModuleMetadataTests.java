@@ -19,16 +19,15 @@ package org.springframework.guice.module;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Qualifier;
-
 import com.google.inject.ConfigurationException;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.ProvisionException;
 import com.google.inject.name.Names;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Qualifier;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.cache.annotation.Cacheable;
@@ -129,8 +128,7 @@ public class SpringModuleMetadataTests {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
 		context.register(config);
 		context.refresh();
-		Injector injector = Guice.createInjector(new SpringModule(context));
-		return injector;
+		return Guice.createInjector(new SpringModule(context));
 	}
 
 	interface Service {
