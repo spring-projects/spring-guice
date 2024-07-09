@@ -16,10 +16,9 @@
 
 package org.springframework.guice;
 
-import javax.inject.Inject;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.BeansException;

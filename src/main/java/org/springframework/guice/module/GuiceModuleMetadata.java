@@ -98,10 +98,7 @@ public class GuiceModuleMetadata implements BindingTypeMatcher {
 	@Override
 	public boolean matches(String name, Type type) {
 		Type rawType = (type instanceof ParameterizedType) ? ((ParameterizedType) type).getRawType() : type;
-		if (!matches(name) || !matches(rawType)) {
-			return false;
-		}
-		return true;
+		return matches(name) && matches(rawType);
 	}
 
 	private boolean matches(String name) {
@@ -125,9 +122,7 @@ public class GuiceModuleMetadata implements BindingTypeMatcher {
 			}
 		}
 		if (this.excludeNames != null && this.excludeNames.length > 0) {
-			if (PatternMatchUtils.simpleMatch(this.excludeNames, name)) {
-				return false;
-			}
+			return !PatternMatchUtils.simpleMatch(this.excludeNames, name);
 		}
 		return true;
 	}

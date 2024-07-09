@@ -23,9 +23,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.inject.Provider;
-
 import com.google.inject.spi.ProvisionListener;
+import jakarta.inject.Provider;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;

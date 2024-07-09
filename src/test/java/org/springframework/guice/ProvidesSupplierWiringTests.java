@@ -18,12 +18,11 @@ package org.springframework.guice;
 
 import java.util.function.Supplier;
 
-import javax.inject.Singleton;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Key;
 import com.google.inject.Provides;
 import com.google.inject.TypeLiteral;
+import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 

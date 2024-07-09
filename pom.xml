@@ -5,7 +5,7 @@
 
 	<groupId>org.springframework.guice</groupId>
 	<artifactId>spring-guice</artifactId>
-	<version>2.0.5-SNAPSHOT</version>
+	<version>3.0.0-SNAPSHOT</version>
 
 	<name>spring-guice</name>
 	<description>Utilities for using Spring with Guice and vice versa</description>
@@ -31,14 +31,19 @@
 		<dependency>
 			<groupId>com.google.inject</groupId>
 			<artifactId>guice</artifactId>
-			<version>5.1.0</version>
+			<version>7.0.0</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.google.inject.extensions</groupId>
 			<artifactId>guice-throwingproviders</artifactId>
-			<version>5.1.0</version>
+			<version>7.0.0</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>jakarta.annotation</groupId>
+			<artifactId>jakarta.annotation-api</artifactId>
+			<version>3.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
@@ -78,10 +83,10 @@
 	</dependencies>
 
 	<properties>
-		<java.version>1.8</java.version>
+		<java.version>17</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<spring.version>5.3.16</spring.version>
+		<spring.version>6.1.10</spring.version>
 		<!-- Important for reproducible builds. Update using e.g. ./mvnw versions:set -DnewVersion=... -->
 		<project.build.outputTimestamp>2023-05-25T11:06:34Z</project.build.outputTimestamp>
 	</properties>

@@ -21,12 +21,11 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.inject.Provider;
-
 import com.google.inject.BindingAnnotation;
 import com.google.inject.Injector;
 import com.google.inject.Key;
 import com.google.inject.name.Names;
+import jakarta.inject.Provider;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 

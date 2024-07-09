@@ -21,10 +21,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Qualifier;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.BindingAnnotation;
 import com.google.inject.Injector;
@@ -34,6 +30,9 @@ import com.google.inject.name.Names;
 import com.google.inject.throwingproviders.CheckedProvider;
 import com.google.inject.throwingproviders.CheckedProvides;
 import com.google.inject.throwingproviders.ThrowingProviderBinder;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
+import jakarta.inject.Qualifier;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
@@ -69,9 +68,9 @@ public class BindingAnnotationTests {
 		assertThat(stringHolder.annotatedString).isEqualTo("annotated");
 		assertThat(stringHolder.otherAnnotatedString).isEqualTo("other");
 
-		// Check javax @Named
+		// Check jakarta @Named
 		SomeDependencyWithNamedAnnotationOnProvider someDependencyWithNamedAnnotationOnProvider = injector
-				.getInstance(Key.get(SomeDependencyWithNamedAnnotationOnProvider.class, Names.named("javaxNamed")));
+				.getInstance(Key.get(SomeDependencyWithNamedAnnotationOnProvider.class, Names.named("jakartaNamed")));
 		assertThat(someDependencyWithNamedAnnotationOnProvider).isNotNull();
 
 		// Check Guice @Named
@@ -211,7 +210,7 @@ public class BindingAnnotationTests {
 
 	}
 
-	public static class SomeProvider implements javax.inject.Provider<Object> {
+	public static class SomeProvider implements jakarta.inject.Provider<Object> {
 
 		@Override
 		public Object get() {
@@ -237,13 +236,13 @@ public class BindingAnnotationTests {
 		}
 
 		@Bean
-		@Named("javaxNamed")
+		@Named("jakartaNamed")
 		SomeDependencyWithNamedAnnotationOnProvider someDependencyWithNamedAnnotationOnProvider() {
 			return new SomeDependencyWithNamedAnnotationOnProvider();
 		}
 
-		@Bean(name = "javaxNamed2")
-		@Named("javaxNamed2")
+		@Bean(name = "jakartaNamed2")
+		@Named("jakartaNamed2")
 		SomeDependencyWithNamedAnnotationOnProvider someSecondDependencyWithNamedAnnotationOnProvider() {
 			return new SomeDependencyWithNamedAnnotationOnProvider();
 		}

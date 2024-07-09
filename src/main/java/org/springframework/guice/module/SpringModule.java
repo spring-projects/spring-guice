@@ -31,8 +31,6 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 
-import javax.inject.Provider;
-
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Injector;
@@ -46,6 +44,7 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.spi.ProvisionListener;
 import com.google.inject.util.Types;
+import jakarta.inject.Provider;
 
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.FactoryBean;
@@ -197,8 +196,8 @@ public class SpringModule extends AbstractModule {
 			if (annotation instanceof Named) {
 				return ((Named) annotation).value();
 			}
-			else if (annotation instanceof javax.inject.Named) {
-				return ((javax.inject.Named) annotation).value();
+			else if (annotation instanceof jakarta.inject.Named) {
+				return ((jakarta.inject.Named) annotation).value();
 			}
 			else {
 				return null;
@@ -264,7 +263,7 @@ public class SpringModule extends AbstractModule {
 			return;
 		}
 		String typeName = type.getTypeName();
-		if (typeName.startsWith("com.google.inject") || typeName.startsWith("javax.inject.Provider")) {
+		if (typeName.startsWith("com.google.inject") || typeName.startsWith("jakarta.inject.Provider")) {
 			return;
 		}
 		if (type instanceof ParameterizedType) {
