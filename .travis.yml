@@ -1,8 +1,0 @@
-language: java
-jdk:
-  - openjdk17
-cache:
-  directories:
-    - $HOME/.m2
-
-install: mvn install
