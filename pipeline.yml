@@ -13,6 +13,7 @@ resources:
   type: git
   source:
     uri: https://github.com/spring-projects/spring-guice.git
+    branch: 2.0.x
 - name: slack
   type: slack-notification
   source:
