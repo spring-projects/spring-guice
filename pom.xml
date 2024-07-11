@@ -88,7 +88,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<spring.version>6.1.10</spring.version>
 		<!-- Important for reproducible builds. Update using e.g. ./mvnw versions:set -DnewVersion=... -->
-		<project.build.outputTimestamp>2023-05-25T11:06:34Z</project.build.outputTimestamp>
+		<project.build.outputTimestamp>2024-07-11T12:15:41Z</project.build.outputTimestamp>
 	</properties>
 
 	<build>
