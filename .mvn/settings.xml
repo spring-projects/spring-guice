@@ -14,8 +14,8 @@
 	<servers>
 		<server>
 			<id>sonatype-nexus-staging</id>
-			<username>${env.nexus_username}</username>
-			<password>${env.nexus_password}</password>
+			<username>${env.sonatype_username}</username>
+			<password>${env.sonatype_password}</password>
 		</server>
 		<server>
 			<id>repo.spring.io</id>
