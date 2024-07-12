@@ -26,16 +26,12 @@ jobs:
       env:
         spring_username: ${{ secrets.ARTIFACTORY_USERNAME }}
         spring_password: ${{ secrets.ARTIFACTORY_PASSWORD }}
-        sonatype_username: ${{ secrets.OSSRH_USERNAME }}
-        sonatype_password: ${{ secrets.OSSRH_PASSWORD }}
+        sonatype_username: ${{ secrets.OSSRH_S01_TOKEN_USERNAME }}
+        sonatype_password: ${{ secrets.OSSRH_S01_TOKEN_PASSWORD }}
         signing_key: ${{ secrets.GPG_PRIVATE_KEY }}
         passphrase: ${{ secrets.GPG_PASSPHRASE }}
       run: |
           echo "${signing_key}" > private.asc
           gpg --import --batch --no-tty private.asc
-          token=`curl -H "Accept: application/json" -H "Content-Type: application/json" --data '{"u":"'$(echo -n $sonatype_username | base64)'","p":"'$(echo -n $sonatype_password | base64)'"}' -u $sonatype_username:$sonatype_password https://oss.sonatype.org/service/siesta/wonderland/authenticate | jq -r .t`
-          creds=`curl -H "Accept: application/json" -H "Content-Type: application/json" -H "X-NX-AuthTicket: $token" -u $sonatype_username:$sonatype_password https://oss.sonatype.org/service/siesta/usertoken/current`
-          export nexus_username=`echo $creds | jq -r .nameCode`
-          export nexus_password=`echo $creds | jq -r .passCode`
           ./mvnw -B deploy -s .mvn/settings.xml
 
